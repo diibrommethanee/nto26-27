@@ -1,6 +1,6 @@
 ﻿using VContainer.Unity;
 
-namespace _Project.Develop.EntryPoints
+namespace _Project.Develop.Infrastructure.EntryPoints
 {
     public class BootstrapEntryPoint : IStartable
     {

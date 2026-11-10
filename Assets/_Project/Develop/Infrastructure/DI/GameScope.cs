@@ -1,8 +1,8 @@
-﻿using _Project.Develop.EntryPoints;
+﻿using _Project.Develop.Infrastructure.EntryPoints;
 using VContainer;
 using VContainer.Unity;
 
-namespace _Project.Develop.DI
+namespace _Project.Develop.Infrastructure.DI
 {
     public class GameScope : LifetimeScope
     {
