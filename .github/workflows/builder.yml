@@ -1,0 +1,104 @@
+name: Unity Windows Build & Release
+
+"on":
+  push:
+    branches:
+      - main
+      - ci
+  workflow_dispatch:
+
+concurrency:
+  group: unity-build-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64
+    runs-on: ubuntu-latest
+    outputs:
+      buildVersion: ${{ steps.unity-build.outputs.buildVersion }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-6000.6.8f1-StandaloneWindows64-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-6000.6.8f1-StandaloneWindows64-
+
+      - name: Build Unity project
+        id: unity-build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.6.8f1
+          targetPlatform: StandaloneWindows64
+          versioning: Semantic
+          buildName: nto26-27
+          buildsPath: build
+
+      - name: Archive Windows build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUILD_DIR="build/StandaloneWindows64"
+
+          if [ ! -f "$BUILD_DIR/nto26-27.exe" ]; then
+            echo "Build executable not found: $BUILD_DIR/nto26-27.exe"
+            find build -maxdepth 5 -print || true
+            exit 1
+          fi
+
+          cd "$BUILD_DIR"
+          zip -qr "$GITHUB_WORKSPACE/nto26-27-windows.zip" .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nto26-27-windows-${{ github.sha }}
+          path: nto26-27-windows.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Production approval & GitHub Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nto26-27-windows-${{ github.sha }}
+          path: release
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.buildVersion }}
+          name: nto26-27 ${{ needs.build.outputs.buildVersion }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: release/nto26-27-windows.zip
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
