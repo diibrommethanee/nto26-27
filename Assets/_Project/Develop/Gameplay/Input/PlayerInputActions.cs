@@ -639,6 +639,16 @@ namespace _Project.Develop.Gameplay.Input
                     ""interactions"": """",
                     ""initialStateCheck"": true,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""Interaction"",
+                    ""type"": ""Button"",
+                    ""id"": ""7a740cbc-3129-41a0-b714-4cc1bf449d38"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -661,6 +671,17 @@ namespace _Project.Develop.Gameplay.Input
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""MousePosition"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c4c71c7d-bccb-4eb1-acbd-63c355a9338b"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Interaction"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -746,6 +767,7 @@ namespace _Project.Develop.Gameplay.Input
             m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
             m_Player_MoveTo = m_Player.FindAction("MoveTo", throwIfNotFound: true);
             m_Player_MousePosition = m_Player.FindAction("MousePosition", throwIfNotFound: true);
+            m_Player_Interaction = m_Player.FindAction("Interaction", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
@@ -1024,6 +1046,7 @@ namespace _Project.Develop.Gameplay.Input
         private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
         private readonly InputAction m_Player_MoveTo;
         private readonly InputAction m_Player_MousePosition;
+        private readonly InputAction m_Player_Interaction;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -1043,6 +1066,10 @@ namespace _Project.Develop.Gameplay.Input
             /// Provides access to the underlying input action "Player/MousePosition".
             /// </summary>
             public InputAction @MousePosition => m_Wrapper.m_Player_MousePosition;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/Interaction".
+            /// </summary>
+            public InputAction @Interaction => m_Wrapper.m_Player_Interaction;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -1075,6 +1102,9 @@ namespace _Project.Develop.Gameplay.Input
                 @MousePosition.started += instance.OnMousePosition;
                 @MousePosition.performed += instance.OnMousePosition;
                 @MousePosition.canceled += instance.OnMousePosition;
+                @Interaction.started += instance.OnInteraction;
+                @Interaction.performed += instance.OnInteraction;
+                @Interaction.canceled += instance.OnInteraction;
             }
 
             /// <summary>
@@ -1092,6 +1122,9 @@ namespace _Project.Develop.Gameplay.Input
                 @MousePosition.started -= instance.OnMousePosition;
                 @MousePosition.performed -= instance.OnMousePosition;
                 @MousePosition.canceled -= instance.OnMousePosition;
+                @Interaction.started -= instance.OnInteraction;
+                @Interaction.performed -= instance.OnInteraction;
+                @Interaction.canceled -= instance.OnInteraction;
             }
 
             /// <summary>
@@ -1289,6 +1322,13 @@ namespace _Project.Develop.Gameplay.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnMousePosition(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Interaction" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnInteraction(InputAction.CallbackContext context);
         }
     }
 }

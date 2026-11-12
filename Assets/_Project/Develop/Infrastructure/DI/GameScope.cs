@@ -1,5 +1,7 @@
-﻿using _Project.Develop.Gameplay.Events;
+﻿using _Project.Develop.Gameplay;
+using _Project.Develop.Gameplay.Events;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Infrastructure.EntryPoints;
 using MessagePipe;
@@ -12,16 +14,19 @@ namespace _Project.Develop.Infrastructure.DI
     {
         protected override void Configure(IContainerBuilder builder)
         {
-            builder.RegisterMessagePipe();
             builder.Register<InputController>(Lifetime.Singleton);
             
             var options = new MessagePipeOptions();
-            builder.RegisterMessageBroker<NpcInteractedEvent>(new MessagePipeOptions());
-            builder.RegisterMessageBroker<QuestCompletedEvent>(new MessagePipeOptions());
-            builder.RegisterMessageBroker<QuestStepCompletedEvent>(new MessagePipeOptions());
+            builder.RegisterMessageBroker<NpcInteractedEvent>(options);
+            builder.RegisterMessageBroker<QuestCompletedEvent>(options);
+            builder.RegisterMessageBroker<QuestStepCompletedEvent>(options);
+            builder.RegisterMessageBroker<StartQuestEvent>(options);
             
             builder.RegisterEntryPoint<GameEntryPoint>();
             builder.RegisterEntryPoint<QuestService>();
+            
+            builder.RegisterComponentInHierarchy<TestQuestSystem>();
+            builder.RegisterComponentInHierarchy<TestNPC>();
         }
     }
 }

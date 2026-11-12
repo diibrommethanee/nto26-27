@@ -5,6 +5,8 @@ using _Project.Develop.Data.Quests;
 using _Project.Develop.Gameplay.Events;
 using MessagePipe;
 using VContainer.Unity;
+using NaughtyAttributes;
+using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Quests
 {
@@ -23,6 +25,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public QuestService(
             ISubscriber<NpcInteractedEvent> npcSubscriber,
+            ISubscriber<StartQuestEvent> startQuestSubscriber,
             IPublisher<QuestStepCompletedEvent> stepCompletedPublisher,
             IPublisher<QuestCompletedEvent> questCompletedPublisher)
         {
@@ -30,8 +33,15 @@ namespace _Project.Develop.Gameplay.Quests
             _questCompletedPublisher = questCompletedPublisher;
 
             _subscriptions.Add(npcSubscriber.Subscribe(OnNpcInteracted));
+            _subscriptions.Add(startQuestSubscriber.Subscribe(OnStartQuest));
         }
 
+        public void OnStartQuest(StartQuestEvent evt)
+        {
+            if (StartQuest(evt.QuestData)) Debug.Log("Quest started");
+            else  Debug.Log("Quest not started");
+        }
+        
         public bool StartQuest(QuestData data)
         {
             if (data == null)
@@ -56,6 +66,7 @@ namespace _Project.Develop.Gameplay.Quests
         public void RemoveQuest(string questId)
         {
             _activeQuests.RemoveAll(x => x.Data.questId == questId);
+            Debug.Log("quest removed");
         }
 
         private void OnNpcInteracted(NpcInteractedEvent evt)
@@ -95,6 +106,7 @@ namespace _Project.Develop.Gameplay.Quests
                 if (quest.IsCompleted)
                     CompleteQuest(quest);
             }
+            Debug.Log("updated quest progress");
         }
 
         private void CompleteQuest(QuestProgress quest)
@@ -104,6 +116,8 @@ namespace _Project.Develop.Gameplay.Quests
 
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data.questId));
+            
+            Debug.Log("completed quest");
         }
 
         public void Dispose()
@@ -116,7 +130,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void Initialize()
         {
-            
+            Debug.Log("initializing quest service");
         }
     }
 }
