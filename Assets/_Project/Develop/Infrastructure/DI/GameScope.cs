@@ -1,4 +1,5 @@
-﻿using _Project.Develop.Infrastructure.EntryPoints;
+﻿using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Infrastructure.EntryPoints;
 using VContainer;
 using VContainer.Unity;
 
@@ -8,6 +9,8 @@ namespace _Project.Develop.Infrastructure.DI
     {
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.Register<InputController>(Lifetime.Singleton);
+            
             builder.RegisterEntryPoint<GameEntryPoint>();
         }
     }
