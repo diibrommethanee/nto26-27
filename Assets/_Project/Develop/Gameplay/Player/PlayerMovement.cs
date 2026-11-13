@@ -2,7 +2,6 @@
 using _Project.Develop.Gameplay.Input;
 using NaughtyAttributes;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -10,13 +9,14 @@ using UnityCamera = UnityEngine.Camera;
 
 namespace _Project.Develop.Gameplay.Player
 {
-    [RequireComponent(typeof(NavMeshAgent))]
+    [RequireComponent(typeof(Rigidbody2D))]
     public class PlayerMovement : MonoBehaviour
     {
         [SerializeField, Expandable] private PlayerStats stats;
         
-        private NavMeshAgent _agent;
-        private NavMeshPath _path;
+        private Rigidbody2D _rb;
+        private float _targetX;
+        private bool _hasTarget;
         
         private InputController _input;
         private UnityCamera _camera;
@@ -26,19 +26,10 @@ namespace _Project.Develop.Gameplay.Player
         {
             _input = input;
         }
-        
+
         private void Start()
         {
-            _agent = GetComponent<NavMeshAgent>();
-            _path = new NavMeshPath();
-            
-            _agent.speed = stats.speed;
-            _agent.acceleration = stats.acceleration;
-            _agent.stoppingDistance = stats.stoppingDistance;
-            
-            _agent.updateRotation = false;
-            _agent.updateUpAxis = false;
-            
+            _rb = GetComponent<Rigidbody2D>();
             _camera = UnityCamera.main;
 
             _input.Actions.Player.MoveTo.performed += OnMoveTo;
@@ -46,24 +37,51 @@ namespace _Project.Develop.Gameplay.Player
 
         private void OnMoveTo(InputAction.CallbackContext ctx)
         {
-            if (CalculatePath())
-                _agent.SetPath(_path);
-        }
-        
-        private bool CalculatePath()
-        {
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                return false;
+                return;
             
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
             if (!_camera.pixelRect.Contains(mousePos))
-                return false;
+                return;
 
-            var destination = _camera.ScreenToWorldPoint(mousePos);
-            destination.z = transform.position.z;
+            var ray = _camera.ScreenPointToRay(mousePos);
+            var plane = new Plane(Vector3.forward, transform.position);
 
-            return _agent.CalculatePath(destination, _path) &&
-                   _path.status == NavMeshPathStatus.PathComplete;
+            if (!plane.Raycast(ray, out var distance))
+                return;
+
+            _targetX = ray.GetPoint(distance).x;
+            _hasTarget = true;
+        }
+
+        private void FixedUpdate()
+        {
+            var velocity = _rb.linearVelocity;
+
+            if (!_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= stats.stoppingDistance)
+            {
+                _hasTarget = false;
+                velocity.x = 0f;
+            }
+            else
+            {
+                var distance = _targetX - _rb.position.x;
+                var brakingSpeed = Mathf.Sqrt(2f * stats.acceleration * Mathf.Abs(distance));
+                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(stats.speed, brakingSpeed);
+
+                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, stats.acceleration * Time.fixedDeltaTime);
+
+                var maxSpeed = Mathf.Abs(distance) / Time.fixedDeltaTime;
+                velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+            }
+
+            _rb.linearVelocity = velocity;
+        }
+
+        private void OnDisable()
+        {
+            _hasTarget = false;
+            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
         }
 
         private void OnDestroy()
