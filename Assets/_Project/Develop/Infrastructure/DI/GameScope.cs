@@ -9,7 +9,7 @@ namespace _Project.Develop.Infrastructure.DI
     {
         protected override void Configure(IContainerBuilder builder)
         {
-            builder.Register<InputController>(Lifetime.Singleton);
+            builder.RegisterEntryPoint<InputController>().AsSelf();
             
             builder.RegisterEntryPoint<GameEntryPoint>();
         }

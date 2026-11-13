@@ -1,18 +1,25 @@
-﻿using _Project.Develop.Gameplay.Input;
+﻿using _Project.Develop.Data.Player;
+using _Project.Develop.Gameplay.Input;
+using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using VContainer;
+using UnityCamera = UnityEngine.Camera;
 
 namespace _Project.Develop.Gameplay.Player
 {
     [RequireComponent(typeof(NavMeshAgent))]
     public class PlayerMovement : MonoBehaviour
     {
-        private InputController _input;
+        [SerializeField, Expandable] private PlayerStats stats;
         
         private NavMeshAgent _agent;
-        private Camera _camera;
+        private NavMeshPath _path;
+        
+        private InputController _input;
+        private UnityCamera _camera;
         
         [Inject]
         private void Construct(InputController input)
@@ -23,33 +30,45 @@ namespace _Project.Develop.Gameplay.Player
         private void Start()
         {
             _agent = GetComponent<NavMeshAgent>();
-        
+            _path = new NavMeshPath();
+            
+            _agent.speed = stats.speed;
+            _agent.acceleration = stats.acceleration;
+            _agent.stoppingDistance = stats.stoppingDistance;
+            
             _agent.updateRotation = false;
             _agent.updateUpAxis = false;
             
-            _camera = Camera.main;
-            
-            _input.Actions.Player.MoveTo.performed += _ =>
-            {
-                if (TryGetDestination(out var destination))
-                    _agent.SetDestination(destination);
-            };
+            _camera = UnityCamera.main;
+
+            _input.Actions.Player.MoveTo.performed += OnMoveTo;
+        }
+
+        private void OnMoveTo(InputAction.CallbackContext ctx)
+        {
+            if (CalculatePath())
+                _agent.SetPath(_path);
         }
         
-        private bool TryGetDestination(out Vector2 destination)
+        private bool CalculatePath()
         {
-            destination = default;
-
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return false;
-
-            var pos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            if (!_camera.pixelRect.Contains(pos))
+            
+            var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            if (!_camera.pixelRect.Contains(mousePos))
                 return false;
 
-            destination = _camera.ScreenToWorldPoint(pos);
-            return true;
+            var destination = _camera.ScreenToWorldPoint(mousePos);
+            destination.z = transform.position.z;
+
+            return _agent.CalculatePath(destination, _path) &&
+                   _path.status == NavMeshPathStatus.PathComplete;
         }
 
+        private void OnDestroy()
+        {
+            _input.Actions.Player.MoveTo.performed -= OnMoveTo;
+        }
     }
 }

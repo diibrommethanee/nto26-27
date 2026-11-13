@@ -590,6 +590,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects:
   - {fileID: 1240338796}
+  - {fileID: 1896562480}
 --- !u!1 &1050551480
 GameObject:
   m_ObjectHideFlags: 0
@@ -1022,8 +1023,6 @@ GameObject:
   - component: {fileID: 1240338800}
   - component: {fileID: 1240338801}
   - component: {fileID: 1240338802}
-  - component: {fileID: 1240338799}
-  - component: {fileID: 1240338798}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1047,70 +1046,6 @@ Transform:
   - {fileID: 1231873093}
   m_Father: {fileID: 926947315}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!70 &1240338798
-CapsuleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1240338796}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.5, y: 1}
-  m_Direction: 0
---- !u!50 &1240338799
-Rigidbody2D:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1240338796}
-  m_BodyType: 1
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 1
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 4
 --- !u!195 &1240338800
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1157,6 +1092,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b04347ff6f764b7ea8aeae402f211a71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Player.PlayerMovement
+  stats: {fileID: 11400000, guid: d2dc13e9a0482fa4597d2973a3a671d0, type: 2}
 --- !u!1 &1357730980
 GameObject:
   m_ObjectHideFlags: 0
@@ -1221,7 +1157,7 @@ MonoBehaviour:
   m_BuildHeightMesh: 0
   m_MinRegionArea: 0
   m_HideEditorLogs: 0
-  m_NavMeshData: {fileID: 23800000, guid: 0bb871f13a959654b9c61f8071a6909c, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 011f959076c0be9488be35bd580d6275, type: 2}
 --- !u!114 &1357730983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1370,6 +1306,8 @@ GameObject:
   - component: {fileID: 1896562482}
   - component: {fileID: 1896562481}
   - component: {fileID: 1896562483}
+  - component: {fileID: 1896562484}
+  - component: {fileID: 1896562485}
   m_Layer: 0
   m_Name: Train Camera
   m_TagString: Untagged
@@ -1454,6 +1392,36 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 0, z: -10}
+--- !u!114 &1896562484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1896562480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68bb026fafb42b14791938953eaace77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineBasicMultiChannelPerlin
+  NoiseProfile: {fileID: 11400000, guid: ecb92c704d0fa4648802486664144d75, type: 2}
+  PivotOffset: {x: 0, y: 0, z: 0}
+  AmplitudeGain: 1
+  FrequencyGain: 0.4
+  m_NoiseOffsets: {x: 481.16586, y: 552.5682, z: 239.96768}
+--- !u!114 &1896562485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1896562480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0235cfcd7cd4ae29a276e0e35c1a102, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Camera.CameraController
+  settings: {fileID: 11400000, guid: f183d83099575e8478f9a1ed027681d1, type: 2}
 --- !u!1 &2086218265
 GameObject:
   m_ObjectHideFlags: 0
