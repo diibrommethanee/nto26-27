@@ -16,7 +16,7 @@ namespace _Project.Develop.Gameplay.Train
             Stopped,
             Accelerating
         }
-
+        
         private readonly TrainSettings _settings;
         private readonly IPublisher<TrainStopped> _stoppedPublisher;
         private readonly IPublisher<TrainDeparted> _departedPublisher;
@@ -28,6 +28,7 @@ namespace _Project.Develop.Gameplay.Train
         private float _duration;
 
         public ReadOnlyReactiveProperty<float> Speed01 => _speed;
+        public float CurrentSpeed => _settings.travelSpeed * _speed.Value;
 
         public TrainMovement(TrainSettings settings, IPublisher<TrainStopped> stoppedPublisher, IPublisher<TrainDeparted> departedPublisher)
         {

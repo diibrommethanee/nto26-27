@@ -14,5 +14,7 @@ namespace _Project.Develop.Data.Camera
         [BoxGroup("Zoom"), Min(0.1f)] public float maxZoom = 8f;
         [BoxGroup("Zoom")] public float zoomSensitivity = 0.7f;
         [BoxGroup("Zoom"), Min(0.01f)] public float zoomSmoothTime = 0.15f;
+        
+        [BoxGroup("Parallax"), Min(0.01f)] public float cameraInfluence = 0.1f;
     }
 }
