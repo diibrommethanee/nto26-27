@@ -11,5 +11,6 @@ namespace _Project.Develop.Data.Train
         [BoxGroup, Min(0.1f)] public float brakingDuration = 3f;
         [BoxGroup, Min(0.1f)] public float stopDuration = 15f;
         [BoxGroup, Min(0.1f)] public float accelerationDuration = 4f;
+        [BoxGroup, Min(0f)] public float travelSpeed = 2f;
     }
 }

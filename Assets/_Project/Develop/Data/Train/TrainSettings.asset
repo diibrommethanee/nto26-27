@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fad07ee8fbd44266b975bf16ca8b71e8, type: 3}
   m_Name: TrainSettings
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Train.TrainStopSettings
-  minTravelTime: 60
-  maxTravelTime: 120
+  minTravelTime: 20
+  maxTravelTime: 40
   brakingDuration: 3
   stopDuration: 15
   accelerationDuration: 4
+  travelSpeed: 4

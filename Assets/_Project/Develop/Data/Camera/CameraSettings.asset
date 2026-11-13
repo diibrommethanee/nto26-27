@@ -19,3 +19,4 @@ MonoBehaviour:
   maxZoom: 8
   zoomSensitivity: 0.7
   zoomSmoothTime: 0.15
+  cameraInfluence: 0.1
