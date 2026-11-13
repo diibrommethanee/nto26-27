@@ -1,4 +1,5 @@
 ﻿using _Project.Develop.Data.Camera.Parallax;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Camera.Parallax
@@ -6,7 +7,7 @@ namespace _Project.Develop.Gameplay.Camera.Parallax
     [ExecuteInEditMode]
     public class ParallaxLayer : MonoBehaviour
     {
-        [SerializeField] private ParallaxFactor parallaxFactor;
+        [SerializeField, Expandable] private ParallaxFactor parallaxFactor;
 
         public void Move(float delta)
         {
