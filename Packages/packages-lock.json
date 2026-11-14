@@ -37,13 +37,6 @@
       "dependencies": {},
       "hash": "4a2d9c8e6a4f0fa50ecb24ec2d14ae588b1951da"
     },
-    "com.h8man.2d.navmeshplus": {
-      "version": "https://github.com/h8man/NavMeshPlus.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "d615919ce2d1472e21ea1c761882cc02d7ba4469"
-    },
     "com.kyrylokuzyk.primetween": {
       "version": "file:../Packages/com.kyrylokuzyk.primetween.tgz",
       "depth": 0,

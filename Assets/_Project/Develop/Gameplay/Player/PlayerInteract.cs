@@ -4,6 +4,7 @@ using UnityEngine;
 using PrimeTween;
 using UnityEngine.InputSystem;
 using VContainer;
+using UnityCamera = UnityEngine.Camera;
 
 namespace _Project.Develop.Gameplay.Player
 {
@@ -16,7 +17,7 @@ namespace _Project.Develop.Gameplay.Player
         [SerializeField] private float hideDuration = 0.15f;
         
         private InputController _input;
-        private Camera _camera;
+        private UnityCamera _camera;
         private IInteractable _currentTarget;
         
         [Inject]
@@ -27,7 +28,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Start()
         {
-            _camera = Camera.main;
+            _camera = UnityCamera.main;
             interactIcon.localScale = Vector3.zero;
             
             _input.Actions.Player.Interaction.performed += OnInteraction;
