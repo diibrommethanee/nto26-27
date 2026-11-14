@@ -19,19 +19,17 @@ namespace _Project.Develop.Gameplay.Input
         
         private void OnZoomPressed(InputAction.CallbackContext _)
         {
-            Actions.Player.Disable();
             Actions.Camera.Zoom.Enable();
         }
 
         private void OnZoomReleased(InputAction.CallbackContext _)
         {
             Actions.Camera.Zoom.Disable();
-            Actions.Player.Enable();
         }
 
         public void Dispose()
         {
-            Actions.Camera.Mode.performed -= OnZoomPressed;
+            Actions.Camera.Mode.performed -= OnZoomPressed; 
             Actions.Camera.Mode.canceled -= OnZoomReleased;
 
             Actions.Disable();
