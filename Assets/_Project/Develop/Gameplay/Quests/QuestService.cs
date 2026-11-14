@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using _Project.Develop.Data.Quests;
+using _Project.Develop.Data.Quests.Rewards;
 using _Project.Develop.Gameplay.Events;
 using MessagePipe;
 using VContainer.Unity;
@@ -114,6 +115,14 @@ namespace _Project.Develop.Gameplay.Quests
             _activeQuests.Remove(quest);
             _completedQuests.Add(quest);
 
+            if (quest.Data.rewards != null)
+            {
+                foreach (var reward in quest.Data.rewards)
+                {
+                    reward?.Grant();
+                }
+            }
+            
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data.questId));
             

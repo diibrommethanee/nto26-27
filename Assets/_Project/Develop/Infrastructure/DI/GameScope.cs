@@ -1,4 +1,5 @@
 using _Project.Develop.Data.Quests;
+using _Project.Develop.Data.Quests.Rewards;
 using _Project.Develop.Data.Train;
 using _Project.Develop.Gameplay;
 using _Project.Develop.Gameplay.Events;

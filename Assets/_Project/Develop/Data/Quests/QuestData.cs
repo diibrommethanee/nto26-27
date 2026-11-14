@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using _Project.Develop.Data.Quests.Rewards;
 
 namespace _Project.Develop.Data.Quests
 {
@@ -11,5 +12,6 @@ namespace _Project.Develop.Data.Quests
         public string questName;
         [TextArea] public string description;
         public List<QuestStepData> steps;
+        [SerializeReference] public List<QuestReward> rewards = new();
     }
 }
