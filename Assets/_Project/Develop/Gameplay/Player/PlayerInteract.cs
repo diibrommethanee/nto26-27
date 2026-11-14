@@ -1,16 +1,23 @@
 using _Project.Develop.Gameplay.Input;
+using NaughtyAttributes;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.EventSystems;
+using PrimeTween;
+using UnityEngine.InputSystem;
 using VContainer;
 
 namespace _Project.Develop.Gameplay.Player
 {
     public class PlayerInteract : MonoBehaviour
     {
-        private InputController _input;
+        [BoxGroup("Interaction Icon")]
+        [SerializeField] private RectTransform interactIcon;
+        [SerializeField] private Vector2 iconOffset = new Vector2(40f, -40f);
+        [SerializeField] private float showDuration = 0.25f;
+        [SerializeField] private float hideDuration = 0.15f;
         
+        private InputController _input;
         private Camera _camera;
+        private IInteractable _currentTarget;
         
         [Inject]
         private void Construct(InputController input)
@@ -21,31 +28,50 @@ namespace _Project.Develop.Gameplay.Player
         private void Start()
         {
             _camera = Camera.main;
+            interactIcon.localScale = Vector3.zero;
             
-            _input.Actions.Player.Interaction.performed += _ =>
-            {
-                if (TryInteract(out var target))
-                {
-                    target.Interact();
-                }
-            };
+            _input.Actions.Player.Interaction.performed += OnInteraction;
+            _input.Actions.Player.MousePosition.performed += OnMouseMoved;
         }
-
-        private bool TryInteract(out IInteractable target)
+        
+        private void OnDestroy()
         {
-            target = null;
-
-            var mousePosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            if (_input == null) return;
+            _input.Actions.Player.Interaction.performed -= OnInteraction;
+            _input.Actions.Player.MousePosition.performed -= OnMouseMoved;
+        }
+        
+        private void OnInteraction(InputAction.CallbackContext ctx)
+        {
+            if (_currentTarget != null)
+                _currentTarget.Interact();
+        }
+        
+        private void OnMouseMoved(InputAction.CallbackContext ctx)
+        {
+            var mousePosition = ctx.ReadValue<Vector2>();
             var ray = _camera.ScreenPointToRay(mousePosition);
-
             var hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity);
 
-            if (hit.collider == null)
-                return false;
+            var target = hit.collider != null
+                ? hit.collider.GetComponentInParent<IInteractable>()
+                : null;
 
-            target = hit.collider.GetComponentInParent<IInteractable>();
+            if (!ReferenceEquals(target, _currentTarget))
+                SetTarget(target);
 
-            return target != null;
+            if (_currentTarget != null)
+                interactIcon.position = mousePosition + iconOffset;
+        }
+
+        private void SetTarget(IInteractable target)
+        {
+            _currentTarget = target;
+
+            if (target == null)
+                Tween.Scale(interactIcon, Vector3.zero, hideDuration, ease: Ease.InBack);
+            else
+                Tween.Scale(interactIcon, Vector3.one, showDuration, ease: Ease.OutBack);
         }
     }
 }
