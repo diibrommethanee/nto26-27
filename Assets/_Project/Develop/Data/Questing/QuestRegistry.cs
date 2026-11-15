@@ -1,16 +1,17 @@
 using System.Collections.Generic;
+using _Project.Develop.Data.Questing.Quests;
 using UnityEngine;
 
-namespace _Project.Develop.Data.Quests
+namespace _Project.Develop.Data.Questing
 {
-    public sealed class QuestRegistry : IQuestRegistry
+    public class QuestRegistry : IQuestRegistry
     {
-        private readonly Dictionary<string, QuestData> _quests;
+        private readonly Dictionary<string, Quest> _quests;
         private readonly Dictionary<string, Dictionary<string, int>> _stepIndices;
 
         public QuestRegistry(QuestDatabase database)
         {
-            _quests = new Dictionary<string, QuestData>();
+            _quests = new Dictionary<string, Quest>();
             _stepIndices = new Dictionary<string, Dictionary<string, int>>();
 
             if (database == null)
@@ -44,7 +45,7 @@ namespace _Project.Develop.Data.Quests
             }
         }
 
-        private static Dictionary<string, int> BuildStepIndices(QuestData quest)
+        private static Dictionary<string, int> BuildStepIndices(Quest quest)
         {
             var map = new Dictionary<string, int>(quest.steps.Count);
 
@@ -76,10 +77,10 @@ namespace _Project.Develop.Data.Quests
             return map;
         }
 
-        public bool TryGetQuest(string questId, out QuestData quest)
+        public bool TryGetQuest(string questId, out Quest quest)
             => _quests.TryGetValue(questId, out quest);
 
-        public bool TryGetStep(string questId, string stepId, out QuestStepData step)
+        public bool TryGetStep(string questId, string stepId, out QuestStep step)
         {
             step = null;
             if (string.IsNullOrEmpty(stepId)) return false;
@@ -97,7 +98,7 @@ namespace _Project.Develop.Data.Quests
             return map.TryGetValue(stepId, out index);
         }
 
-        public bool TryGetNextStep(string questId, string stepId, out QuestStepData nextStep)
+        public bool TryGetNextStep(string questId, string stepId, out QuestStep nextStep)
         {
             nextStep = null;
             if (!TryGetStepIndex(questId, stepId, out var index)) return false;
@@ -110,6 +111,6 @@ namespace _Project.Develop.Data.Quests
             return nextStep != null;
         }
 
-        public IReadOnlyCollection<QuestData> AllQuests => _quests.Values;
+        public IReadOnlyCollection<Quest> AllQuests => _quests.Values;
     }
 }

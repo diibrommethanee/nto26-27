@@ -1,5 +1,4 @@
 using _Project.Develop.Gameplay.Input;
-using NaughtyAttributes;
 using UnityEngine;
 using PrimeTween;
 using VContainer;
@@ -9,17 +8,14 @@ namespace _Project.Develop.Gameplay.Player
 {
     public class PlayerInteract : MonoBehaviour
     {
-        [BoxGroup("Interaction Icon")]
-        
         [SerializeField] private Transform interactIcon;
-        [SerializeField] private Vector3 iconOffset = new Vector3(40f, -40f, 0f);
-        [SerializeField] private float iconWorldZ = -1f;
+        [SerializeField] private Vector3 iconOffset = new(0.5f, -0.5f);
         [SerializeField] private float showDuration = 0.25f;
         [SerializeField] private float hideDuration = 0.15f;
         
-        
         private InputController _input;
         private UnityCamera _camera;
+        
         private IInteractable _currentTarget;
         
         [Inject]
@@ -31,22 +27,20 @@ namespace _Project.Develop.Gameplay.Player
         private void Start()
         {
             _camera = UnityCamera.main;
+            
             interactIcon.localScale = Vector3.zero;
         }
         
         private void Update()
         {
-            var mousePosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            
-            UpdateTarget(mousePosition);
+            var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            UpdateTarget(mousePos);
 
             if (_currentTarget != null)
-                PositionIcon(mousePosition);
+                PositionIcon(mousePos);
 
             if (_input.Actions.Player.Interaction.WasPressedThisFrame())
                 _currentTarget?.Interact();
-            
-            Debug.Log(_currentTarget == null);
         }
         
         private void UpdateTarget(Vector2 mousePosition)
@@ -59,23 +53,21 @@ namespace _Project.Develop.Gameplay.Player
             {
                 if (hit.collider == null) continue;
                 var candidate = hit.collider.GetComponent<IInteractable>();
-                if (candidate != null)
-                {
-                    target = candidate;
-                    break;
-                }
+                if (candidate == null) continue;
+                target = candidate;
+                break;
             }
 
             if (!ReferenceEquals(target, _currentTarget))
                 SetTarget(target);
         }
         
-        private void PositionIcon(Vector2 screenPosition)
+        private void PositionIcon(Vector2 screenPos)
         {
-            var world = _camera.ScreenToWorldPoint(
-                new Vector3(screenPosition.x, screenPosition.y, -_camera.transform.position.z));
-            world.z = iconWorldZ;
-            interactIcon.position = world + iconOffset;
+            var worldPos = _camera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -_camera.transform.position.z));
+            worldPos.z = 0f;
+            
+            interactIcon.position = worldPos + iconOffset;
         }
 
         private void SetTarget(IInteractable target)

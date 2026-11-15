@@ -1,9 +1,8 @@
-using _Project.Develop.Data.Quests;
-using _Project.Develop.Data.Quests.Rewards;
+using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Train;
 using _Project.Develop.Gameplay;
-using _Project.Develop.Gameplay.Events;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Train;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Quests;
@@ -34,7 +33,6 @@ namespace _Project.Develop.Infrastructure.DI
             
             builder.RegisterInstance(questDatabase);
             builder.Register<IQuestRegistry, QuestRegistry>(Lifetime.Singleton);
-            builder.RegisterComponentInHierarchy<QuestTrackerView>();
             
             builder.RegisterEntryPoint<GameEntryPoint>();
             
@@ -44,9 +42,6 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterInstance(trainSettings);
             builder.RegisterEntryPoint<TrainMovement>().AsSelf();
             builder.RegisterEntryPoint<QuestService>();
-            
-            builder.RegisterComponentInHierarchy<TestQuestSystem>();
-            builder.RegisterComponentInHierarchy<TestNPC>();
         }
     }
 }

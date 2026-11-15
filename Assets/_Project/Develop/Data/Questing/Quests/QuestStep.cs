@@ -1,9 +1,9 @@
 using System;
 
-namespace _Project.Develop.Data.Quests
+namespace _Project.Develop.Data.Questing.Quests
 {
     [Serializable]
-    public class QuestStepData
+    public class QuestStep
     {
         public string id;
         public string title;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Data.Camera
 {
-    [CreateAssetMenu(fileName = "CameraSettings", menuName = "Camera Settings")]
+    [CreateAssetMenu(fileName = "CameraSettings", menuName = "Configs/Camera/Camera Settings")]
     public class CameraSettings : ScriptableObject
     {
         [BoxGroup("Scrolling")] public float panSensitivity = 0.7f;

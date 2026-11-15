@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Data.Player
 {
-    [CreateAssetMenu(fileName = "PlayerStats", menuName = "Player Stats")]
+    [CreateAssetMenu(fileName = "PlayerStats", menuName = "Configs/Player Stats")]
     public class PlayerStats : ScriptableObject
     {
         [BoxGroup("Movement"), Min(0f)] public float speed = 3f;

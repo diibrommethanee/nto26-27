@@ -1,27 +1,23 @@
+using _Project.Develop.Data.Questing.Quests;
 using System;
-using _Project.Develop.Data.Quests;
 
 namespace _Project.Develop.Gameplay.Quests
 {
     public class QuestStepProgress
     {
-        public QuestStepData Data { get; }
-
+        public QuestStep Data { get; }
         public int CurrentAmount { get; private set; }
 
         public bool IsCompleted => CurrentAmount >= Data.requiredAmount;
 
-        public QuestStepProgress(QuestStepData data)
+        public QuestStepProgress(QuestStep data)
         {
             Data = data;
         }
 
         public void AddProgress(int amount)
         {
-            CurrentAmount = Math.Min(
-                CurrentAmount + amount,
-                Data.requiredAmount
-            );
+            CurrentAmount = Math.Min(CurrentAmount + amount, Data.requiredAmount);
         }
     }
 }
