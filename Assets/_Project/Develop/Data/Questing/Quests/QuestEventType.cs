@@ -1,4 +1,4 @@
-namespace _Project.Develop.Data.Quests
+namespace _Project.Develop.Data.Questing.Quests
 {
     public enum QuestEventType
     {

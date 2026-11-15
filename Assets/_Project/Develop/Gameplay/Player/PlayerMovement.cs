@@ -1,5 +1,6 @@
 ﻿using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Input;
+using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -35,8 +36,18 @@ namespace _Project.Develop.Gameplay.Player
             _input.Actions.Player.MoveTo.performed += OnMoveTo;
         }
 
-        private void OnMoveTo(InputAction.CallbackContext ctx)
+        private void OnMoveTo(InputAction.CallbackContext _)
         {
+            MoveToAsync().Forget();
+        }
+        
+        private async UniTask MoveToAsync()
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
+            
+            if (!isActiveAndEnabled)
+                return;
+
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
             
@@ -53,6 +64,7 @@ namespace _Project.Develop.Gameplay.Player
             _targetX = ray.GetPoint(distance).x;
             _hasTarget = true;
         }
+
 
         private void FixedUpdate()
         {

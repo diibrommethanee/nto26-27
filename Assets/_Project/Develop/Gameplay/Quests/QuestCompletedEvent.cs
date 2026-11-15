@@ -1,4 +1,4 @@
-namespace _Project.Develop.Gameplay.Events
+namespace _Project.Develop.Gameplay.Quests
 {
     public readonly struct QuestCompletedEvent
     {

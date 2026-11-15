@@ -1,5 +1,5 @@
-using _Project.Develop.Data.Quests;
-using _Project.Develop.Gameplay.Events;
+using _Project.Develop.Data.Questing.Quests;
+using _Project.Develop.Gameplay.Quests;
 using MessagePipe;
 using NaughtyAttributes;
 using UnityEngine;
@@ -9,9 +9,10 @@ namespace _Project.Develop.Gameplay
 {
     public class TestQuestSystem : MonoBehaviour
     {
-        [SerializeField] private QuestData questData;
+        [SerializeField] private Quest quest;
+        
         private IPublisher<StartQuestEvent>  _publisher;
-
+        
         [Inject]
         public void Construct(IPublisher<StartQuestEvent> publisher)
         {
@@ -21,7 +22,7 @@ namespace _Project.Develop.Gameplay
         [Button]
         public void CreateNewQuest()
         {
-            _publisher.Publish(new StartQuestEvent(questData));
+            _publisher.Publish(new StartQuestEvent(quest));
         }
     }
 }

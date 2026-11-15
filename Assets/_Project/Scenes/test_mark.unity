@@ -1513,6 +1513,7 @@ MonoBehaviour:
   - {fileID: 1896562480}
   - {fileID: 384457999}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
+  questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
 --- !u!1 &927133715
 GameObject:
   m_ObjectHideFlags: 0

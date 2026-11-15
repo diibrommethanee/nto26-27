@@ -1,12 +1,10 @@
+using _Project.Develop.Data.Questing.Quests;
+using _Project.Develop.Gameplay.Npc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using _Project.Develop.Data.Quests;
-using _Project.Develop.Data.Quests.Rewards;
-using _Project.Develop.Gameplay.Events;
 using MessagePipe;
 using VContainer.Unity;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Quests
@@ -24,8 +22,7 @@ namespace _Project.Develop.Gameplay.Quests
         public IReadOnlyList<QuestProgress> ActiveQuests => _activeQuests;
         public IReadOnlyList<QuestProgress> CompletedQuests => _completedQuests;
 
-        public QuestService(
-            ISubscriber<NpcInteractedEvent> npcSubscriber,
+        public QuestService(ISubscriber<NpcInteractedEvent> npcSubscriber,
             ISubscriber<StartQuestEvent> startQuestSubscriber,
             IPublisher<QuestStepCompletedEvent> stepCompletedPublisher,
             IPublisher<QuestCompletedEvent> questCompletedPublisher)
@@ -39,11 +36,11 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void OnStartQuest(StartQuestEvent evt)
         {
-            if (StartQuest(evt.QuestData)) Debug.Log("Quest started");
+            if (StartQuest(evt.Quest)) Debug.Log("Quest started");
             else  Debug.Log("Quest not started");
         }
         
-        public bool StartQuest(QuestData data)
+        public bool StartQuest(Quest data)
         {
             if (data == null)
                 return false;
@@ -67,7 +64,7 @@ namespace _Project.Develop.Gameplay.Quests
         public void RemoveQuest(string questId)
         {
             _activeQuests.RemoveAll(x => x.Data.questId == questId);
-            Debug.Log("quest removed");
+            Debug.Log("Quest removed");
         }
 
         private void OnNpcInteracted(NpcInteractedEvent evt)
@@ -80,7 +77,7 @@ namespace _Project.Develop.Gameplay.Quests
             if (amount <= 0)
                 return;
 
-            for (int i = _activeQuests.Count - 1; i >= 0; i--)
+            for (var i = _activeQuests.Count - 1; i >= 0; i--)
             {
                 var quest = _activeQuests[i];
                 var step = quest.CurrentStep;
@@ -95,6 +92,7 @@ namespace _Project.Develop.Gameplay.Quests
                     continue;
 
                 step.AddProgress(amount);
+                Debug.Log("Updated quest progress");
 
                 if (!step.IsCompleted)
                     continue;
@@ -107,7 +105,6 @@ namespace _Project.Develop.Gameplay.Quests
                 if (quest.IsCompleted)
                     CompleteQuest(quest);
             }
-            Debug.Log("updated quest progress");
         }
 
         private void CompleteQuest(QuestProgress quest)
@@ -126,7 +123,7 @@ namespace _Project.Develop.Gameplay.Quests
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data.questId));
             
-            Debug.Log("completed quest");
+            Debug.Log("Completed quest");
         }
 
         public void Dispose()
@@ -139,7 +136,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void Initialize()
         {
-            Debug.Log("initializing quest service");
+            Debug.Log("Initializing quest service");
         }
     }
 }

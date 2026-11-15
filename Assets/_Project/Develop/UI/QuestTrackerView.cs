@@ -1,10 +1,10 @@
+using _Project.Develop.Data.Questing;
+using _Project.Develop.Gameplay.Quests;
 using System;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
 using VContainer;
-using _Project.Develop.Data.Quests;
-using _Project.Develop.Gameplay.Events;
 
 namespace _Project.Develop.UI
 {
@@ -12,10 +12,11 @@ namespace _Project.Develop.UI
     {
         private const string CompletedText = "Завершено";
         
-        [SerializeField] private GameObject panelRoot;
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private TextMeshProUGUI currentStepText;
+
+        private CanvasGroup _group;
 
         private ISubscriber<QuestStepCompletedEvent> _subscriber;
         private ISubscriber<StartQuestEvent> _startedSubscriber;
@@ -30,7 +31,10 @@ namespace _Project.Develop.UI
         private bool _isCompleted;
 
         [Inject]
-        public void Construct(ISubscriber<QuestStepCompletedEvent> subscriber, ISubscriber<StartQuestEvent> startedSubscriber, ISubscriber<QuestCompletedEvent> completedSubscriber, IQuestRegistry registry)
+        public void Construct(ISubscriber<QuestStepCompletedEvent> subscriber,
+            ISubscriber<StartQuestEvent> startedSubscriber,
+            ISubscriber<QuestCompletedEvent> completedSubscriber,
+            IQuestRegistry registry)
         {
             _subscriber = subscriber;
             _startedSubscriber = startedSubscriber;
@@ -40,7 +44,11 @@ namespace _Project.Develop.UI
 
         private void Start()
         {
-            panelRoot.SetActive(false);
+            _group = GetComponent<CanvasGroup>();
+            
+            _group.alpha = 0;
+            _group.blocksRaycasts = false;
+            
             _subscription = _subscriber.Subscribe(OnStepUpdated);
             _startedSubscription = _startedSubscriber.Subscribe(OnQuestStarted);
             _completedSubscription = _completedSubscriber.Subscribe(OnQuestCompleted);
@@ -59,7 +67,7 @@ namespace _Project.Develop.UI
         
         private void OnQuestStarted(StartQuestEvent evt)
         {
-            var quest = evt.QuestData;
+            var quest = evt.Quest;
             if (quest == null)
             {
                 Debug.LogWarning("[QuestTracker] StartQuestEvent пришел с пустым квестом");
@@ -70,7 +78,9 @@ namespace _Project.Develop.UI
             _currentStepId = null;
             _isCompleted = false;
 
-            panelRoot.SetActive(true);
+            _group.alpha = 1;
+            _group.blocksRaycasts = true;
+            
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
 
@@ -108,7 +118,9 @@ namespace _Project.Develop.UI
             _currentStepId = evt.StepId;
             _isCompleted = false;
 
-            panelRoot.SetActive(true);
+            _group.alpha = 1;
+            _group.blocksRaycasts = true;
+            
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
             currentStepText.text = step.title;

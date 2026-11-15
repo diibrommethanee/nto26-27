@@ -1,7 +1,6 @@
 using System;
-using UnityEngine;
 
-namespace _Project.Develop.Data.Quests.Rewards
+namespace _Project.Develop.Data.Questing.Rewards
 {
     [Serializable]
     public abstract class QuestReward

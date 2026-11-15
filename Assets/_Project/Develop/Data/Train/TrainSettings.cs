@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Data.Train
 {
-    [CreateAssetMenu(fileName = "TrainSettings", menuName = "Train Settings")]
+    [CreateAssetMenu(fileName = "TrainSettings", menuName = "Configs/Train Settings")]
     public class TrainSettings : ScriptableObject
     {
         [BoxGroup, Min(0.1f)] public float minTravelTime = 60f;
