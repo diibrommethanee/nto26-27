@@ -1,4 +1,5 @@
 using _Project.Develop.Data.Questing;
+using _Project.Develop.Data.Questing.Quests;
 using _Project.Develop.Gameplay.Quests;
 using System;
 using MessagePipe;
@@ -26,7 +27,7 @@ namespace _Project.Develop.UI
         private IDisposable _startedSubscription;
         private IDisposable _completedSubscription;
         
-        private string _currentQuestId;
+        private Quest _currentQuest;
         private string _currentStepId;
         private bool _isCompleted;
 
@@ -56,7 +57,7 @@ namespace _Project.Develop.UI
 
         private void OnQuestCompleted(QuestCompletedEvent evt)
         {
-            if (_currentQuestId != evt.QuestId) return;
+            if (_currentQuest != evt.Quest) return;
             
             if (_isCompleted) return;
 
@@ -70,11 +71,11 @@ namespace _Project.Develop.UI
             var quest = evt.Quest;
             if (quest == null)
             {
-                Debug.LogWarning("[QuestTracker] StartQuestEvent пришел с пустым квестом");
+                Debug.LogWarning("[QuestTracker] StartQuestEvent contains a null quest.");
                 return;
             }
 
-            _currentQuestId = quest.questId;
+            _currentQuest = quest;
             _currentStepId = null;
             _isCompleted = false;
 
@@ -93,28 +94,29 @@ namespace _Project.Develop.UI
             else
             {
                 currentStepText.text = string.Empty;
-                Debug.LogWarning($"[QuestTracker] У квеста '{quest.questId}' нет шагов");
+                Debug.LogWarning($"[QuestTracker] Quest '{quest.name}' has no steps.");
             }
         }
         
         private void OnStepUpdated(QuestStepCompletedEvent evt)
         {
-            if (_isCompleted && evt.QuestId == _currentQuestId)
+            if (_isCompleted && evt.Quest == _currentQuest)
                 return;
 
-            if (!_registry.TryGetQuest(evt.QuestId, out var quest))
+            var quest = evt.Quest;
+            if (quest == null || !_registry.Contains(quest))
             {
-                Debug.LogWarning($"[QuestTracker] Квест '{evt.QuestId}' не найден в реестре");
+                Debug.LogWarning("[QuestTracker] Quest was not found in the registry.");
                 return;
             }
 
-            if (!_registry.TryGetStep(evt.QuestId, evt.StepId, out var step))
+            if (!_registry.TryGetStep(quest, evt.StepId, out var step))
             {
-                Debug.LogWarning($"[QuestTracker] шага '{evt.StepId}' не найдено в квесте '{evt.QuestId}'");
+                Debug.LogWarning($"[QuestTracker] Step '{evt.StepId}' was not found in quest '{quest.name}'.");
                 return;
             }
 
-            _currentQuestId = evt.QuestId;
+            _currentQuest = quest;
             _currentStepId = evt.StepId;
             _isCompleted = false;
 
