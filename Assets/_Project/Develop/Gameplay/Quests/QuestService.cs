@@ -1,4 +1,5 @@
 using _Project.Develop.Data.Questing.Quests;
+using _Project.Develop.Data.Npc;
 using _Project.Develop.Gameplay.Npc;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,8 @@ namespace _Project.Develop.Gameplay.Quests
             if (data == null)
                 return false;
 
-            if (_activeQuests.Any(x => x.Data.questId == data.questId))
+            if (_activeQuests.Any(x => x.Data == data) ||
+                _completedQuests.Any(x => x.Data == data))
                 return false;
 
             var progress = new QuestProgress(data);
@@ -53,7 +55,7 @@ namespace _Project.Develop.Gameplay.Quests
             if (progress.IsCompleted)
             {
                 _completedQuests.Add(progress);
-                _questCompletedPublisher.Publish(new QuestCompletedEvent(data.questId));
+                _questCompletedPublisher.Publish(new QuestCompletedEvent(data));
                 return true;
             }
 
@@ -61,20 +63,20 @@ namespace _Project.Develop.Gameplay.Quests
             return true;
         }
 
-        public void RemoveQuest(string questId)
+        public void RemoveQuest(Quest quest)
         {
-            _activeQuests.RemoveAll(x => x.Data.questId == questId);
+            _activeQuests.RemoveAll(x => x.Data == quest);
             Debug.Log("Quest removed");
         }
 
         private void OnNpcInteracted(NpcInteractedEvent evt)
         {
-            UpdateProgress(QuestEventType.NpcInteracted, evt.NpcId, 1);
+            UpdateProgress(QuestEventType.NpcInteracted, evt.Npc, 1);
         }
 
-        private void UpdateProgress(QuestEventType eventType, string targetId, int amount)
+        private void UpdateProgress(QuestEventType eventType, NpcData targetNpc, int amount)
         {
-            if (amount <= 0)
+            if (amount <= 0 || targetNpc == null)
                 return;
 
             for (var i = _activeQuests.Count - 1; i >= 0; i--)
@@ -88,7 +90,7 @@ namespace _Project.Develop.Gameplay.Quests
                 if (step.Data.eventType != eventType)
                     continue;
 
-                if (step.Data.targetId != targetId)
+                if (step.Data.target != targetNpc)
                     continue;
 
                 step.AddProgress(amount);
@@ -98,7 +100,7 @@ namespace _Project.Develop.Gameplay.Quests
                     continue;
 
                 _stepCompletedPublisher.Publish(
-                    new QuestStepCompletedEvent(quest.Data.questId, step.Data.id));
+                    new QuestStepCompletedEvent(quest.Data, step.Data.id));
 
                 quest.AdvanceStep();
 
@@ -121,7 +123,7 @@ namespace _Project.Develop.Gameplay.Quests
             }
             
             _questCompletedPublisher.Publish(
-                new QuestCompletedEvent(quest.Data.questId));
+                new QuestCompletedEvent(quest.Data));
             
             Debug.Log("Completed quest");
         }

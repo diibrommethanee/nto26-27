@@ -1,14 +1,14 @@
+using _Project.Develop.Data.Npc;
+
 namespace _Project.Develop.Gameplay.Npc
 {
     public readonly struct NpcInteractedEvent
     {
-        public string NpcId { get; }
-        public string NpcName { get; }
+        public NpcData Npc { get; }
 
-        public NpcInteractedEvent(string npcId, string npcName)
+        public NpcInteractedEvent(NpcData npc)
         {
-            NpcId = npcId;
-            NpcName = npcName;
+            Npc = npc;
         }
     }
 }

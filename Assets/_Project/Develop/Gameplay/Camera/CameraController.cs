@@ -30,6 +30,10 @@ namespace _Project.Develop.Gameplay.Camera
         private float _targetZoom;
         private float _currentZoom;
         private float _zoomVelocity;
+        
+        public bool IsZoomMode => _input != null && _input.Actions.Camera.Zoom.enabled;
+        public float ScrollPulse { get; private set; }
+        public float ScrollDirection { get; private set; }
 
         [Inject]
         private void Construct(InputController input)
@@ -55,9 +59,11 @@ namespace _Project.Develop.Gameplay.Camera
         
         private void OnCameraPan(InputAction.CallbackContext ctx)
         {
+            if (_input.Actions.Camera.Mode.IsPressed()) return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
             
+            Pulse(ctx.ReadValue<Vector2>().y);
             _targetPanOffset = Mathf.Clamp(_targetPanOffset + ctx.ReadValue<Vector2>().y * settings.panSensitivity, -settings.maxPanOffset, settings.maxPanOffset);
         }
 
@@ -72,15 +78,24 @@ namespace _Project.Develop.Gameplay.Camera
             var horizontalOffset = (mouseX - 0.5f) * 2f;
 
             _targetPanOffset = Mathf.Clamp(_targetPanOffset + horizontalOffset * _camera.aspect * (_targetZoom - nextZoom), -settings.maxPanOffset, settings.maxPanOffset);
+            if (!Mathf.Approximately(_targetZoom, nextZoom)) Pulse(ctx.ReadValue<Vector2>().y);
             _targetZoom = nextZoom;
         }
         
+        private void Pulse(float scroll)
+        {
+            if (Mathf.Approximately(scroll, 0f)) return;
+            ScrollPulse = 1f;
+            ScrollDirection = Mathf.Sign(scroll);
+        }
+
         private void Update()
         {
             _currentPanOffset = Mathf.SmoothDamp(_currentPanOffset, _targetPanOffset, ref _panVelocity, settings.panSmoothTime);
             _follow.FollowOffset = _initialFollowOffset + Vector3.right * _currentPanOffset;
 
             _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, settings.zoomSmoothTime);
+            ScrollPulse = Mathf.MoveTowards(ScrollPulse, 0f, Time.unscaledDeltaTime * 3.5f);
             _cinemachineCamera.Lens.OrthographicSize = _currentZoom;
         }
         

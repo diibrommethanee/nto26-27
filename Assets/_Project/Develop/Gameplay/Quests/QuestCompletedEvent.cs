@@ -1,12 +1,14 @@
+using _Project.Develop.Data.Questing.Quests;
+
 namespace _Project.Develop.Gameplay.Quests
 {
     public readonly struct QuestCompletedEvent
     {
-        public string QuestId { get; }
+        public Quest Quest { get; }
 
-        public QuestCompletedEvent(string questId)
+        public QuestCompletedEvent(Quest quest)
         {
-            QuestId = questId;
+            Quest = quest;
         }
     }
 }
