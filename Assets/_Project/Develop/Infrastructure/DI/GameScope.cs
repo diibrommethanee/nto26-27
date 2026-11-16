@@ -1,3 +1,4 @@
+using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Train;
 using _Project.Develop.Gameplay.Dialogue;
@@ -6,6 +7,7 @@ using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Train;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Infrastructure.EntryPoints;
+using _Project.Develop.UI.Evidence;
 using MessagePipe;
 using NaughtyAttributes;
 using UnityEngine;
@@ -18,6 +20,9 @@ namespace _Project.Develop.Infrastructure.DI
     {
         [SerializeField, Expandable, Space(5)] private TrainSettings trainSettings;
         [SerializeField] private QuestDatabase questDatabase;
+        
+        [SerializeField] private EvidenceDatabase evidenceDatabase;
+        [SerializeField] private EvidenceBoardController evidenceBoardController;
         
         protected override void Configure(IContainerBuilder builder)
         {
@@ -48,6 +53,9 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterInstance(trainSettings);
             builder.RegisterEntryPoint<TrainMovement>().AsSelf();
             builder.RegisterEntryPoint<QuestService>();
+            
+            builder.RegisterInstance(evidenceDatabase);
+            builder.RegisterComponent(evidenceBoardController);
         }
     }
 }
