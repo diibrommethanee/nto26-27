@@ -20,25 +20,25 @@ namespace _Project.Develop.Gameplay.NPC
         {
             _interactPublisher = interactPublisher;
             _dialogueRunner = dialogueRunner;
+            
+            npcData.state = new NpcState
+            {
+                mood = npcData.initialMood,
+                dialogue = npcData.dialogue
+            };
         }
-
         
         public void Interact()
         {
-            if (npcData == null)
-            {
-                Debug.LogError("NpcInteract: assign NPC data.", this);
-                return;
-            }
-
             if (_dialogueRunner.IsRunning)
                 return;
 
-            if (npcData.dialogue != null)
-                _dialogueRunner.Start(npcData.dialogue);
+            var dialogue = npcData.state.dialogue;
+            if (dialogue != null)
+                _dialogueRunner.Start(dialogue, npcData);
             
             _interactPublisher.Publish(new NpcInteractedEvent(npcData));
-            print("Npc interacted");
         }
+
     }
 }

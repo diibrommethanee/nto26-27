@@ -24,6 +24,7 @@ namespace _Project.Develop.Gameplay.Quests
         public IReadOnlyList<QuestProgress> CompletedQuests => _completedQuests;
 
         public QuestService(ISubscriber<NpcInteractedEvent> npcSubscriber,
+            ISubscriber<NpcTalkedEvent> talkedSubscriber,
             ISubscriber<StartQuestEvent> startQuestSubscriber,
             IPublisher<QuestStepCompletedEvent> stepCompletedPublisher,
             IPublisher<QuestCompletedEvent> questCompletedPublisher)
@@ -32,6 +33,7 @@ namespace _Project.Develop.Gameplay.Quests
             _questCompletedPublisher = questCompletedPublisher;
 
             _subscriptions.Add(npcSubscriber.Subscribe(OnNpcInteracted));
+            _subscriptions.Add(talkedSubscriber.Subscribe(OnNpcTalked));
             _subscriptions.Add(startQuestSubscriber.Subscribe(OnStartQuest));
         }
 
@@ -72,6 +74,11 @@ namespace _Project.Develop.Gameplay.Quests
         private void OnNpcInteracted(NpcInteractedEvent evt)
         {
             UpdateProgress(QuestEventType.NpcInteracted, evt.Npc, 1);
+        }
+
+        private void OnNpcTalked(NpcTalkedEvent evt)
+        {
+            UpdateProgress(QuestEventType.NpcTalked, evt.Npc, 1);
         }
 
         private void UpdateProgress(QuestEventType eventType, NpcData targetNpc, int amount)
@@ -138,7 +145,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void Initialize()
         {
-            Debug.Log("Initializing quest service");
+            
         }
     }
 }

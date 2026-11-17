@@ -1,29 +1,40 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Dialogue;
+using _Project.Develop.Data.Npc;
+using _Project.Develop.Gameplay.Npc;
 using MessagePipe;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Dialogue
 {
-    public sealed class DialogueRunner
+    public class DialogueRunner
     {
         private const int MaxAutomaticSteps = 128;
 
-        private readonly Dictionary<Hash128, DialogueNodeData> _nodes = new();
+        private readonly Dictionary<Hash128, NodeData> _nodes = new();
         private readonly Dictionary<Type, IDialogueNodeHandler> _handlers = new();
         private readonly IPublisher<DialogueEnded> _endedPublisher;
+        private readonly IPublisher<NpcTalkedEvent> _talkedPublisher;
+        private readonly IPublisher<DialogueChoicesShown> _choicesPublisher;
+        private IReadOnlyList<ChoiceOptionData> _choices;
+        private NpcData _npc;
+        private bool _talkedPublished;
 
         private Hash128 _nextNodeId;
-        private DialogueNodeData _waitingNode;
+        private NodeData _waitingNode;
         private bool _waitingForContinue;
         private bool _processing;
 
         public bool IsRunning { get; private set; }
+        public bool IsChoosing => _choices != null;
 
-        public DialogueRunner(IEnumerable<IDialogueNodeHandler> handlers, IPublisher<DialogueEnded> endedPublisher)
+        public DialogueRunner(IEnumerable<IDialogueNodeHandler> handlers, IPublisher<DialogueEnded> endedPublisher,
+            IPublisher<NpcTalkedEvent> talkedPublisher, IPublisher<DialogueChoicesShown> choicesPublisher)
         {
             _endedPublisher = endedPublisher;
+            _talkedPublisher = talkedPublisher;
+            _choicesPublisher = choicesPublisher;
 
             foreach (var handler in handlers)
             {
@@ -34,7 +45,7 @@ namespace _Project.Develop.Gameplay.Dialogue
             }
         }
 
-        public void Start(DialogueDefinition dialogue)
+        public void Start(DialogueDefinition dialogue, NpcData npc = null)
         {
             if (_processing)
             {
@@ -74,6 +85,8 @@ namespace _Project.Develop.Gameplay.Dialogue
             }
 
             _nextNodeId = dialogue.entryNodeId;
+            _npc = npc;
+            _talkedPublished = false;
             _waitingForContinue = false;
             IsRunning = true;
 
@@ -92,7 +105,7 @@ namespace _Project.Develop.Gameplay.Dialogue
             _processing = true;
             try
             {
-                if (completedNode != null &&
+                if (IsRunning && completedNode != null &&
                     _handlers[completedNode.GetType()] is IDialogueContinuationHandler handler)
                 {
                     handler.Complete(completedNode);
@@ -107,6 +120,19 @@ namespace _Project.Develop.Gameplay.Dialogue
                 ProcessNodes();
         }
 
+        public void Choose(int index)
+        {
+            if (!IsChoosing || _processing)
+                return;
+
+            if (index < 0 || index >= _choices.Count)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            _nextNodeId = _choices[index].nextNodeId;
+            _choices = null;
+            ProcessNodes();
+        }
+
         public void Stop()
         {
             if (!IsRunning)
@@ -115,7 +141,9 @@ namespace _Project.Develop.Gameplay.Dialogue
             IsRunning = false;
             _waitingForContinue = false;
             _waitingNode = null;
+            _choices = null;
             _nextNodeId = default;
+            _npc = null;
             _nodes.Clear();
 
             _endedPublisher.Publish(new DialogueEnded());
@@ -134,19 +162,19 @@ namespace _Project.Develop.Gameplay.Dialogue
 
                     if (!_nodes.TryGetValue(_nextNodeId, out var node))
                     {
-                        Fail($"Dialogue node '{_nextNodeId}' was not found.");
-                        return;
+                        var missingNodeId = _nextNodeId;
+                        Stop();
+                        throw new InvalidOperationException($"Dialogue node '{missingNodeId}' was not found.");
                     }
 
                     if (!_handlers.TryGetValue(node.GetType(), out var handler))
                     {
-                        Fail($"No dialogue handler registered for {node.GetType().Name}.");
-                        return;
+                        Stop();
+                        throw new InvalidOperationException($"No dialogue handler registered for {node.GetType().Name}.");
                     }
 
                     var step = handler.Handle(node);
-
-                    // A message subscriber may have stopped the dialogue.
+                    
                     if (!IsRunning)
                         return;
 
@@ -156,6 +184,15 @@ namespace _Project.Develop.Gameplay.Dialogue
                             _waitingNode = node;
                             _nextNodeId = step.nextNodeId;
                             _waitingForContinue = true;
+                            if (step.publishTalked)
+                                PublishTalked();
+                            return;
+
+                        case DialogueStepKind.Choose:
+                            _choices = step.choices;
+                            _waitingForContinue = false;
+                            _waitingNode = null;
+                            _choicesPublisher.Publish(new DialogueChoicesShown(_choices));
                             return;
 
                         case DialogueStepKind.GoTo:
@@ -163,16 +200,25 @@ namespace _Project.Develop.Gameplay.Dialogue
                             break;
 
                         case DialogueStepKind.End:
+                            if (_npc != null && step.setDialogue != null)
+                                _npc.state.dialogue = step.setDialogue;
+                            PublishTalked();
                             Stop();
                             return;
 
                         default:
-                            Fail($"Unsupported dialogue step: {step.kind}.");
-                            return;
+                            Stop();
+                            throw new InvalidOperationException($"Unsupported dialogue step: {step.kind}.");
                     }
                 }
 
-                Fail("Dialogue exceeded the automatic step limit. Check for a loop.");
+                Stop();
+                throw new InvalidOperationException("Dialogue exceeded the automatic step limit. Check for a loop.");
+            }
+            catch
+            {
+                Stop();
+                throw;
             }
             finally
             {
@@ -180,10 +226,13 @@ namespace _Project.Develop.Gameplay.Dialogue
             }
         }
 
-        private void Fail(string message)
+        private void PublishTalked()
         {
-            Debug.LogError(message);
-            Stop();
+            if (_talkedPublished || _npc == null)
+                return;
+            
+            _talkedPublished = true;
+            _talkedPublisher.Publish(new NpcTalkedEvent(_npc));
         }
     }
 }
