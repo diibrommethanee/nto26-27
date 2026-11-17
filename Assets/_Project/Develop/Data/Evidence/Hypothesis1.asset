@@ -23,4 +23,12 @@ MonoBehaviour:
     text: 
     correctEvidence: {fileID: 11400000, guid: b4487bb94e07e0e48a213ab6e4fbb2a7, type: 2}
     correctAnswerFill: "\u0441\u043B\u043E\u043D\u043E\u043C"
+  - type: 0
+    text: "\u0430 \u043E\u043D \u0431\u044B\u043B"
+    correctEvidence: {fileID: 0}
+    correctAnswerFill: 
+  - type: 1
+    text: 
+    correctEvidence: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+    correctAnswerFill: "\u043A\u0440\u0443\u0442\u044B\u043C"
   rewardId: tutorial_reward
