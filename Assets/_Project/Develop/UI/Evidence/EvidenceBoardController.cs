@@ -17,6 +17,7 @@ namespace _Project.Develop.UI.Evidence
         [Header("Prefabs")]
         [SerializeField] private EvidenceView evidencePrefab;
         [SerializeField] private EvidenceThreadView threadPrefab;
+        [SerializeField] private HypothesisData currentHypothesis;
         
         [Header("Animations")]
         [SerializeField] private float openDuration = 0.32f;
@@ -32,6 +33,8 @@ namespace _Project.Develop.UI.Evidence
         private EvidenceView _selectedEvidence;
 
         private EvidenceThreadView _previewThread;
+        private HypothesisBuilderView _hypothesisView;
+        private readonly List<EvidenceData> _collectedEvidence = new();
 
         private readonly List<(EvidenceView first, EvidenceView second)> _combinedPairs = new();
         private readonly List<EvidenceView> _evidenceViews = new();
@@ -63,6 +66,10 @@ namespace _Project.Develop.UI.Evidence
                 board.localScale = _boardOpenScale * closedScale;
                 board.anchoredPosition += Vector2.down * slideDistance;
             }
+
+            _hypothesisView = HypothesisBuilderView.Create(board);
+            if (currentHypothesis != null)
+                _hypothesisView.Show(currentHypothesis, _collectedEvidence, OnHypothesisSolved);
         }
 
         public void SelectEvidence(EvidenceView evidence)
@@ -90,25 +97,61 @@ namespace _Project.Develop.UI.Evidence
                 return;
             }
 
-            if (!_database.TryGetResult(first.Data, evidence.Data, out var result))
+            if (!_database.TryGetResult(first.Data, evidence.Data, out var result) || result == null)
             {
                 SetSelectedEvidence(null);
                 return;
             }
 
-            var position = (
-                first.Rect.anchoredPosition +
-                evidence.Rect.anchoredPosition
-            ) / 2f;
-
             _combinedPairs.Add((first, evidence));
 
             CreateThread(first, evidence);
 
+            var resultPosition = (first.Rect.anchoredPosition + evidence.Rect.anchoredPosition) / 2f
+                                 + Vector2.up * 100f;
+            SpawnEvidence(result, resultPosition);
+
             SetSelectedEvidence(null);
 
-            SpawnEvidence(result, position + Vector2.up * 100f);
         }
+
+        private void RegisterEvidence(EvidenceData data)
+        {
+            if (data == null)
+                return;
+
+            if (!_collectedEvidence.Contains(data))
+                _collectedEvidence.Add(data);
+
+            // Also read the cards currently on the board. This covers evidence
+            // views instantiated by scene tools that do not use SpawnEvidence.
+            foreach (var view in evidenceContainer.GetComponentsInChildren<EvidenceView>(true))
+            {
+                if (view.Data != null && !_collectedEvidence.Contains(view.Data))
+                    _collectedEvidence.Add(view.Data);
+            }
+
+            // Refresh even when the asset was already registered. The same evidence
+            // can be spawned again after the hypothesis UI has been created.
+            _hypothesisView?.RefreshEvidence(_collectedEvidence);
+        }
+
+        public void SetCurrentHypothesis(HypothesisData hypothesis)
+        {
+            currentHypothesis = hypothesis;
+            _hypothesisView?.Show(currentHypothesis, _collectedEvidence, OnHypothesisSolved);
+        }
+
+        private void OnHypothesisSolved(HypothesisData hypothesis)
+        {
+            // Story progression can subscribe to this event or use the reward id
+            // as the quest/story key.
+            HypothesisSolved?.Invoke(hypothesis);
+        }
+
+        public event System.Action<HypothesisData> HypothesisSolved;
+
+        public void RegisterCollectedEvidence(EvidenceData data) => RegisterEvidence(data);
 
         private void SetSelectedEvidence(EvidenceView evidence)
         {
@@ -190,6 +233,7 @@ namespace _Project.Develop.UI.Evidence
 
             _evidenceViews.Add(view);
             view.SetSelected(false);
+            RegisterEvidence(data);
         }
 
         public void Open()
