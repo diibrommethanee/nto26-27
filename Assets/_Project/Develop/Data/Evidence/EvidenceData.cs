@@ -9,5 +9,8 @@ namespace _Project.Develop.Data.Evidence
         public string title;
         [TextArea] public string description;
         public Sprite icon;
+
+        [Header("Hypothesis Text")]
+        public string fillWord;
     }
 }

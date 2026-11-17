@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.EvidenceData
   id: evidence3
   title: "\u0423\u043B\u0438\u043A\u0430 3"
-  description: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0441\u043B\u0438\u044F\u043D\u0438\u044F 1 \u0438 2"
-  icon: {fileID: -2278566297644842510, guid: 8d6074689b6cefa4cb6c5c9bed4eb94a, type: 3}
+  description: "\u0441\u043B\u043E\u043D \u0443\u043A\u0440\u0430\u043B \u0438 \u0441\u044C\u0435\u043B \u043F\u0438\u0440\u043E\u0433"
+  icon: {fileID: 21300000, guid: 493d02360b10e264ab4449996a94dd6a, type: 3}
+  fillWord: "\u0441\u043B\u043E\u043D\u043E\u043C"
