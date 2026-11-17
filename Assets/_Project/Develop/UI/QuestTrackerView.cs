@@ -9,7 +9,7 @@ using VContainer;
 
 namespace _Project.Develop.UI
 {
-    public sealed class QuestTrackerView : MonoBehaviour
+    public class QuestTrackerView : MonoBehaviour
     {
         private const string CompletedText = "Завершено";
         

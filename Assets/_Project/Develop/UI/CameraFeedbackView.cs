@@ -4,7 +4,7 @@ using UnityEngine;
 namespace _Project.Develop.UI
 {
     // Runtime-only preview: no scene or prefab wiring required.
-    public sealed class CameraFeedbackView : MonoBehaviour
+    public class CameraFeedbackView : MonoBehaviour
     {
         private static readonly Color Gold = new(1f, 0.8f, 0.48f);
         private static readonly Color Ivory = new(1f, 0.94f, 0.78f);

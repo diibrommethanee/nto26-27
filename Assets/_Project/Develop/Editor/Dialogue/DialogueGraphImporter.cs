@@ -1,4 +1,4 @@
-﻿using _Project.Develop.Data.Dialogue;
+using _Project.Develop.Data.Dialogue;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Editor.Dialogue
 {
-    [ScriptedImporter(3, DialogueGraph.AssetExtension)]
+    [ScriptedImporter(11, DialogueGraph.AssetExtension)]
     public class DialogueGraphImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -35,7 +35,9 @@ namespace _Project.Develop.Editor.Dialogue
                 }
 
                 var entryNodeId = ReadNextNodeId(starts[0]);
-                var nodes = new List<DialogueNodeData>();
+                if (sourceNodes.Any(node => node.ID == entryNodeId && node is NextDialogueNode))
+                    throw new InvalidOperationException("NextDialogue requires a preceding Dialogue node.");
+                var nodes = new List<NodeData>();
 
                 foreach (var node in sourceNodes)
                 {
@@ -44,14 +46,17 @@ namespace _Project.Develop.Editor.Dialogue
                         case StartNode:
                             break;
 
-                        case DialogueNode:
-                            nodes.Add(new StatementNodeData
+                        case DialogueNodeBase:
+                            nodes.Add(new DialogueNodeData
                             {
                                 id = node.ID,
-                                character = ReadValue<NpcData>(node, "Character"),
-                                overrideName = ReadText(node, "OverrideName"),
+                                character = node is DialogueNode ? ReadValue<NpcData>(node, "Character") : null,
+                                overrideName = node is DialogueNode ? ReadText(node, "OverrideName") : string.Empty,
+                                inheritCharacter = node is NextDialogueNode,
                                 text = ReadText(node, "Text"),
                                 quest = ReadValue<Quest>(node, "Quest"),
+                                publishTalked = ReadValue<bool>(node, "PublishTalked"),
+                                moodChange = ReadValue<int>(node, "MoodChange"),
                                 nextNodeId = ReadNextNodeId(node)
                             });
                             break;
@@ -59,8 +64,13 @@ namespace _Project.Develop.Editor.Dialogue
                         case EndNode:
                             nodes.Add(new EndNodeData
                             {
-                                id = node.ID
+                                id = node.ID,
+                                setDialogue = ReadValue<DialogueDefinition>(node, "SetDialogue")
                             });
+                            break;
+
+                        case ChoiceNode:
+                            nodes.Add(ReadChoice(node));
                             break;
 
                         default:
@@ -85,21 +95,49 @@ namespace _Project.Develop.Editor.Dialogue
             }
         }
 
-        private static Hash128 ReadNextNodeId(INode node)
+        private static ChoiceNodeData ReadChoice(INode node)
         {
-            var port = node.GetOutputPortByName("Out");
+            var choice = new ChoiceNodeData { id = node.ID };
+
+            for (var i = 1; i <= node.OutputPortCount; i++)
+            {
+                node.GetNodeOptionByName($"Condition{i}")
+                    .TryGetValue<ChoiceConditionType>(out var condition);
+
+                var option = new ChoiceOptionData
+                {
+                    text = ReadText(node, $"Text{i}"),
+                    condition = condition,
+                    nextNodeId = ReadNextNodeId(node, $"Out{i}")
+                };
+
+                if (condition == ChoiceConditionType.RequiredMood)
+                {
+                    option.character = ReadValue<NpcData>(node, $"Character{i}");
+                    option.moodThreshold = ReadValue<int>(node, $"MoodThreshold{i}");
+                }
+
+                choice.options.Add(option);
+            }
+
+            return choice;
+        }
+
+        private static Hash128 ReadNextNodeId(INode node, string portName = "Out")
+        {
+            var port = node.GetOutputPortByName(portName);
             var connection = port?.FirstConnectedPort;
 
             if (connection == null)
             {
-                throw new InvalidOperationException($"Node {node.GetType().Name} " + $"({node.ID}) has no connection on its Out port.");
+                throw new InvalidOperationException($"Node {node.GetType().Name} ({node.ID}) has no connection on its {portName} port.");
             }
 
             var target = connection.GetNode();
 
-            if (connection.Name != "In" || (target is not DialogueNode && target is not EndNode))
+            if (connection.Name != "In" || (target is not DialogueNodeBase && target is not ChoiceNode && target is not EndNode))
             {
-                throw new InvalidOperationException("Out must connect to the In port " + "of a Dialogue or End node.");
+                throw new InvalidOperationException("Flow outputs must connect to the In port of a Dialogue, NextDialogue, Choice or End node.");
             }
 
             return target.ID;

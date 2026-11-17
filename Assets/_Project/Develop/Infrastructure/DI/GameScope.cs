@@ -25,14 +25,17 @@ namespace _Project.Develop.Infrastructure.DI
             
             var options = new MessagePipeOptions();
             
-            builder.RegisterMessageBroker<DialogueStatementShown>(options);
+            builder.RegisterMessageBroker<DialogueShown>(options);
             builder.RegisterMessageBroker<DialogueEnded>(options);
+            builder.RegisterMessageBroker<DialogueChoicesShown>(options);
 
-            builder.Register<StatementNodeHandler>(Lifetime.Scoped).As<IDialogueNodeHandler>();
+            builder.Register<DialogueNodeHandler>(Lifetime.Scoped).As<IDialogueNodeHandler>();
             builder.Register<EndNodeHandler>(Lifetime.Scoped).As<IDialogueNodeHandler>();
+            builder.Register<ChoiceNodeHandler>(Lifetime.Scoped).As<IDialogueNodeHandler>();
             builder.Register<DialogueRunner>(Lifetime.Scoped);
             
             builder.RegisterMessageBroker<NpcInteractedEvent>(options);
+            builder.RegisterMessageBroker<NpcTalkedEvent>(options);
             builder.RegisterMessageBroker<QuestCompletedEvent>(options);
             builder.RegisterMessageBroker<QuestStepCompletedEvent>(options);
             builder.RegisterMessageBroker<StartQuestEvent>(options);
@@ -40,14 +43,15 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterInstance(questDatabase);
             builder.Register<IQuestRegistry, QuestRegistry>(Lifetime.Singleton);
             
-            builder.RegisterEntryPoint<GameEntryPoint>();
+            builder.RegisterEntryPoint<QuestService>();
             
             builder.RegisterMessageBroker<TrainStopped>(options);
             builder.RegisterMessageBroker<TrainDeparted>(options);
             
             builder.RegisterInstance(trainSettings);
             builder.RegisterEntryPoint<TrainMovement>().AsSelf();
-            builder.RegisterEntryPoint<QuestService>();
+            
+            builder.RegisterEntryPoint<GameEntryPoint>();
         }
     }
 }
