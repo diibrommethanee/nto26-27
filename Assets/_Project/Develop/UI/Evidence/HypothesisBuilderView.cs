@@ -120,6 +120,7 @@ namespace _Project.Develop.UI.Evidence
             ClearSlots();
             var source = new StringBuilder();
             var slotRanges = new List<(FillChoice fill, int start, int length)>();
+            var fillIndex = 0;
 
             foreach (var node in _hypothesis.nodes)
             {
@@ -134,15 +135,17 @@ namespace _Project.Develop.UI.Evidence
                 var fill = new FillChoice
                 {
                     Node = node,
-                    Evidence = GetTextEvidence()
+                    Evidence = GetTextEvidence(fillIndex)
                 };
                 _fills.Add(fill);
                 slotRanges.Add((fill, start, PlaceholderLength));
+                fillIndex++;
             }
 
             _hypothesisText.text = source.ToString();
             Canvas.ForceUpdateCanvases();
             _hypothesisText.ForceMeshUpdate();
+            _hypothesisText.maxVisibleCharacters = int.MaxValue;
 
             for (var i = 0; i < slotRanges.Count; i++)
             {
@@ -248,11 +251,12 @@ namespace _Project.Develop.UI.Evidence
             fill.Dropdown.interactable = fill.Evidence.Count > 0;
         }
 
-        /// <summary>Возвращает уникальные улики с заполненным текстом для подстановки.</summary>
-        private List<EvidenceData> GetTextEvidence()
+        /// <summary>Возвращает улики с текстом, назначенные указанному пропуску.</summary>
+        private List<EvidenceData> GetTextEvidence(int fillIndex)
         {
             return _evidence
-                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.fillWord))
+                .Where(item => item != null && item.fillIndex == fillIndex &&
+                               !string.IsNullOrWhiteSpace(item.fillWord))
                 .Distinct()
                 .ToList();
         }
