@@ -1,132 +1,72 @@
-
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace _Project.Develop.UI.Evidence
 {
+    [RequireComponent(typeof(UnityEngine.UI.Image))]
     public class EvidenceThreadView : MonoBehaviour
     {
-        [SerializeField] private RectTransform rect;
-        [SerializeField] private Graphic lineGraphic;
-
-        private RectTransform _board;
+        private RectTransform _rect;
+        private RectTransform _container;
         private RectTransform _first;
         private RectTransform _second;
-
+        private UnityEngine.UI.Image _line;
         private Camera _uiCamera;
-
-        private bool _isVisible;
-        private bool _followMouse;
 
         private void Awake()
         {
-            if (rect == null)
-                rect = GetComponent<RectTransform>();
-
-            if (lineGraphic == null)
-                lineGraphic = rect.GetComponent<Graphic>();
-
-            if (lineGraphic != null)
-            {
-                lineGraphic.enabled = false;
-                lineGraphic.raycastTarget = false;
-            }
-        }
-
-        public void Initialize(RectTransform board)
-        {
-            _board = board;
-
-            var canvas = board.GetComponentInParent<Canvas>()?.rootCanvas;
-
-            if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                _uiCamera = canvas.worldCamera;
+            _rect = (RectTransform)transform;
+            _container = (RectTransform)_rect.parent;
+            _line = GetComponent<UnityEngine.UI.Image>();
+            var canvas = GetComponentInParent<Canvas>().rootCanvas;
+            _uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            Hide();
         }
 
         public void FollowMouse(RectTransform first)
         {
-            _first = first;
-            _second = null;
-
-            _followMouse = true;
-            SetVisible(true);
+            Connect(first, null);
         }
 
         public void Connect(RectTransform first, RectTransform second)
         {
             _first = first;
             _second = second;
-
-            _followMouse = false;
-            SetVisible(true);
+            enabled = true;
+            UpdateLine();
         }
 
         public void Hide()
         {
-            _first = null;
-            _second = null;
-
-            _followMouse = false;
-            SetVisible(false);
+            _line.enabled = false;
+            enabled = false;
         }
 
         private void LateUpdate()
         {
-            if (!_isVisible || _first == null || _board == null)
+            UpdateLine();
+        }
+
+        private void UpdateLine()
+        {
+            Vector2 end;
+            if (_second != null)
+            {
+                end = _container.InverseTransformPoint(_second.position);
+            }
+            else if (Mouse.current == null || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                         _container, Mouse.current.position.ReadValue(), _uiCamera, out end))
+            {
+                _line.enabled = false;
                 return;
-
-            Vector2 firstPosition = _board.InverseTransformPoint(_first.position);
-            Vector2 secondPosition;
-
-            if (_followMouse)
-            {
-                if (Mouse.current == null)
-                    return;
-
-                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        _board,
-                        Mouse.current.position.ReadValue(),
-                        _uiCamera,
-                        out secondPosition))
-                    return;
-            }
-            else
-            {
-                if (_second == null)
-                {
-                    Hide();
-                    return;
-                }
-
-                secondPosition = _board.InverseTransformPoint(_second.position);
             }
 
-            Draw(firstPosition, secondPosition);
-        }
-
-        private void Draw(Vector2 first, Vector2 second)
-        {
-            var direction = second - first;
-
-            rect.localPosition = (first + second) / 2f;
-
-            rect.sizeDelta = new Vector2(
-                direction.magnitude,
-                rect.sizeDelta.y
-            );
-
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-            rect.localRotation = Quaternion.Euler(0, 0, angle);
-        }
-
-        private void SetVisible(bool visible)
-        {
-            _isVisible = visible;
-
-            if (lineGraphic != null)
-                lineGraphic.enabled = visible;
+            var start = (Vector2)_container.InverseTransformPoint(_first.position);
+            var direction = end - start;
+            _rect.localPosition = (start + end) * 0.5f;
+            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, direction.magnitude);
+            _rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+            _line.enabled = true;
         }
     }
 }

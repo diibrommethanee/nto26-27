@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1155155100357304721
 RectTransform:
   m_ObjectHideFlags: 0
@@ -99,6 +99,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5832834103288292970}
   - component: {fileID: 8551615079845308726}
+  - component: {fileID: 1914053283363301551}
   m_Layer: 0
   m_Name: EvidencePrefab
   m_TagString: Untagged
@@ -143,6 +144,22 @@ MonoBehaviour:
   icon: {fileID: 9215240495425225474}
   title: {fileID: 1172714359621074421}
   selectedVisual: {fileID: 1601964822342704618}
+  spawnDuration: 0.3
+  selectScale: 1.05
+  hoverScale: 1.03
+  dragScale: 1.08
+--- !u!225 &1914053283363301551
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3420552595341122491}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3886968458326215822
 GameObject:
   m_ObjectHideFlags: 0

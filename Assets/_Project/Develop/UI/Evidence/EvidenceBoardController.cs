@@ -1,6 +1,9 @@
-using PrimeTween;
+using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Evidence;
+using _Project.Develop.Gameplay.Evidence;
+using Cysharp.Threading.Tasks;
+using PrimeTween;
 using UnityEngine;
 using VContainer;
 
@@ -10,296 +13,174 @@ namespace _Project.Develop.UI.Evidence
     {
         [Header("References")]
         [SerializeField] private RectTransform board;
-        [SerializeField] private Transform evidenceContainer;
-        [SerializeField] private Transform threadContainer;
+        [SerializeField] private RectTransform evidenceContainer;
+        [SerializeField] private RectTransform threadContainer;
         [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private HypothesisBuilderView hypothesisView;
 
         [Header("Prefabs")]
         [SerializeField] private EvidenceView evidencePrefab;
         [SerializeField] private EvidenceThreadView threadPrefab;
         [SerializeField] private HypothesisData currentHypothesis;
-        
+
         [Header("Animations")]
         [SerializeField] private float openDuration = 0.32f;
         [SerializeField] private float closeDuration = 0.18f;
         [SerializeField] private float slideDistance = 30f;
         [SerializeField] private float closedScale = 0.94f;
 
-        private Vector3 _boardOpenScale;
-        private float _boardOpenY;
+        private readonly HashSet<(EvidenceView, EvidenceView)> _combinedPairs = new();
+        private EvidenceService _evidence;
+        private EvidenceView _selected;
+        private EvidenceThreadView _preview;
+        private Vector3 _openScale;
+        private float _openY;
         private bool _isOpen;
+        private Tween _transition;
+        private int _transitionId;
 
-        private EvidenceDatabase _database;
-        private EvidenceView _selectedEvidence;
-
-        private EvidenceThreadView _previewThread;
-        private HypothesisBuilderView _hypothesisView;
-        private readonly List<EvidenceData> _collectedEvidence = new();
-
-        private readonly List<(EvidenceView first, EvidenceView second)> _combinedPairs = new();
-        private readonly List<EvidenceView> _evidenceViews = new();
-
-        public RectTransform Board => board;
-        public RectTransform EvidenceContainer => (RectTransform)evidenceContainer;
+        public event Action<HypothesisData> HypothesisSolved;
 
         [Inject]
-        private void Construct(EvidenceDatabase database)
+        private void Construct(EvidenceService evidence)
         {
-            _database = database;
+            _evidence = evidence;
         }
-        
-        private void Awake()
-        {
-            _boardOpenScale = board.localScale;
-            _boardOpenY = board.anchoredPosition.y;
 
-            _isOpen = canvasGroup.alpha > 0.99f &&
-                      canvasGroup.interactable &&
-                      canvasGroup.blocksRaycasts;
+        private void Start()
+        {
+            _openScale = board.localScale;
+            _openY = board.anchoredPosition.y;
+            _isOpen = canvasGroup.interactable && canvasGroup.blocksRaycasts && canvasGroup.alpha > 0.99f;
 
             if (!_isOpen)
             {
-                canvasGroup.alpha = 0;
+                canvasGroup.alpha = 0f;
                 canvasGroup.interactable = false;
                 canvasGroup.blocksRaycasts = false;
-
-                board.localScale = _boardOpenScale * closedScale;
-                board.anchoredPosition += Vector2.down * slideDistance;
+                board.localScale = _openScale * closedScale;
+                board.anchoredPosition -= Vector2.up * slideDistance;
             }
 
-            _hypothesisView = HypothesisBuilderView.Create(board);
-            if (currentHypothesis != null)
-                _hypothesisView.Show(currentHypothesis, _collectedEvidence, OnHypothesisSolved);
+            hypothesisView.Initialize(_evidence);
+            hypothesisView.Solved += OnHypothesisSolved;
+            hypothesisView.Show(currentHypothesis);
         }
 
-        public void SelectEvidence(EvidenceView evidence)
+        private void OnDestroy()
         {
-            if (evidence == null)
-                return;
-
-            if (_selectedEvidence == evidence)
-            {
-                SetSelectedEvidence(null);
-                return;
-            }
-
-            if (_selectedEvidence == null)
-            {
-                SetSelectedEvidence(evidence);
-                return;
-            }
-
-            var first = _selectedEvidence;
-
-            if (IsAlreadyCombined(first, evidence))
-            {
-                SetSelectedEvidence(null);
-                return;
-            }
-
-            if (!_database.TryGetResult(first.Data, evidence.Data, out var result) || result == null)
-            {
-                SetSelectedEvidence(null);
-                return;
-            }
-
-            _combinedPairs.Add((first, evidence));
-
-            CreateThread(first, evidence);
-
-            var resultPosition = (first.Rect.anchoredPosition + evidence.Rect.anchoredPosition) / 2f
-                                 + Vector2.up * 100f;
-            SpawnEvidence(result, resultPosition);
-
-            SetSelectedEvidence(null);
-
+            hypothesisView.Solved -= OnHypothesisSolved;
         }
 
-        private void RegisterEvidence(EvidenceData data)
+        public void SelectEvidence(EvidenceView card)
         {
-            if (data == null)
-                return;
-
-            if (!_collectedEvidence.Contains(data))
-                _collectedEvidence.Add(data);
-
-            // Also read the cards currently on the board. This covers evidence
-            // views instantiated by scene tools that do not use SpawnEvidence.
-            foreach (var view in evidenceContainer.GetComponentsInChildren<EvidenceView>(true))
+            if (_selected == null)
             {
-                if (view.Data != null && !_collectedEvidence.Contains(view.Data))
-                    _collectedEvidence.Add(view.Data);
+                _selected = card;
+                card.SetSelected(true);
+                if (_preview == null)
+                    _preview = Instantiate(threadPrefab, threadContainer);
+
+                _preview.FollowMouse(card.Rect);
+                return;
             }
 
-            // Refresh even when the asset was already registered. The same evidence
-            // can be spawned again after the hypothesis UI has been created.
-            _hypothesisView?.RefreshEvidence(_collectedEvidence);
+            if (_selected != card &&
+                !_combinedPairs.Contains((_selected, card)) &&
+                !_combinedPairs.Contains((card, _selected)) &&
+                _evidence.TryCombine(_selected.Data, card.Data, out var result))
+            {
+                _combinedPairs.Add((_selected, card));
+                _preview.Connect(_selected.Rect, card.Rect);
+                _preview = null;
+
+                var center = (_selected.Rect.anchoredPosition + card.Rect.anchoredPosition) * 0.5f;
+                SpawnEvidence(result, center + Vector2.up * 100f);
+            }
+
+            ClearSelection();
+        }
+
+        private void ClearSelection()
+        {
+            if (_selected == null)
+                return;
+
+            _selected.SetSelected(false);
+            _selected = null;
+            if (_preview != null)
+                _preview.Hide();
+        }
+
+        public void SpawnEvidence(EvidenceData data, Vector2 position)
+        {
+            RegisterCollectedEvidence(data);
+            Instantiate(evidencePrefab, evidenceContainer).Initialize(data, board, position, SelectEvidence);
+        }
+
+        public void RegisterCollectedEvidence(EvidenceData data)
+        {
+            if (_evidence.Collect(data))
+                hypothesisView.RefreshEvidence();
         }
 
         public void SetCurrentHypothesis(HypothesisData hypothesis)
         {
             currentHypothesis = hypothesis;
-            _hypothesisView?.Show(currentHypothesis, _collectedEvidence, OnHypothesisSolved);
+            hypothesisView.Show(hypothesis);
         }
 
         private void OnHypothesisSolved(HypothesisData hypothesis)
         {
-            // Story progression can subscribe to this event or use the reward id
-            // as the quest/story key.
             HypothesisSolved?.Invoke(hypothesis);
-        }
-
-        public event System.Action<HypothesisData> HypothesisSolved;
-
-        public void RegisterCollectedEvidence(EvidenceData data) => RegisterEvidence(data);
-
-        private void SetSelectedEvidence(EvidenceView evidence)
-        {
-            if (_selectedEvidence != null)
-                _selectedEvidence.SetSelected(false);
-
-            _selectedEvidence = evidence;
-
-            if (_selectedEvidence == null)
-            {
-                if (_previewThread != null)
-                    _previewThread.Hide();
-
-                return;
-            }
-
-            _selectedEvidence.SetSelected(true);
-
-            GetPreviewThread()?.FollowMouse(_selectedEvidence.Rect);
-        }
-
-        private bool IsAlreadyCombined(
-            EvidenceView first,
-            EvidenceView second)
-        {
-            foreach (var pair in _combinedPairs)
-            {
-                if ((pair.first == first && pair.second == second) ||
-                    (pair.first == second && pair.second == first))
-                    return true;
-            }
-
-            return false;
-        }
-
-        private EvidenceThreadView GetPreviewThread()
-        {
-            if (_previewThread != null)
-                return _previewThread;
-
-            if (threadPrefab == null || threadContainer == null)
-            {
-                return null;
-            }
-
-            _previewThread = Instantiate(
-                threadPrefab,
-                threadContainer,
-                false
-            );
-
-            _previewThread.Initialize(board);
-
-            return _previewThread;
-        }
-
-        private void CreateThread(EvidenceView first, EvidenceView second)
-        {
-            var thread = GetPreviewThread();
-
-            if (thread == null)
-                return;
-
-            thread.Connect(first.Rect, second.Rect);
-
-            _previewThread = null;
-        }
-
-        public void SpawnEvidence(EvidenceData data, Vector2 position)
-        {
-            var view = Instantiate(
-                evidencePrefab,
-                evidenceContainer,
-                false
-            );
-
-            view.Initialize(data, this);
-            view.Rect.anchoredPosition = position;
-
-            _evidenceViews.Add(view);
-            view.SetSelected(false);
-            RegisterEvidence(data);
         }
 
         public void Open()
         {
-            if (_isOpen)
-                return;
-
-            _isOpen = true;
-
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-
-            Sequence.Create()
-                .Group(Tween.Scale(
-                    board,
-                    _boardOpenScale,
-                    openDuration,
-                    Ease.OutBack
-                ))
-                .Group(Tween.UIAnchoredPositionY(
-                    board,
-                    _boardOpenY,
-                    openDuration,
-                    Ease.OutCubic
-                ))
-                .Group(Tween.Custom(
-                    canvasGroup,
-                    canvasGroup.alpha,
-                    1f,
-                    openDuration,
-                    (target, alpha) => target.alpha = alpha
-                ));
+            SetOpenAsync(true).Forget();
         }
 
         public void Close()
         {
-            SetSelectedEvidence(null);
+            ClearSelection();
+            hypothesisView.CloseChoices();
+            SetOpenAsync(false).Forget();
+        }
 
-            if (!_isOpen)
+        private async UniTask SetOpenAsync(bool open)
+        {
+            if (_isOpen == open)
                 return;
 
-            _isOpen = false;
+            _isOpen = open;
+            var transitionId = ++_transitionId;
+            _transition.Stop();
 
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
 
-            Sequence.Create()
-                .Group(Tween.Scale(
-                    board,
-                    _boardOpenScale * closedScale,
-                    closeDuration,
-                    Ease.InBack
-                ))
-                .Group(Tween.UIAnchoredPositionY(
-                    board,
-                    _boardOpenY - slideDistance,
-                    closeDuration,
-                    Ease.InCubic
-                ))
-                .Group(Tween.Custom(
-                    canvasGroup,
-                    canvasGroup.alpha,
-                    0f,
-                    closeDuration,
-                    (target, alpha) => target.alpha = alpha
-                ));
+            var duration = open ? openDuration : closeDuration;
+            var startScale = board.localScale;
+            var startPosition = board.anchoredPosition;
+            var startAlpha = canvasGroup.alpha;
+            var targetScale = open ? _openScale : _openScale * closedScale;
+            var targetY = open ? _openY : _openY - slideDistance;
+            var targetAlpha = open ? 1f : 0f;
+            _transition = Tween.Custom(0f, 1f, duration, progress =>
+            {
+                var scale = Easing.Evaluate(progress, open ? Ease.OutBack : Ease.InBack);
+                var slide = Easing.Evaluate(progress, open ? Ease.OutCubic : Ease.InCubic);
+                board.localScale = Vector3.LerpUnclamped(startScale, targetScale, scale);
+                board.anchoredPosition = new Vector2(startPosition.x, Mathf.Lerp(startPosition.y, targetY, slide));
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, progress);
+            }, Ease.Linear).SetCancellationToken(destroyCancellationToken);
+
+            await _transition;
+            if (transitionId == _transitionId && open)
+            {
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
         }
     }
 }
