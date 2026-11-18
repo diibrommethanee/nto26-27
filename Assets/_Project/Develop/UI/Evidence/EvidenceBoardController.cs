@@ -5,6 +5,7 @@ using _Project.Develop.Gameplay.Evidence;
 using Cysharp.Threading.Tasks;
 using PrimeTween;
 using UnityEngine;
+using UnityEngine.UI;
 using VContainer;
 
 namespace _Project.Develop.UI.Evidence
@@ -17,6 +18,7 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField] private RectTransform threadContainer;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private HypothesisBuilderView hypothesisView;
+        [SerializeField] private RectTransform notebookButton;
 
         [Header("Prefabs")]
         [SerializeField] private EvidenceView evidencePrefab;
@@ -28,6 +30,9 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField] private float closeDuration = 0.18f;
         [SerializeField] private float slideDistance = 30f;
         [SerializeField] private float closedScale = 0.94f;
+        [SerializeField, Min(0.1f)] private float evidenceFlyDuration = 0.55f;
+        [SerializeField, Min(0f)] private float evidenceFlyArc = 90f;
+        [SerializeField, Min(8f)] private float evidenceFlyIconSize = 48f;
 
         private readonly HashSet<(EvidenceView, EvidenceView)> _combinedPairs = new();
         private readonly HashSet<EvidenceData> _displayedEvidence = new();
@@ -134,11 +139,76 @@ namespace _Project.Develop.UI.Evidence
             _evidence.Collect(data);
         }
 
-        private void OnEvidenceCollected(EvidenceData data)
+        private void OnEvidenceCollected(EvidenceData data, Vector3? sourceWorldPosition)
         {
             hypothesisView.RefreshEvidence();
+
+            if (sourceWorldPosition.HasValue && notebookButton != null &&
+                TryGetFlightCanvas(out var canvas, out var startPosition, sourceWorldPosition.Value))
+            {
+                FlyEvidenceToNotebookAsync(data, canvas, startPosition).Forget();
+                return;
+            }
+
             var position = _preferredSpawnPosition ?? GetAutomaticSpawnPosition();
             AddEvidenceCard(data, position);
+        }
+
+        private bool TryGetFlightCanvas(out Canvas canvas, out Vector2 startPosition, Vector3 sourceWorldPosition)
+        {
+            canvas = notebookButton.GetComponentInParent<Canvas>()?.rootCanvas;
+            startPosition = default;
+            var worldCamera = Camera.main;
+            if (canvas == null || worldCamera == null)
+                return false;
+
+            var canvasRect = canvas.transform as RectTransform;
+            var screenPosition = worldCamera.WorldToScreenPoint(sourceWorldPosition);
+            if (screenPosition.z <= 0f)
+                return false;
+
+            var eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            return RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvasRect, screenPosition, eventCamera, out startPosition);
+        }
+
+        private async UniTaskVoid FlyEvidenceToNotebookAsync(EvidenceData data, Canvas canvas, Vector2 startPosition)
+        {
+            var flightObject = new GameObject("Collected Evidence Flight", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var flightRect = (RectTransform)flightObject.transform;
+            flightRect.SetParent(canvas.transform, false);
+            flightRect.SetAsLastSibling();
+            flightRect.anchorMin = flightRect.anchorMax = new Vector2(0.5f, 0.5f);
+            flightRect.pivot = new Vector2(0.5f, 0.5f);
+            flightRect.anchoredPosition = startPosition;
+            flightRect.sizeDelta = new Vector2(evidenceFlyIconSize, evidenceFlyIconSize);
+
+            var flightImage = flightObject.GetComponent<Image>();
+            flightImage.sprite = data.icon;
+            flightImage.preserveAspect = true;
+            flightImage.raycastTarget = false;
+
+            var canvasRect = (RectTransform)canvas.transform;
+            var eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            var buttonScreenPosition = RectTransformUtility.WorldToScreenPoint(eventCamera, notebookButton.position);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvasRect, buttonScreenPosition, eventCamera, out var targetPosition))
+            {
+                Destroy(flightObject);
+                AddEvidenceCard(data, GetAutomaticSpawnPosition());
+                return;
+            }
+
+            await Tween.Custom(flightRect, 0f, 1f, evidenceFlyDuration, (rect, progress) =>
+            {
+                var position = Vector2.LerpUnclamped(startPosition, targetPosition, progress);
+                position.y += Mathf.Sin(progress * Mathf.PI) * evidenceFlyArc;
+                rect.anchoredPosition = position;
+                rect.localScale = Vector3.one * Mathf.Lerp(1f, 0.45f, progress);
+            }, Ease.InOutCubic).SetCancellationToken(destroyCancellationToken);
+
+            Destroy(flightObject);
+            AddEvidenceCard(data, GetAutomaticSpawnPosition());
         }
 
         private void AddEvidenceCard(EvidenceData data, Vector2 position)

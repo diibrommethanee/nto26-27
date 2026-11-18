@@ -59,7 +59,7 @@ namespace _Project.Develop.Gameplay.Evidence
 
             SetHoldProgress(1f);
             IsCollected = true;
-            evidenceService.Collect(evidence);
+            evidenceService.Collect(evidence, transform.position);
             if (targetCollider != null)
                 targetCollider.enabled = false;
         }

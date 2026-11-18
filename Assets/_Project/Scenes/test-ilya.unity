@@ -882,7 +882,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d6b7e19b63d431cb48f8c3a140c1a76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Evidence.WorldEvidence
-  evidence: {fileID: 11400000, guid: 3d302f163b6d0f34aadbea9da9182518, type: 2}
+  evidence: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
   holdDuration: 1.5
   spriteRenderer: {fileID: 330612584}
   targetCollider: {fileID: 330612583}
@@ -7765,6 +7765,7 @@ MonoBehaviour:
   threadContainer: {fileID: 46106089481541086}
   canvasGroup: {fileID: 1369355133113926160}
   hypothesisView: {fileID: 6399292269691474019}
+  notebookButton: {fileID: 6454474946867833675}
   evidencePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
   threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
   currentHypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
@@ -7772,6 +7773,9 @@ MonoBehaviour:
   closeDuration: 0.18
   slideDistance: 30
   closedScale: 0.94
+  evidenceFlyDuration: 0.55
+  evidenceFlyArc: 90
+  evidenceFlyIconSize: 48
 --- !u!114 &5923326024373567615
 MonoBehaviour:
   m_ObjectHideFlags: 0
