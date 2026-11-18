@@ -50,7 +50,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 076aef0fcfd74ef488a011baed196f02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceThreadView
-  rect: {fileID: 9044472138665776281}
 --- !u!222 &946038134278602250
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -73,7 +72,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
