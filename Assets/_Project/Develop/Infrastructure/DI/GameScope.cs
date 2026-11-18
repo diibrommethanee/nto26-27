@@ -8,7 +8,6 @@ using _Project.Develop.Gameplay.Train;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Infrastructure.EntryPoints;
 using MessagePipe;
-using NaughtyAttributes;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
