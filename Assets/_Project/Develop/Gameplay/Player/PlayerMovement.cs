@@ -1,4 +1,5 @@
 ﻿using _Project.Develop.Data.Player;
+using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
@@ -56,6 +57,13 @@ namespace _Project.Develop.Gameplay.Player
                 return;
 
             var ray = _camera.ScreenPointToRay(mousePos);
+            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
+            foreach (var hit in hits)
+            {
+                if (hit.collider != null && hit.collider.GetComponentInParent<IWorldEvidence>() != null)
+                    return;
+            }
+
             var plane = new Plane(Vector3.forward, transform.position);
 
             if (!plane.Raycast(ray, out var distance))

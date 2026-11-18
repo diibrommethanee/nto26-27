@@ -30,6 +30,7 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField] private float closedScale = 0.94f;
 
         private readonly HashSet<(EvidenceView, EvidenceView)> _combinedPairs = new();
+        private readonly HashSet<EvidenceData> _displayedEvidence = new();
         private EvidenceService _evidence;
         private EvidenceView _selected;
         private EvidenceThreadView _preview;
@@ -38,6 +39,7 @@ namespace _Project.Develop.UI.Evidence
         private bool _isOpen;
         private Tween _transition;
         private int _transitionId;
+        private Vector2? _preferredSpawnPosition;
 
         public event Action<HypothesisData> HypothesisSolved;
 
@@ -64,12 +66,16 @@ namespace _Project.Develop.UI.Evidence
 
             hypothesisView.Initialize(_evidence);
             hypothesisView.Solved += OnHypothesisSolved;
+            _evidence.EvidenceCollected += OnEvidenceCollected;
             hypothesisView.Show(currentHypothesis);
+            SyncCollectedEvidence();
         }
 
         private void OnDestroy()
         {
             hypothesisView.Solved -= OnHypothesisSolved;
+            if (_evidence != null)
+                _evidence.EvidenceCollected -= OnEvidenceCollected;
         }
 
         public void SelectEvidence(EvidenceView card)
@@ -114,14 +120,52 @@ namespace _Project.Develop.UI.Evidence
 
         public void SpawnEvidence(EvidenceData data, Vector2 position)
         {
+            _preferredSpawnPosition = position;
             RegisterCollectedEvidence(data);
-            Instantiate(evidencePrefab, evidenceContainer).Initialize(data, board, position, SelectEvidence);
+
+            if (!_displayedEvidence.Contains(data))
+                AddEvidenceCard(data, position);
+
+            _preferredSpawnPosition = null;
         }
 
         public void RegisterCollectedEvidence(EvidenceData data)
         {
-            if (_evidence.Collect(data))
-                hypothesisView.RefreshEvidence();
+            _evidence.Collect(data);
+        }
+
+        private void OnEvidenceCollected(EvidenceData data)
+        {
+            hypothesisView.RefreshEvidence();
+            var position = _preferredSpawnPosition ?? GetAutomaticSpawnPosition();
+            AddEvidenceCard(data, position);
+        }
+
+        private void AddEvidenceCard(EvidenceData data, Vector2 position)
+        {
+            if (data == null || _displayedEvidence.Contains(data))
+                return;
+
+            if (evidencePrefab == null)
+            {
+                Debug.LogError("Evidence Board is missing its Evidence Prefab reference.", this);
+                return;
+            }
+
+            _displayedEvidence.Add(data);
+            Instantiate(evidencePrefab, evidenceContainer).Initialize(data, board, position, SelectEvidence);
+        }
+
+        private void SyncCollectedEvidence()
+        {
+            foreach (var collected in _evidence.Collected)
+                AddEvidenceCard(collected, GetAutomaticSpawnPosition());
+        }
+
+        private Vector2 GetAutomaticSpawnPosition()
+        {
+            var index = _displayedEvidence.Count;
+            return new Vector2((index % 3) * 24f, -(index / 3) * 24f);
         }
 
         public void SetCurrentHypothesis(HypothesisData hypothesis)
@@ -137,6 +181,7 @@ namespace _Project.Develop.UI.Evidence
 
         public void Open()
         {
+            SyncCollectedEvidence();
             SetOpenAsync(true).Forget();
         }
 

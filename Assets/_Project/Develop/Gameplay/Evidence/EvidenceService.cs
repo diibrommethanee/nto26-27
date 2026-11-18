@@ -10,6 +10,7 @@ namespace _Project.Develop.Gameplay.Evidence
         private readonly List<EvidenceData> _collected = new();
 
         public IReadOnlyList<EvidenceData> Collected { get; }
+        public event Action<EvidenceData> EvidenceCollected;
 
         public EvidenceService(EvidenceDatabase database)
         {
@@ -26,6 +27,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 return false;
 
             _collected.Add(evidence);
+            EvidenceCollected?.Invoke(evidence);
             return true;
         }
 
