@@ -45,7 +45,7 @@ namespace _Project.Develop.UI.Dialogue
             _continueButton = GetComponent<Button>();
             
             _contentWriter = contentText.GetComponent<TMPWriter>();
-            _choiceTemplate = choicesContainer.GetComponentInChildren<Button>();
+            _choiceTemplate = choicesContainer.GetComponentInChildren<Button>(true);
             
             ClearText();
             SetVisible(false);

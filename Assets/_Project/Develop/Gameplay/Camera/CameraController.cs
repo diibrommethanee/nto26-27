@@ -1,5 +1,6 @@
 using _Project.Develop.Data.Camera;
 using _Project.Develop.Gameplay.Input;
+using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -59,6 +60,13 @@ namespace _Project.Develop.Gameplay.Camera
         
         private void OnCameraPan(InputAction.CallbackContext ctx)
         {
+            CameraPanAsync(ctx).Forget();
+        }
+
+        private async UniTask CameraPanAsync(InputAction.CallbackContext ctx)
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
+            
             if (_input.Actions.Camera.Mode.IsPressed()) return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
@@ -69,6 +77,13 @@ namespace _Project.Develop.Gameplay.Camera
 
         private void OnZoom(InputAction.CallbackContext ctx)
         {
+            ZoomAsync(ctx).Forget();
+        }
+
+        private async UniTask ZoomAsync(InputAction.CallbackContext ctx)
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
+            
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
 
