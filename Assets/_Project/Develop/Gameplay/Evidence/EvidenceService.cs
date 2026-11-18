@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Evidence;
+using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Evidence
 {
@@ -10,6 +11,7 @@ namespace _Project.Develop.Gameplay.Evidence
         private readonly List<EvidenceData> _collected = new();
 
         public IReadOnlyList<EvidenceData> Collected { get; }
+        public event Action<EvidenceData, Vector3?> EvidenceCollected;
 
         public EvidenceService(EvidenceDatabase database)
         {
@@ -17,7 +19,7 @@ namespace _Project.Develop.Gameplay.Evidence
             Collected = _collected.AsReadOnly();
         }
 
-        public bool Collect(EvidenceData evidence)
+        public bool Collect(EvidenceData evidence, Vector3? sourceWorldPosition = null)
         {
             if (evidence == null)
                 throw new ArgumentNullException(nameof(evidence));
@@ -26,6 +28,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 return false;
 
             _collected.Add(evidence);
+            EvidenceCollected?.Invoke(evidence, sourceWorldPosition);
             return true;
         }
 

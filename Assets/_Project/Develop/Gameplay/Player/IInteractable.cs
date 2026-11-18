@@ -1,3 +1,5 @@
+using _Project.Develop.Gameplay.Evidence;
+
 namespace _Project.Develop.Gameplay.Player
 {
     public interface IInteractable
