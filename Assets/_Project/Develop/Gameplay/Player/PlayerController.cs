@@ -1,4 +1,4 @@
-﻿using _Project.Develop.Data.Player;
+using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using Cysharp.Threading.Tasks;
@@ -12,7 +12,7 @@ using UnityCamera = UnityEngine.Camera;
 namespace _Project.Develop.Gameplay.Player
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IPlayerController
     {
         [SerializeField, Expandable] private PlayerStats stats;
         
@@ -23,6 +23,8 @@ namespace _Project.Develop.Gameplay.Player
         private InputController _input;
         private UnityCamera _camera;
         
+        public Vector2 Velocity => _rb.linearVelocity;
+
         [Inject]
         private void Construct(InputController input)
         {
@@ -45,9 +47,6 @@ namespace _Project.Develop.Gameplay.Player
         private async UniTask MoveToAsync()
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
-            
-            if (!isActiveAndEnabled)
-                return;
 
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
@@ -57,15 +56,8 @@ namespace _Project.Develop.Gameplay.Player
                 return;
 
             var ray = _camera.ScreenPointToRay(mousePos);
-            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
-            foreach (var hit in hits)
-            {
-                if (hit.collider != null && hit.collider.GetComponentInParent<IWorldEvidence>() != null)
-                    return;
-            }
-
             var plane = new Plane(Vector3.forward, transform.position);
-
+            
             if (!plane.Raycast(ray, out var distance))
                 return;
 
@@ -96,6 +88,13 @@ namespace _Project.Develop.Gameplay.Player
             }
 
             _rb.linearVelocity = velocity;
+
+            if (!Mathf.Approximately(velocity.x, 0f))
+            {
+                var scale = transform.localScale;
+                scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(velocity.x);
+                transform.localScale = scale;
+            }
         }
 
         private void OnDisable()
@@ -108,5 +107,10 @@ namespace _Project.Develop.Gameplay.Player
         {
             _input.Actions.Player.MoveTo.performed -= OnMoveTo;
         }
+    }
+    
+    public interface IPlayerController
+    {
+        Vector2 Velocity { get; }
     }
 }

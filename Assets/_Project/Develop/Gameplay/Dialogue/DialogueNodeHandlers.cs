@@ -3,6 +3,7 @@ using _Project.Develop.Data.Dialogue;
 using _Project.Develop.Gameplay.Quests;
 using MessagePipe;
 using System.Collections.Generic;
+using _Project.Develop.Gameplay.Evidence;
 
 namespace _Project.Develop.Gameplay.Dialogue
 {
@@ -10,15 +11,21 @@ namespace _Project.Develop.Gameplay.Dialogue
     {
         private readonly IPublisher<DialogueShown> _publisher;
         private readonly IPublisher<StartQuestEvent> _questPublisher;
+        private readonly EvidenceService _evidenceService;
         private readonly IDisposable _endedSubscription;
         private DialogueNodeData _previousDialogue;
 
         public Type NodeType => typeof(DialogueNodeData);
 
-        public DialogueNodeHandler(IPublisher<DialogueShown> publisher, IPublisher<StartQuestEvent> questPublisher, ISubscriber<DialogueEnded> endedSubscriber)
+        public DialogueNodeHandler(
+            IPublisher<DialogueShown> publisher,
+            IPublisher<StartQuestEvent> questPublisher,
+            ISubscriber<DialogueEnded> endedSubscriber,
+            EvidenceService evidenceService)
         {
             _publisher = publisher;
             _questPublisher = questPublisher;
+            _evidenceService = evidenceService;
             _endedSubscription = endedSubscriber.Subscribe(_ => _previousDialogue = null);
         }
 
@@ -32,6 +39,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                 overrideName = dialogue.inheritCharacter ? _previousDialogue?.overrideName : dialogue.overrideName,
                 text = dialogue.text,
                 quest = dialogue.quest,
+                evidence = dialogue.evidence,
                 publishTalked = dialogue.publishTalked,
                 moodChange = dialogue.moodChange,
                 nextNodeId = dialogue.nextNodeId
@@ -54,6 +62,9 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             if (dialogue.quest != null)
                 _questPublisher.Publish(new StartQuestEvent(dialogue.quest));
+
+            if (dialogue.evidence != null)
+                _evidenceService.Collect(dialogue.evidence);
         }
 
         public void Dispose()
@@ -65,7 +76,14 @@ namespace _Project.Develop.Gameplay.Dialogue
 
     public class ChoiceNodeHandler : IDialogueNodeHandler
     {
+        private readonly EvidenceService _evidenceService;
+
         public Type NodeType => typeof(ChoiceNodeData);
+
+        public ChoiceNodeHandler(EvidenceService evidenceService)
+        {
+            _evidenceService = evidenceService;
+        }
 
         public DialogueStep Handle(NodeData node)
         {
@@ -79,6 +97,10 @@ namespace _Project.Develop.Gameplay.Dialogue
                     ChoiceConditionType.Always => true,
                     ChoiceConditionType.RequiredMood =>
                         option.character.state.mood >= option.moodThreshold,
+                    ChoiceConditionType.HasEvidence =>
+                        _evidenceService.HasEvidence(option.requiredEvidence),
+                    ChoiceConditionType.HasHypothesis =>
+                        _evidenceService.HasSolvedHypothesis(option.requiredHypothesis),
                     _ => throw new InvalidOperationException($"Unsupported choice condition: {option.condition}.")
                 };
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Npc;
 using _Project.Develop.Data.Questing.Quests;
 using UnityEngine;
@@ -28,6 +29,7 @@ namespace _Project.Develop.Data.Dialogue
         public bool inheritCharacter;
         public string text;
         public Quest quest;
+        public EvidenceData evidence;
         public bool publishTalked;
         public int moodChange;
         public Hash128 nextNodeId;
@@ -47,6 +49,8 @@ namespace _Project.Develop.Data.Dialogue
         public ChoiceConditionType condition;
         public NpcData character;
         public int moodThreshold;
+        public EvidenceData requiredEvidence;
+        public HypothesisData requiredHypothesis;
 
         public Hash128 nextNodeId;
     }
@@ -54,7 +58,9 @@ namespace _Project.Develop.Data.Dialogue
     public enum ChoiceConditionType
     {
         Always = 0,
-        RequiredMood = 1
+        RequiredMood = 1,
+        HasEvidence = 2,
+        HasHypothesis = 3
     }
 
     [Serializable]

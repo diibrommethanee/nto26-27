@@ -9,6 +9,7 @@ namespace _Project.Develop.Gameplay.Evidence
     {
         private readonly EvidenceDatabase _database;
         private readonly List<EvidenceData> _collected = new();
+        private readonly HashSet<HypothesisData> _solvedHypotheses = new();
 
         public IReadOnlyList<EvidenceData> Collected { get; }
         public event Action<EvidenceData, Vector3?> EvidenceCollected;
@@ -37,6 +38,10 @@ namespace _Project.Develop.Gameplay.Evidence
             return _database.TryGetResult(first, second, out result) && result != null;
         }
 
+        public bool HasEvidence(EvidenceData evidence) => _collected.Contains(evidence);
+
+        public bool HasSolvedHypothesis(HypothesisData hypothesis) => _solvedHypotheses.Contains(hypothesis);
+
         public bool CheckHypothesis(HypothesisData hypothesis, IReadOnlyList<EvidenceData> answers)
         {
             var index = 0;
@@ -51,7 +56,11 @@ namespace _Project.Develop.Gameplay.Evidence
                 index++;
             }
 
-            return index > 0 && index == answers.Count;
+            if (index == 0 || index != answers.Count)
+                return false;
+
+            _solvedHypotheses.Add(hypothesis);
+            return true;
         }
 
         private bool IsCorrectAnswer(HypothesisNode node, EvidenceData answer, int index)

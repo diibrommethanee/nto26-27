@@ -2,6 +2,7 @@ using _Project.Develop.Data.Dialogue;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Npc;
 using _Project.Develop.Data.Questing.Quests;
 using System.Linq;
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Editor.Dialogue
 {
-    [ScriptedImporter(11, DialogueGraph.AssetExtension)]
+    [ScriptedImporter(13, DialogueGraph.AssetExtension)]
     public class DialogueGraphImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -55,6 +56,7 @@ namespace _Project.Develop.Editor.Dialogue
                                 inheritCharacter = node is NextDialogueNode,
                                 text = ReadText(node, "Text"),
                                 quest = ReadValue<Quest>(node, "Quest"),
+                                evidence = ReadValue<EvidenceData>(node, "Evidence"),
                                 publishTalked = ReadValue<bool>(node, "PublishTalked"),
                                 moodChange = ReadValue<int>(node, "MoodChange"),
                                 nextNodeId = ReadNextNodeId(node)
@@ -115,6 +117,14 @@ namespace _Project.Develop.Editor.Dialogue
                 {
                     option.character = ReadValue<NpcData>(node, $"Character{i}");
                     option.moodThreshold = ReadValue<int>(node, $"MoodThreshold{i}");
+                }
+                else if (condition == ChoiceConditionType.HasEvidence)
+                {
+                    option.requiredEvidence = ReadValue<EvidenceData>(node, $"Evidence{i}");
+                }
+                else if (condition == ChoiceConditionType.HasHypothesis)
+                {
+                    option.requiredHypothesis = ReadValue<HypothesisData>(node, $"Hypothesis{i}");
                 }
 
                 choice.options.Add(option);
