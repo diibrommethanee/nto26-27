@@ -2,18 +2,9 @@ using UnityEngine;
 
 namespace _Project.Develop.Data.Scent
 {
-    public enum ScentType
-    {
-        Food,
-        Magic,
-        Living,
-        Mechanical
-    }
-
     [CreateAssetMenu(menuName = "Scent Data")]
     public sealed class ScentData : ScriptableObject
     {
-        public ScentType type;
         public Color color = Color.white;
         public Texture2D flowTexture;
         public float flowSpeed = 0.5f;

@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7bdf711d423eb845aaa86311414bbbd, type: 3}
   m_Name: GreenFoodScent
   m_EditorClassIdentifier: 
-  type: 0
-  color: {r: 0.3265481, g: 0.6981132, b: 0.07573871, a: 1}
+  color: {r: 0.35459226, g: 0.7075472, b: 0.11681202, a: 1}
   flowTexture: {fileID: 0}
-  flowSpeed: 0.1
-  waveAmplitude: 0.13
-  ribbonWidth: 0.15
+  flowSpeed: 0.64
+  waveAmplitude: 0.01
+  ribbonWidth: 0.16
   intensity: 1
