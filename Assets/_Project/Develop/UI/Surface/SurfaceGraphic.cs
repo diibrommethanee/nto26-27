@@ -14,7 +14,7 @@ namespace _Project.Develop.UI.Surface
         private Material _instance;
 
         public override Material defaultMaterial => _instance ? _instance :
-            _instance = new Material(Resources.Load<Shader>("TrainSurface")) { hideFlags = HideFlags.HideAndDontSave };
+            _instance = new Material(Resources.Load<Shader>("SurfaceGraphic")) { hideFlags = HideFlags.HideAndDontSave };
 
         protected override void OnEnable()
         {

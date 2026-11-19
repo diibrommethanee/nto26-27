@@ -1,4 +1,4 @@
-Shader "UI/Train Surface"
+Shader "UI/Surface Graphic"
 {
  Properties {
   [PerRendererData] _MainTex ("Texture",2D)="white"{}
