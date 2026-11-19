@@ -1,15 +1,24 @@
 using _Project.Develop.Data.Evidence;
+using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Player;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Evidence
 {
+    public enum EvidenceSkillRequirement
+    {
+        None,
+        Smell,
+        Hearing
+    }
+
     [RequireComponent(typeof(SpriteRenderer))]
     public class WorldEvidence : MonoBehaviour, IWorldEvidence
     {
         private static readonly int ProgressId = Shader.PropertyToID("_Progress");
 
         [SerializeField] private EvidenceData evidence;
+        [SerializeField] private EvidenceSkillRequirement requiredSkill;
         [SerializeField, Min(0.1f)] private float holdDuration = 1.5f;
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Collider2D targetCollider;
@@ -18,6 +27,17 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool IsCollected { get; private set; }
         public float HoldDuration => holdDuration;
+
+        public bool CanCollect(SkillType? activeSkill)
+        {
+            return requiredSkill switch
+            {
+                EvidenceSkillRequirement.None => true,
+                EvidenceSkillRequirement.Smell => activeSkill == SkillType.Smell,
+                EvidenceSkillRequirement.Hearing => activeSkill == SkillType.Hearing,
+                _ => false
+            };
+        }
 
         private void Awake()
         {

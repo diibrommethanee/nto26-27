@@ -57,7 +57,7 @@
                     "priority": 0
                 },
                 {
-                    "name": "ToggleSkill",
+                    "name": "UseSkill",
                     "type": "Button",
                     "id": "d3f30a52-463a-4d7e-a8ab-abe42f514a22",
                     "expectedControlType": "",
@@ -130,7 +130,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleSkill",
+                    "action": "UseSkill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
