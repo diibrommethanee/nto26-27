@@ -89,7 +89,11 @@ namespace _Project.Develop.Gameplay.Input
 
             foreach (var hit in hits)
             {
-                if (hit.collider != null && hit.collider.GetComponentInParent<IWorldEvidence>() != null)
+                if (hit.collider == null)
+                    continue;
+
+                var evidence = hit.collider.GetComponentInParent<IWorldEvidence>();
+                if (evidence != null && !evidence.IsCollected && evidence.CanCollect(ActiveSkill))
                     return true;
             }
 

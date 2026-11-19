@@ -883,6 +883,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Evidence.WorldEvidence
   evidence: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+  requiredSkill: 0
   holdDuration: 1.5
   spriteRenderer: {fileID: 330612584}
   targetCollider: {fileID: 330612583}
@@ -1336,11 +1337,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a75620cf46af45cabec840e71f66b497, type: 3}
---- !u!4 &435386117 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 400000000, guid: a75620cf46af45cabec840e71f66b497, type: 3}
-  m_PrefabInstance: {fileID: 435386116}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &463489365
 GameObject:
   m_ObjectHideFlags: 0
@@ -2179,11 +2175,6 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
---- !u!4 &704499914 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 400000000, guid: a75620cf46af45cabec840e71f66b497, type: 3}
-  m_PrefabInstance: {fileID: 704522495}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &704522495
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9337,3 +9328,5 @@ SceneRoots:
   - {fileID: 2090053496}
   - {fileID: 983831438}
   - {fileID: 534272848338630908}
+  - {fileID: 435386116}
+  - {fileID: 704522495}

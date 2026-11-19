@@ -60,7 +60,11 @@ namespace _Project.Develop.Gameplay.Player
             var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
             foreach (var hit in hits)
             {
-                if (hit.collider != null && hit.collider.GetComponentInParent<IWorldEvidence>() != null)
+                if (hit.collider == null)
+                    continue;
+
+                var evidence = hit.collider.GetComponentInParent<IWorldEvidence>();
+                if (evidence != null && !evidence.IsCollected && evidence.CanCollect(_input.ActiveSkill))
                     return;
             }
 
