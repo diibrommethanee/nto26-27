@@ -110,6 +110,11 @@ namespace _Project.Develop.Gameplay.Player
 
                 var interactiveCandidate = hit.collider.GetComponentInParent<IInteractable>();
                 var holdCandidate = hit.collider.GetComponentInParent<IWorldEvidence>();
+
+                if (holdCandidate != null &&
+                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_input.ActiveSkill)))
+                    holdCandidate = null;
+
                 if (interactiveCandidate == null && holdCandidate == null) continue;
 
                 target = interactiveCandidate;

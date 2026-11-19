@@ -56,6 +56,17 @@ namespace _Project.Develop.Gameplay.Player
                 return;
 
             var ray = _camera.ScreenPointToRay(mousePos);
+            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
+            foreach (var hit in hits)
+            {
+                if (hit.collider == null)
+                    continue;
+
+                var evidence = hit.collider.GetComponentInParent<IWorldEvidence>();
+                if (evidence != null && !evidence.IsCollected && evidence.CanCollect(_input.ActiveSkill))
+                    return;
+            }
+
             var plane = new Plane(Vector3.forward, transform.position);
             
             if (!plane.Raycast(ray, out var distance))
