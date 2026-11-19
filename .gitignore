@@ -139,3 +139,7 @@ crashlytics-build.properties
 
 .idea/
 .vscode/
+
+# Local Rider and ReSharper settings
+*.DotSettings
+*.DotSettings.user
