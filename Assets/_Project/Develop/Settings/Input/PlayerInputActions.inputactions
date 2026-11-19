@@ -12,7 +12,7 @@
                     "id": "8061e88e-f8b0-4c08-95d7-d47f1fe8483b",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Tap(duration=0.3,pressPoint=0.5)",
                     "initialStateCheck": false,
                     "priority": 0
                 },
@@ -43,6 +43,26 @@
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "SwitchSkill",
+                    "type": "Button",
+                    "id": "aac15050-ce89-42a0-9f08-dd541d95679a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "ToggleSkill",
+                    "type": "Button",
+                    "id": "d3f30a52-463a-4d7e-a8ab-abe42f514a22",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Hold(duration=0.3)",
                     "initialStateCheck": false,
                     "priority": 0
                 }
@@ -89,6 +109,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Interaction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3dac92c6-d535-4d37-b4d6-004b22da1b3a",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwitchSkill",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "80490c63-494b-4bdb-af27-4ee4730e0eb7",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSkill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
