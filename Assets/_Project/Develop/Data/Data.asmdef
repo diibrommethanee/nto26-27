@@ -1,3 +1,6 @@
-{
-	"name": "Data"
+﻿{
+    "name": "Data",
+    "references": [
+        "NaughtyAttributes.Core"
+    ]
 }
