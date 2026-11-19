@@ -31,7 +31,7 @@ namespace _Project.Develop.Gameplay.Input
             Actions.Camera.Mode.canceled += OnZoomReleased;
 
             Actions.Player.SwitchSkill.performed += OnSwitchSkill;
-            Actions.Player.ToggleSkill.performed += OnToggleSkill;
+            Actions.Player.UseSkill.performed += OnUseSkill;
         }
 
         private void OnZoomPressed(InputAction.CallbackContext _)
@@ -70,12 +70,12 @@ namespace _Project.Develop.Gameplay.Input
                 : SkillType.Smell;
         }
 
-        private void OnToggleSkill(InputAction.CallbackContext _)
+        private void OnUseSkill(InputAction.CallbackContext _)
         {
             if (IsPointerOverWorldEvidence())
                 return;
 
-            ToggleSelectedSkill();
+            UseSelectedSkill();
         }
 
         private bool IsPointerOverWorldEvidence()
@@ -96,13 +96,11 @@ namespace _Project.Develop.Gameplay.Input
             return false;
         }
 
-        private void ToggleSelectedSkill()
+        private void UseSelectedSkill()
         {
             ActiveSkill = ActiveSkill == SelectedSkill
                 ? null
                 : SelectedSkill;
-
-            Debug.Log("toggle selected skill: " + ActiveSkill);
         }
 
         public void Dispose()
@@ -110,7 +108,7 @@ namespace _Project.Develop.Gameplay.Input
             Actions.Camera.Mode.started -= OnZoomPressed;
             Actions.Camera.Mode.canceled -= OnZoomReleased;
             Actions.Player.SwitchSkill.performed -= OnSwitchSkill;
-            Actions.Player.ToggleSkill.performed -= OnToggleSkill;
+            Actions.Player.UseSkill.performed -= OnUseSkill;
 
             Actions.Disable();
             Actions.Dispose();
