@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 namespace _Project.Develop.UI.Evidence
 {
     [RequireComponent(typeof(UnityEngine.UI.Image))]
-    public class EvidenceThreadView : MonoBehaviour
+    public class ClueThreadView : MonoBehaviour
     {
         private RectTransform _rect;
         private RectTransform _container;

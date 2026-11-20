@@ -471,6 +471,57 @@ Transform:
   m_Children: []
   m_Father: {fileID: 926947315}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &137430544
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 137430546}
+  - component: {fileID: 137430545}
+  m_Layer: 0
+  m_Name: Dialogue Bubbles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &137430545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137430544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de4368aeda61d7d4bb52e83b64b6871e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Dialogue.DialogueBubbles
+  style: {fileID: 11400000, guid: dd0425b81aea8414eb47cf0e1cd6f747, type: 2}
+  template: {fileID: 1822275661}
+  visibleLines: 4
+--- !u!224 &137430546
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137430544}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 613320288}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &146366186
 GameObject:
   m_ObjectHideFlags: 0
@@ -1772,6 +1823,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 392308993}
+  - {fileID: 137430546}
   - {fileID: 1370697425}
   - {fileID: 6454474946867833675}
   - {fileID: 1181209000342278956}
@@ -2187,7 +2239,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &819819319
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2598,58 +2650,13 @@ MonoBehaviour:
   - {fileID: 392308992}
   - {fileID: 2113724529}
   - {fileID: 1226829968}
-  - {fileID: 983831436}
+  - {fileID: 0}
   - {fileID: 1370697424}
   - {fileID: 5809622237658280620}
   - {fileID: 1860401910}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
   questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
   evidenceDatabase: {fileID: 11400000, guid: 3cf9909b87a1f2a4a91ad5ccb37c15e2, type: 2}
---- !u!1 &983831436
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 983831438}
-  - component: {fileID: 983831437}
-  m_Layer: 0
-  m_Name: '[Test] Create New Quest'
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &983831437
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 983831436}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 743884a105259dc43a0b0757d61d23c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Gameplay::TestQuestSystem
-  quest: {fileID: 11400000, guid: 44e5e7698f86b2a4db56d6047d656a97, type: 2}
---- !u!4 &983831438
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 983831436}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.70396, y: -0.31538, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1133506432
 GameObject:
   m_ObjectHideFlags: 0
@@ -3336,6 +3343,8 @@ MonoBehaviour:
   characterText: {fileID: 463489367}
   contentText: {fileID: 1822275661}
   choicesContainer: {fileID: 1628665871}
+  bubbles: {fileID: 137430545}
+  notebook: {fileID: 5872949082049319758}
 --- !u!222 &1370697430
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3542,6 +3551,73 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &1441402763
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1441402764}
+  - component: {fileID: 1441402766}
+  - component: {fileID: 1441402765}
+  m_Layer: 0
+  m_Name: Paper surface
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1441402764
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441402763}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3252999463748670933}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 16, y: 16}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1441402765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441402763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48c01fd3ea5a01944b34d6ce2406b19b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Surface.SurfaceGraphic
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  style: {fileID: 11400000, guid: 72dd97d2464e47f438db479bb484f0a7, type: 2}
+  parts: []
+--- !u!222 &1441402766
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441402763}
+  m_CullTransparentMesh: 1
 --- !u!1 &1472554548
 GameObject:
   m_ObjectHideFlags: 0
@@ -3570,7 +3646,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.32, y: -4.7071, z: 0}
-  m_LocalScale: {x: 13.4, y: 2, z: 1}
+  m_LocalScale: {x: 20, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 926947315}
@@ -3671,7 +3747,7 @@ SpriteRenderer:
   m_SortingOrder: 10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.754717, g: 0.754717, b: 0.754717, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -3943,8 +4019,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 17.010002}
+  m_SizeDelta: {x: 0, y: -34.03}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1628665872
 MonoBehaviour:
@@ -3963,7 +4039,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
+  m_ChildAlignment: 7
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
@@ -5090,6 +5166,7 @@ GameObject:
   - component: {fileID: 1891065296}
   - component: {fileID: 1891065295}
   - component: {fileID: 1891065294}
+  - component: {fileID: 1891065297}
   m_Layer: 5
   m_Name: ChoiceTemplate
   m_TagString: Untagged
@@ -5115,8 +5192,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 960, y: -135}
-  m_SizeDelta: {x: 1000, y: 30}
+  m_AnchoredPosition: {x: 960, y: -210.97}
+  m_SizeDelta: {x: 1000, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1891065294
 MonoBehaviour:
@@ -5200,6 +5277,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1891065292}
   m_CullTransparentMesh: 1
+--- !u!114 &1891065297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891065292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
+  m_HorizontalFit: 0
+  m_VerticalFit: 0
 --- !u!1 &1939564027
 GameObject:
   m_ObjectHideFlags: 0
@@ -6590,7 +6681,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5872949082049319758}
-        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceBoardController, UI
+        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Open
         m_Mode: 1
         m_Arguments:
@@ -7015,9 +7106,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31ae675b219575647808981b334ac6c8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceDebugSpawner
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueDebugSpawner
   boardController: {fileID: 5872949082049319758}
-  evidenceData: {fileID: 0}
+  clue: {fileID: 11400000, guid: 3d302f163b6d0f34aadbea9da9182518, type: 2}
   spawnPosition: {x: 0, y: 0}
 --- !u!114 &1802147318525787990
 MonoBehaviour:
@@ -7444,7 +7535,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1441402764}
   m_Father: {fileID: 8792194156041366760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -8525,23 +8617,21 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceBoardController
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
   board: {fileID: 8792194156041366760}
-  evidenceContainer: {fileID: 829683503068795768}
+  clueContainer: {fileID: 829683503068795768}
   threadContainer: {fileID: 46106089481541086}
-  canvasGroup: {fileID: 1369355133113926160}
-  hypothesisView: {fileID: 6399292270539827045}
-  notebookButton: {fileID: 0}
-  evidencePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
+  notebookButton: {fileID: 6454474946867833675}
+  cluePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
   threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
   currentHypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
   openDuration: 0.32
   closeDuration: 0.18
   slideDistance: 30
   closedScale: 0.94
-  evidenceFlyDuration: 0.55
-  evidenceFlyArc: 90
-  evidenceFlyIconSize: 48
+  clueFlyDuration: 0.55
+  clueFlyArc: 90
+  clueFlyIconSize: 48
 --- !u!114 &5916200230972439941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8585,7 +8675,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -8844,17 +8934,13 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21435cd573ff7f44c99483ac1d84cec9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.HypothesisBuilderView
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.HypothesisView
   title: {fileID: 8439309561124201035}
   textParts:
   - {fileID: 3680534749945085072}
   - {fileID: 1487752877}
   - {fileID: 82490190}
   result: {fileID: 746261670669339603}
-  checkButton: {fileID: 6218082732480945444}
-  slots:
-  - {fileID: 2965197487033866576}
-  - {fileID: 8089588206301853280}
   successColor: {r: 0.12, g: 0.46, b: 0.22, a: 1}
   failureColor: {r: 0.72, g: 0.16, b: 0.12, a: 1}
 --- !u!222 &6419557897397457145
@@ -9863,7 +9949,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5872949082049319758}
-        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceBoardController, UI
+        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Close
         m_Mode: 1
         m_Arguments:
@@ -9958,5 +10044,4 @@ SceneRoots:
   - {fileID: 926947315}
   - {fileID: 613320288}
   - {fileID: 2090053496}
-  - {fileID: 983831438}
   - {fileID: 534272848338630908}

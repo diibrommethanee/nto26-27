@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace _Project.Develop.Data.Evidence
 {
-    [CreateAssetMenu(menuName = "Configs/Evidence/Evidence Database")]
+    [CreateAssetMenu(menuName = "Configs/Evidence/EvidenceDatabase")]
     public class EvidenceDatabase : ScriptableObject
     {
-        [SerializeField] private List<EvidenceRecipe> recipes;
+        [SerializeField] private List<ClueRecipe> recipes;
 
-        public bool TryGetResult(EvidenceData first, EvidenceData second, out EvidenceData result)
+        public bool TryGetResult(Clue first, Clue second, out Clue result)
         {
             foreach (var recipe in recipes)
             {

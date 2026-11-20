@@ -29,7 +29,7 @@ namespace _Project.Develop.Data.Dialogue
         public bool inheritCharacter;
         public string text;
         public Quest quest;
-        public EvidenceData evidence;
+        public Clue clue;
         public bool publishTalked;
         public int moodChange;
         public Hash128 nextNodeId;
@@ -49,8 +49,8 @@ namespace _Project.Develop.Data.Dialogue
         public ChoiceConditionType condition;
         public NpcData character;
         public int moodThreshold;
-        public EvidenceData requiredEvidence;
-        public HypothesisData requiredHypothesis;
+        public Clue requiredClue;
+        public Hypothesis requiredHypothesis;
 
         public Hash128 nextNodeId;
     }
@@ -59,7 +59,7 @@ namespace _Project.Develop.Data.Dialogue
     {
         Always = 0,
         RequiredMood = 1,
-        HasEvidence = 2,
+        HasClue = 2,
         HasHypothesis = 3
     }
 

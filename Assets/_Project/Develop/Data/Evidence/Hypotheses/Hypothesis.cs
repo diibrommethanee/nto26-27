@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _Project.Develop.Data.Questing.Rewards;
 using UnityEngine;
 
 namespace _Project.Develop.Data.Evidence
@@ -12,18 +13,16 @@ namespace _Project.Develop.Data.Evidence
         public HypothesisNodeType type;
 
         [TextArea] public string text;
-        public EvidenceData correctEvidence;
+        public Clue correctClue;
         public string correctAnswerFill;
     }
 
     [CreateAssetMenu(menuName = "Configs/Hypothesis")]
-    public class HypothesisData : ScriptableObject
+    public class Hypothesis : ScriptableObject
     {
-        public string id;
         public string title;
         public List<HypothesisNode> nodes = new();
 
-        [Header("Reward")]
-        public string rewardId;
+        [SerializeReference] public QuestReward reward;
     }
 }

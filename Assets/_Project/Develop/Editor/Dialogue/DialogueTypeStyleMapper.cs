@@ -16,8 +16,8 @@ namespace _Project.Develop.Editor.Dialogue
             var icon = EditorGUIUtility.IconContent("ScriptableObject Icon").image as Texture2D;
             Register(typeof(NpcData), icon, Color.white);
             Register(typeof(Quest), icon, Color.white);
-            Register(typeof(EvidenceData), icon, Color.white);
-            Register(typeof(HypothesisData), icon, Color.white);
+            Register(typeof(Clue), icon, Color.white);
+            Register(typeof(Hypothesis), icon, Color.white);
             Register(typeof(DialogueDefinition), icon, Color.white);
         }
     }

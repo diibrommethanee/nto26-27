@@ -8,11 +8,11 @@ namespace _Project.Develop.Gameplay.Evidence
     public class EvidenceService
     {
         private readonly EvidenceDatabase _database;
-        private readonly List<EvidenceData> _collected = new();
-        private readonly HashSet<HypothesisData> _solvedHypotheses = new();
+        private readonly List<Clue> _collected = new();
+        private readonly HashSet<Hypothesis> _solvedHypotheses = new();
 
-        public IReadOnlyList<EvidenceData> Collected { get; }
-        public event Action<EvidenceData, Vector3?> EvidenceCollected;
+        public IReadOnlyList<Clue> Collected { get; }
+        public event Action<Clue, Vector3?, Vector2?> ClueCollected;
 
         public EvidenceService(EvidenceDatabase database)
         {
@@ -20,29 +20,29 @@ namespace _Project.Develop.Gameplay.Evidence
             Collected = _collected.AsReadOnly();
         }
 
-        public bool Collect(EvidenceData evidence, Vector3? sourceWorldPosition = null)
+        public bool Collect(Clue clue, Vector3? sourceWorldPosition = null, Vector2? boardPosition = null)
         {
-            if (evidence == null)
-                throw new ArgumentNullException(nameof(evidence));
+            if (clue == null)
+                throw new ArgumentNullException(nameof(clue));
 
-            if (_collected.Contains(evidence))
+            if (_collected.Contains(clue))
                 return false;
 
-            _collected.Add(evidence);
-            EvidenceCollected?.Invoke(evidence, sourceWorldPosition);
+            _collected.Add(clue);
+            ClueCollected?.Invoke(clue, sourceWorldPosition, boardPosition);
             return true;
         }
 
-        public bool TryCombine(EvidenceData first, EvidenceData second, out EvidenceData result)
+        public bool TryCombine(Clue first, Clue second, out Clue result)
         {
             return _database.TryGetResult(first, second, out result) && result != null;
         }
 
-        public bool HasEvidence(EvidenceData evidence) => _collected.Contains(evidence);
+        public bool HasClue(Clue clue) => _collected.Contains(clue);
 
-        public bool HasSolvedHypothesis(HypothesisData hypothesis) => _solvedHypotheses.Contains(hypothesis);
+        public bool HasSolvedHypothesis(Hypothesis hypothesis) => _solvedHypotheses.Contains(hypothesis);
 
-        public bool CheckHypothesis(HypothesisData hypothesis, IReadOnlyList<EvidenceData> answers)
+        public bool CheckHypothesis(Hypothesis hypothesis, IReadOnlyList<Clue> answers)
         {
             var index = 0;
             foreach (var node in hypothesis.nodes)
@@ -63,14 +63,14 @@ namespace _Project.Develop.Gameplay.Evidence
             return true;
         }
 
-        private bool IsCorrectAnswer(HypothesisNode node, EvidenceData answer, int index)
+        private bool IsCorrectAnswer(HypothesisNode node, Clue answer, int index)
         {
             if (answer == null || answer.fillIndex != index || string.IsNullOrWhiteSpace(answer.fillWord) ||
                 !_collected.Contains(answer))
                 return false;
 
-            return node.correctEvidence != null
-                ? answer == node.correctEvidence
+            return node.correctClue != null
+                ? answer == node.correctClue
                 : string.Equals(answer.fillWord, node.correctAnswerFill, StringComparison.OrdinalIgnoreCase);
         }
     }

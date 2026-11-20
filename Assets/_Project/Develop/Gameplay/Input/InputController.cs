@@ -72,13 +72,13 @@ namespace _Project.Develop.Gameplay.Input
 
         private void OnUseSkill(InputAction.CallbackContext _)
         {
-            if (IsPointerOverWorldEvidence())
+            if (IsPointerOverWorldClue())
                 return;
 
             UseSelectedSkill();
         }
 
-        private bool IsPointerOverWorldEvidence()
+        private bool IsPointerOverWorldClue()
         {
             if (_camera == null)
                 return false;
@@ -92,8 +92,8 @@ namespace _Project.Develop.Gameplay.Input
                 if (hit.collider == null)
                     continue;
 
-                var evidence = hit.collider.GetComponentInParent<IWorldEvidence>();
-                if (evidence != null && !evidence.IsCollected && evidence.CanCollect(ActiveSkill))
+                var clue = hit.collider.GetComponentInParent<IWorldClue>();
+                if (clue != null && !clue.IsCollected && clue.CanCollect(ActiveSkill))
                     return true;
             }
 

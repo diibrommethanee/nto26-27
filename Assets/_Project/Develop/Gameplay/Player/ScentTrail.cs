@@ -1,4 +1,4 @@
-using _Project.Develop.Data.Scent;
+using _Project.Develop.Data.Scents;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Player
@@ -6,7 +6,7 @@ namespace _Project.Develop.Gameplay.Player
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class ScentTrail : MonoBehaviour
     {
-        [SerializeField] private ScentData scentData;
+        [SerializeField] private Scent scent;
         [SerializeField] private Transform start;
         [SerializeField] private Transform end;
 
@@ -31,7 +31,7 @@ namespace _Project.Develop.Gameplay.Player
             var filter = GetComponent<MeshFilter>();
             _renderer = GetComponent<MeshRenderer>();
 
-            if (scentData == null || start == null || end == null || _renderer.sharedMaterial == null)
+            if (scent == null || start == null || end == null || _renderer.sharedMaterial == null)
             {
                 _renderer.enabled = false;
                 enabled = false;
@@ -78,20 +78,20 @@ namespace _Project.Develop.Gameplay.Player
 
             _properties.SetVector(StartId, startPosition);
             _properties.SetVector(EndId, endPosition);
-            _properties.SetColor(ColorId, scentData.color);
-            if (scentData.flowTexture != null)
-                _properties.SetTexture(TextureId, scentData.flowTexture);
-            _properties.SetFloat(SpeedId, scentData.flowSpeed);
-            _properties.SetFloat(WaveId, scentData.waveAmplitude);
-            _properties.SetFloat(WidthId, scentData.ribbonWidth);
-            _properties.SetFloat(IntensityId, scentData.intensity);
+            _properties.SetColor(ColorId, scent.color);
+            if (scent.flowTexture != null)
+                _properties.SetTexture(TextureId, scent.flowTexture);
+            _properties.SetFloat(SpeedId, scent.flowSpeed);
+            _properties.SetFloat(WaveId, scent.waveAmplitude);
+            _properties.SetFloat(WidthId, scent.ribbonWidth);
+            _properties.SetFloat(IntensityId, scent.intensity);
             _renderer.SetPropertyBlock(_properties);
 
             var bounds = new Bounds((startPosition + endPosition) * 0.5f, Vector3.zero);
             bounds.Encapsulate(startPosition);
             bounds.Encapsulate(endPosition);
             var padding = Vector3.Distance(startPosition, endPosition) * 0.12f
-                          + scentData.waveAmplitude + scentData.ribbonWidth;
+                          + scent.waveAmplitude + scent.ribbonWidth;
             bounds.Expand(new Vector3(padding * 2f, padding * 2f, 0.1f));
             _mesh.bounds = bounds;
         }

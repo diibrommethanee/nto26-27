@@ -62,8 +62,8 @@ namespace _Project.Develop.Gameplay.Player
                 if (hit.collider == null)
                     continue;
 
-                var evidence = hit.collider.GetComponentInParent<IWorldEvidence>();
-                if (evidence != null && !evidence.IsCollected && evidence.CanCollect(_input.ActiveSkill))
+                var clue = hit.collider.GetComponentInParent<IWorldClue>();
+                if (clue != null && !clue.IsCollected && clue.CanCollect(_input.ActiveSkill))
                     return;
             }
 

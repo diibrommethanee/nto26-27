@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b3981dbdc87cdc4cadf11041895f71a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  scentData: {fileID: 11400000, guid: 8d12983c271b42ae8d39e6104f9526c4, type: 2}
+  scent: {fileID: 11400000, guid: 8d12983c271b42ae8d39e6104f9526c4, type: 2}
   start: {fileID: 400000001}
   end: {fileID: 400000004}
 --- !u!1 &100000001

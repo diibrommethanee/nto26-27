@@ -849,7 +849,7 @@ GameObject:
   - component: {fileID: 330612583}
   - component: {fileID: 330612582}
   m_Layer: 0
-  m_Name: Evidence1
+  m_Name: Clue1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -881,8 +881,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d6b7e19b63d431cb48f8c3a140c1a76, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Evidence.WorldEvidence
-  evidence: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Evidence.WorldClue
+  clue: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
   requiredSkill: 0
   holdDuration: 1.5
   spriteRenderer: {fileID: 330612584}
@@ -1285,7 +1285,7 @@ PrefabInstance:
       value: ScentTrail (1)
       objectReference: {fileID: 0}
     - target: {fileID: 114000000, guid: a75620cf46af45cabec840e71f66b497, type: 3}
-      propertyPath: scentData
+      propertyPath: scent
       value: 
       objectReference: {fileID: 11400000, guid: f3e63482076798544a21a6d0c4dde325, type: 2}
     - target: {fileID: 400000000, guid: a75620cf46af45cabec840e71f66b497, type: 3}
@@ -2504,58 +2504,13 @@ MonoBehaviour:
   - {fileID: 392308992}
   - {fileID: 2113724529}
   - {fileID: 1226829968}
-  - {fileID: 983831436}
+  - {fileID: 0}
   - {fileID: 1370697424}
   - {fileID: 5809622237658280620}
   - {fileID: 1860401910}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
   questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
   evidenceDatabase: {fileID: 11400000, guid: 3cf9909b87a1f2a4a91ad5ccb37c15e2, type: 2}
---- !u!1 &983831436
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 983831438}
-  - component: {fileID: 983831437}
-  m_Layer: 0
-  m_Name: '[Test] Create New Quest'
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &983831437
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 983831436}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 743884a105259dc43a0b0757d61d23c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Gameplay::TestQuestSystem
-  quest: {fileID: 11400000, guid: 44e5e7698f86b2a4db56d6047d656a97, type: 2}
---- !u!4 &983831438
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 983831436}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.70396, y: -0.31538, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1226829968
 GameObject:
   m_ObjectHideFlags: 0
@@ -5891,7 +5846,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5872949082049319758}
-        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceBoardController, UI
+        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Open
         m_Mode: 1
         m_Arguments:
@@ -6464,9 +6419,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31ae675b219575647808981b334ac6c8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceDebugSpawner
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueDebugSpawner
   boardController: {fileID: 5872949082049319758}
-  evidenceData: {fileID: 0}
+  clue: {fileID: 0}
   spawnPosition: {x: 0, y: 0}
 --- !u!224 &1818544302222563570
 RectTransform:
@@ -7895,23 +7850,21 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceBoardController
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
   board: {fileID: 8792194156041366760}
-  evidenceContainer: {fileID: 829683503068795768}
+  clueContainer: {fileID: 829683503068795768}
   threadContainer: {fileID: 46106089481541086}
-  canvasGroup: {fileID: 1369355133113926160}
-  hypothesisView: {fileID: 6399292269691474019}
   notebookButton: {fileID: 6454474946867833675}
-  evidencePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
+  cluePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
   threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
   currentHypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
   openDuration: 0.32
   closeDuration: 0.18
+  clueFlyDuration: 0.55
+  clueFlyIconSize: 48
   slideDistance: 30
   closedScale: 0.94
-  evidenceFlyDuration: 0.55
-  evidenceFlyArc: 90
-  evidenceFlyIconSize: 48
+  clueFlyArc: 90
 --- !u!114 &5923326024373567615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8065,17 +8018,13 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21435cd573ff7f44c99483ac1d84cec9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.HypothesisBuilderView
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.HypothesisView
   title: {fileID: 8439309561989256525}
   textParts:
   - {fileID: 3680534748608187286}
   - {fileID: 82490190}
   - {fileID: 504813443}
   result: {fileID: 746261671479917781}
-  checkButton: {fileID: 6218082731687193122}
-  slots:
-  - {fileID: 7701531979000445075}
-  - {fileID: 2488299783619166654}
   successColor: {r: 0.12, g: 0.46, b: 0.22, a: 1}
   failureColor: {r: 0.72, g: 0.16, b: 0.12, a: 1}
 --- !u!222 &6419557897397457145
@@ -9228,7 +9177,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 5872949082049319758}
-        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceBoardController, UI
+        m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Close
         m_Mode: 1
         m_Arguments:
@@ -9326,7 +9275,6 @@ SceneRoots:
   - {fileID: 926947315}
   - {fileID: 613320288}
   - {fileID: 2090053496}
-  - {fileID: 983831438}
   - {fileID: 534272848338630908}
   - {fileID: 435386116}
   - {fileID: 704522495}

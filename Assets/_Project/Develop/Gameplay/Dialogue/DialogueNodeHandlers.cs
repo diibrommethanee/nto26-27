@@ -39,7 +39,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                 overrideName = dialogue.inheritCharacter ? _previousDialogue?.overrideName : dialogue.overrideName,
                 text = dialogue.text,
                 quest = dialogue.quest,
-                evidence = dialogue.evidence,
+                clue = dialogue.clue,
                 publishTalked = dialogue.publishTalked,
                 moodChange = dialogue.moodChange,
                 nextNodeId = dialogue.nextNodeId
@@ -63,8 +63,8 @@ namespace _Project.Develop.Gameplay.Dialogue
             if (dialogue.quest != null)
                 _questPublisher.Publish(new StartQuestEvent(dialogue.quest));
 
-            if (dialogue.evidence != null)
-                _evidenceService.Collect(dialogue.evidence);
+            if (dialogue.clue != null)
+                _evidenceService.Collect(dialogue.clue);
         }
 
         public void Dispose()
@@ -97,8 +97,8 @@ namespace _Project.Develop.Gameplay.Dialogue
                     ChoiceConditionType.Always => true,
                     ChoiceConditionType.RequiredMood =>
                         option.character.state.mood >= option.moodThreshold,
-                    ChoiceConditionType.HasEvidence =>
-                        _evidenceService.HasEvidence(option.requiredEvidence),
+                    ChoiceConditionType.HasClue =>
+                        _evidenceService.HasClue(option.requiredClue),
                     ChoiceConditionType.HasHypothesis =>
                         _evidenceService.HasSolvedHypothesis(option.requiredHypothesis),
                     _ => throw new InvalidOperationException($"Unsupported choice condition: {option.condition}.")

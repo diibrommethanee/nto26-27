@@ -6,41 +6,39 @@ using _Project.Develop.Data.Evidence;
 using _Project.Develop.Gameplay.Evidence;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace _Project.Develop.UI.Evidence
 {
-    public class HypothesisBuilderView : MonoBehaviour
+    public class HypothesisView : MonoBehaviour
     {
         [SerializeField] private TMP_Text title;
         [SerializeField] private TMP_Text[] textParts;
         [SerializeField] private TMP_Text result;
-        [SerializeField] private UnityEngine.UI.Button checkButton;
-        [SerializeField] private TMP_Dropdown[] slots;
         [SerializeField] private Color successColor;
         [SerializeField] private Color failureColor;
 
-        private readonly List<List<EvidenceData>> _options = new();
+        private readonly List<List<Clue>> _options = new();
         private EvidenceService _evidence;
-        private HypothesisData _hypothesis;
-
-        public event Action<HypothesisData> Solved;
-
-        private void Awake()
-        {
-            checkButton.onClick.AddListener(Check);
-        }
+        private Hypothesis _hypothesis;
+        private Button _checkButton;
+        private TMP_Dropdown[] _slots;
 
         private void OnDestroy()
         {
-            checkButton.onClick.RemoveListener(Check);
+            if (_checkButton != null)
+                _checkButton.onClick.RemoveListener(Check);
         }
 
         public void Initialize(EvidenceService evidence)
         {
             _evidence = evidence;
+            _slots = GetComponentsInChildren<TMP_Dropdown>(true);
+            _checkButton = GetComponentInChildren<Button>(true);
+            _checkButton.onClick.AddListener(Check);
         }
 
-        public void Show(HypothesisData hypothesis)
+        public void Show(Hypothesis hypothesis)
         {
             CloseChoices();
             _options.Clear();
@@ -50,19 +48,16 @@ namespace _Project.Develop.UI.Evidence
                 return;
 
             var fillCount = hypothesis.nodes.Count(node => node.type == HypothesisNodeType.Fill);
-            if (fillCount > slots.Length || textParts.Length != slots.Length + 1)
+            if (fillCount > _slots.Length || textParts.Length != _slots.Length + 1)
                 throw new InvalidOperationException($"The scene layout does not support hypothesis '{hypothesis.name}'.");
 
             title.text = hypothesis.title;
             result.text = string.Empty;
-            for (var index = 0; index < slots.Length; index++)
+            for (var index = 0; index < _slots.Length; index++)
             {
-                slots[index].ClearOptions();
-                slots[index].gameObject.SetActive(index < fillCount);
+                _slots[index].SetValueWithoutNotify(0);
+                _slots[index].gameObject.SetActive(index < fillCount);
             }
-
-            foreach (var part in textParts)
-                part.gameObject.SetActive(false);
 
             var text = new StringBuilder();
             foreach (var node in hypothesis.nodes)
@@ -75,12 +70,15 @@ namespace _Project.Develop.UI.Evidence
 
                 SetTextPart(_options.Count, text.ToString());
                 text.Clear();
-                _options.Add(new List<EvidenceData>());
+                _options.Add(new List<Clue>());
             }
 
             SetTextPart(fillCount, text.ToString());
-            checkButton.interactable = fillCount > 0;
-            RefreshEvidence();
+            for (var index = fillCount + 1; index < textParts.Length; index++)
+                textParts[index].gameObject.SetActive(false);
+
+            _checkButton.interactable = fillCount > 0;
+            RefreshClues();
         }
 
         private void SetTextPart(int index, string text)
@@ -90,12 +88,12 @@ namespace _Project.Develop.UI.Evidence
             part.gameObject.SetActive(part.text.Length > 0);
         }
 
-        public void RefreshEvidence()
+        public void RefreshClues()
         {
             for (var index = 0; index < _options.Count; index++)
             {
-                var selected = GetSelection(index);
-                var slot = slots[index];
+                var slot = _slots[index];
+                var selectedIndex = slot.value;
                 if (slot.IsExpanded)
                     slot.Hide();
 
@@ -103,18 +101,18 @@ namespace _Project.Develop.UI.Evidence
                 options.Clear();
 
                 var labels = new List<string> { "______" };
-                foreach (var evidence in _evidence.Collected)
+                foreach (var clue in _evidence.Collected)
                 {
-                    if (evidence.fillIndex != index || string.IsNullOrWhiteSpace(evidence.fillWord))
+                    if (clue.fillIndex != index || string.IsNullOrWhiteSpace(clue.fillWord))
                         continue;
 
-                    options.Add(evidence);
-                    labels.Add(evidence.fillWord);
+                    options.Add(clue);
+                    labels.Add(clue.fillWord);
                 }
 
                 slot.ClearOptions();
                 slot.AddOptions(labels);
-                slot.SetValueWithoutNotify(options.IndexOf(selected) + 1);
+                slot.SetValueWithoutNotify(selectedIndex);
                 slot.RefreshShownValue();
                 slot.interactable = options.Count > 0;
             }
@@ -122,32 +120,29 @@ namespace _Project.Develop.UI.Evidence
 
         public void CloseChoices()
         {
-            foreach (var slot in slots)
+            foreach (var slot in _slots)
             {
                 if (slot.IsExpanded)
                     slot.Hide();
             }
         }
 
-        private EvidenceData GetSelection(int index)
+        private Clue GetSelection(int index)
         {
-            var choice = slots[index].value - 1;
+            var choice = _slots[index].value - 1;
             return choice >= 0 ? _options[index][choice] : null;
         }
 
         private void Check()
         {
-            var answers = new EvidenceData[_options.Count];
+            var answers = new Clue[_options.Count];
             for (var index = 0; index < answers.Length; index++)
                 answers[index] = GetSelection(index);
 
             var solved = _evidence.CheckHypothesis(_hypothesis, answers);
             result.text = solved ? "Гипотеза подтверждена." : "Гипотеза не подтверждена.";
             result.color = solved ? successColor : failureColor;
-            checkButton.interactable = !solved;
-
-            if (solved)
-                Solved?.Invoke(_hypothesis);
+            _checkButton.interactable = !solved;
         }
     }
 }

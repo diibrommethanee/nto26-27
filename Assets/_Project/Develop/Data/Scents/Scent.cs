@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace _Project.Develop.Data.Scent
+namespace _Project.Develop.Data.Scents
 {
-    [CreateAssetMenu(menuName = "Scent Data")]
-    public sealed class ScentData : ScriptableObject
+    [CreateAssetMenu(menuName = "Scent")]
+    public class Scent : ScriptableObject
     {
         public Color color = Color.white;
         public Texture2D flowTexture;
