@@ -5,6 +5,8 @@ using _Project.Develop.Data.Evidence;
 using _Project.Develop.Gameplay.Evidence;
 using Cysharp.Threading.Tasks;
 using PrimeTween;
+using _Project.Develop.Gameplay.Input;
+using MessagePipe;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -43,6 +45,11 @@ namespace _Project.Develop.UI.Evidence
         private int _cardCount;
         private EvidenceService _evidence;
         private CanvasGroup _canvasGroup;
+        private CanvasGroup _notebookButtonGroup;
+        private InputController _input;
+        private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IDisposable _zoomSubscription;
+        private Tween _notebookFade;
         private HypothesisView _hypothesisView;
         private ClueView _selected;
         private ClueThreadView _preview;
@@ -52,14 +59,24 @@ namespace _Project.Develop.UI.Evidence
         private float _openY;
 
         [Inject]
-        private void Construct(EvidenceService evidence)
+        private void Construct(EvidenceService evidence, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _evidence = evidence;
+            _input = input;
+            _zoomMode = zoomMode;
         }
 
         private void Start()
         {
             _canvasGroup = GetComponent<CanvasGroup>();
+            if (notebookButton)
+            {
+                _notebookButtonGroup = notebookButton.GetComponent<CanvasGroup>();
+                if (!_notebookButtonGroup)
+                    _notebookButtonGroup = notebookButton.gameObject.AddComponent<CanvasGroup>();
+                SetNotebookButtonVisible(!_input.IsZoomMode);
+                _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
+            }
             _openScale = board.localScale;
             _openY = board.anchoredPosition.y;
             _isOpen = _canvasGroup.interactable && _canvasGroup.blocksRaycasts && _canvasGroup.alpha > 0.99f;
@@ -79,8 +96,27 @@ namespace _Project.Develop.UI.Evidence
                 AddClueCard(clue, GetAutomaticSpawnPosition());
         }
 
+        private void OnZoomModeChanged(ZoomModeChanged message)
+        {
+            _notebookFade.Stop();
+            _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = false;
+            var visible = !message.IsActive;
+            _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, visible ? 0.28f : 0.18f,
+                Ease.OutCubic, useUnscaledTime: true);
+            if (visible)
+                _notebookFade.OnComplete(this, view => view.SetNotebookButtonVisible(true));
+        }
+
+        private void SetNotebookButtonVisible(bool visible)
+        {
+            _notebookButtonGroup.alpha = visible ? 1f : 0f;
+            _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = visible;
+        }
+
         private void OnDestroy()
         {
+            _zoomSubscription?.Dispose();
+            _notebookFade.Stop();
             _transition.Stop();
             if (_evidence != null)
                 _evidence.ClueCollected -= OnClueCollected;

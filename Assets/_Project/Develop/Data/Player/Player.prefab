@@ -6152,6 +6152,7 @@ GameObject:
   - component: {fileID: 990152407281892630}
   - component: {fileID: 796023280142201872}
   - component: {fileID: 5574898604016148558}
+  - component: {fileID: 7763280403763293073}
   - component: {fileID: 3171899688300386770}
   - component: {fileID: 3861721860211730238}
   m_Layer: 0
@@ -6206,6 +6207,18 @@ MonoBehaviour:
   iconOffset: {x: 0.5, y: -0.5, z: 0}
   showDuration: 0.25
   hideDuration: 0.15
+--- !u!114 &7763280403763293073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5539784261451467969}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9337f5495bb0e24cb12b325b5fe28e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Player.PlayerAbility
 --- !u!50 &3171899688300386770
 Rigidbody2D:
   serializedVersion: 5

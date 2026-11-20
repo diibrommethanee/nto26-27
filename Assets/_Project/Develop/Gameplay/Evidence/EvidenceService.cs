@@ -9,7 +9,7 @@ namespace _Project.Develop.Gameplay.Evidence
     {
         private readonly EvidenceDatabase _database;
         private readonly List<Clue> _collected = new();
-        private readonly HashSet<Hypothesis> _solvedHypotheses = new();
+        private readonly Dictionary<Hypothesis, IReadOnlyList<Clue>> _solvedHypotheses = new();
 
         public IReadOnlyList<Clue> Collected { get; }
         public event Action<Clue, Vector3?, Vector2?> ClueCollected;
@@ -40,7 +40,10 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool HasClue(Clue clue) => _collected.Contains(clue);
 
-        public bool HasSolvedHypothesis(Hypothesis hypothesis) => _solvedHypotheses.Contains(hypothesis);
+        public bool HasSolvedHypothesis(Hypothesis hypothesis) => _solvedHypotheses.ContainsKey(hypothesis);
+
+        public bool TryGetHypothesisAnswers(Hypothesis hypothesis, out IReadOnlyList<Clue> answers) =>
+            _solvedHypotheses.TryGetValue(hypothesis, out answers);
 
         public bool CheckHypothesis(Hypothesis hypothesis, IReadOnlyList<Clue> answers)
         {
@@ -50,7 +53,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 if (node.type != HypothesisNodeType.Fill)
                     continue;
 
-                if (index >= answers.Count || !IsCorrectAnswer(node, answers[index], index))
+                if (index >= answers.Count || !IsCorrectAnswer(node, answers[index]))
                     return false;
 
                 index++;
@@ -59,13 +62,19 @@ namespace _Project.Develop.Gameplay.Evidence
             if (index == 0 || index != answers.Count)
                 return false;
 
-            _solvedHypotheses.Add(hypothesis);
+            if (!_solvedHypotheses.ContainsKey(hypothesis))
+            {
+                var snapshot = new Clue[answers.Count];
+                for (var i = 0; i < answers.Count; i++)
+                    snapshot[i] = answers[i];
+                _solvedHypotheses.Add(hypothesis, Array.AsReadOnly(snapshot));
+            }
             return true;
         }
 
-        private bool IsCorrectAnswer(HypothesisNode node, Clue answer, int index)
+        private bool IsCorrectAnswer(HypothesisNode node, Clue answer)
         {
-            if (answer == null || answer.fillIndex != index || string.IsNullOrWhiteSpace(answer.fillWord) ||
+            if (answer == null || string.IsNullOrWhiteSpace(answer.fillWord) ||
                 !_collected.Contains(answer))
                 return false;
 

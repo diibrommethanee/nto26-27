@@ -1,12 +1,17 @@
-using _Project.Develop.Data.Scents;
+using _Project.Develop.Gameplay.Player;
+using System;
+using _Project.Develop.Gameplay.Player.Abilities;
+using MessagePipe;
 using UnityEngine;
+using VContainer;
+using VContainer.Unity;
 
-namespace _Project.Develop.Gameplay.Player
+namespace _Project.Develop.Gameplay.Scent
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class ScentTrail : MonoBehaviour
+    public class ScentTrail : MonoBehaviour
     {
-        [SerializeField] private Scent scent;
+        [SerializeField] private Data.Scents.Scent scent;
         [SerializeField] private Transform start;
         [SerializeField] private Transform end;
 
@@ -25,6 +30,8 @@ namespace _Project.Develop.Gameplay.Player
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _properties;
         private bool _isVisible;
+        private IBufferedSubscriber<SmellVisibilityChanged> _smell;
+        private IDisposable _subscription;
 
         private void Awake()
         {
@@ -96,12 +103,30 @@ namespace _Project.Develop.Gameplay.Player
             _mesh.bounds = bounds;
         }
 
-        private void OnEnable()
+        private void Start()
         {
-            SetVisible(SmellAbility.IsActive);
+            // Scene-placed trails resolve their own scope once. The buffered event covers late enables.
+            var scope = GetComponentInParent<LifetimeScope>() ?? LifetimeScope.Find<LifetimeScope>(gameObject.scene);
+            _smell = scope.Container.Resolve<IBufferedSubscriber<SmellVisibilityChanged>>();
+            Subscribe();
         }
 
-        public void SetVisible(bool isVisible)
+        private void OnEnable()
+        {
+            if (_smell != null) Subscribe();
+        }
+
+        private void Subscribe() =>
+            _subscription = _smell.Subscribe(message => SetVisible(message.IsActive));
+
+        private void OnDisable()
+        {
+            _subscription?.Dispose();
+            _subscription = null;
+            SetVisible(false);
+        }
+
+        private void SetVisible(bool isVisible)
         {
             _isVisible = isVisible;
 

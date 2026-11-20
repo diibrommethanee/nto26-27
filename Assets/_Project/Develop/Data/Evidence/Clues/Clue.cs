@@ -11,7 +11,5 @@ namespace _Project.Develop.Data.Evidence
 
         [Header("Hypothesis Text")]
         public string fillWord;
-        [Min(0), Tooltip("Индекс пропуска гипотезы, начиная с 0.")]
-        public int fillIndex;
     }
 }

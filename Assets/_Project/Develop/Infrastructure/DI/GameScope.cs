@@ -4,7 +4,9 @@ using _Project.Develop.Data.Train;
 using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.Player;
 using _Project.Develop.Gameplay.Npc;
+using _Project.Develop.Gameplay.Player.Abilities;
 using _Project.Develop.Gameplay.Train;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Infrastructure.EntryPoints;
@@ -27,6 +29,8 @@ namespace _Project.Develop.Infrastructure.DI
             
             var options = new MessagePipeOptions();
             
+            builder.RegisterMessageBroker<ZoomModeChanged>(options);
+            builder.RegisterMessageBroker<SmellVisibilityChanged>(options);
             builder.RegisterMessageBroker<DialogueShown>(options);
             builder.RegisterMessageBroker<DialogueEnded>(options);
             builder.RegisterMessageBroker<DialogueChoicesShown>(options);

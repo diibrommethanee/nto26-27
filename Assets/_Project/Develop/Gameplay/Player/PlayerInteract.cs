@@ -1,5 +1,6 @@
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
+using _Project.Develop.Gameplay.Player.Abilities;
 using UnityEngine;
 using PrimeTween;
 using VContainer;
@@ -15,6 +16,7 @@ namespace _Project.Develop.Gameplay.Player
         [SerializeField] private float hideDuration = 0.15f;
         
         private InputController _input;
+        private PlayerAbility _ability;
         private EvidenceService _evidenceService;
         private UnityCamera _camera;
         
@@ -32,6 +34,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Start()
         {
+            _ability = GetComponent<PlayerAbility>();
             _camera = UnityCamera.main;
             
             interactIcon.localScale = Vector3.zero;
@@ -112,7 +115,7 @@ namespace _Project.Develop.Gameplay.Player
                 var holdCandidate = hit.collider.GetComponentInParent<IWorldClue>();
 
                 if (holdCandidate != null &&
-                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_input.ActiveSkill)))
+                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_ability.ActiveSkill)))
                     holdCandidate = null;
 
                 if (interactiveCandidate == null && holdCandidate == null) continue;

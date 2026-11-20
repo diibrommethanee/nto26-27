@@ -26,7 +26,6 @@ namespace _Project.Develop.Gameplay.Dialogue
         private bool _waitingForContinue;
         private bool _processing;
 
-        public NpcData Interlocutor => _npc;
         public bool IsRunning { get; private set; }
         public bool IsChoosing => _choices != null;
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   fill: {r: 0.055, g: 0.035, b: 0.072, a: 1}
   edge: {r: 0.5803922, g: 0.43529412, b: 0.6117647, a: 1}
   accent: {r: 1, g: 0.9019608, b: 0.7882353, a: 1}
-  rounding: 28
+  rounding: 24
   fusion: 82
   border: 3
   ripple: 1.4

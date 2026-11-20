@@ -12,8 +12,6 @@ namespace _Project.Develop.Gameplay.NPC
     {
         [SerializeField] private NpcData npcData;
         
-        public NpcData Data => npcData;
-
         private DialogueRunner _dialogueRunner;
         private IPublisher<NpcInteractedEvent> _interactPublisher;
 

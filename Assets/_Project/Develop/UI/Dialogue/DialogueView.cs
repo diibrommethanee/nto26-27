@@ -19,7 +19,6 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private TMP_Text contentText;
         [SerializeField] private RectTransform choicesContainer;
         
-        [SerializeField] private DialogueBubbles bubbles;
         [SerializeField] private EvidenceView notebook;
 
         private Clue _lineClue;
@@ -71,12 +70,6 @@ namespace _Project.Develop.UI.Dialogue
             var text = dialogue.text ?? string.Empty;
             if (_lineClue && notebook)
                 text = TagCluePhrases(text);
-            if (bubbles)
-            {
-                SetVisible(false);
-                bubbles.Show(dialogue.character, _runner.Interlocutor, FormatText(text), OnContinueClicked);
-                return;
-            }
             characterText.text = !string.IsNullOrWhiteSpace(dialogue.overrideName) ? dialogue.overrideName
                 : dialogue.character != null ? dialogue.character.displayName
                     : string.Empty;
@@ -144,7 +137,6 @@ namespace _Project.Develop.UI.Dialogue
             ClearChoices();
             SetVisible(false);
             ClearText();
-            if (bubbles) bubbles.Clear();
         }
 
         private void OnContinueClicked()
@@ -152,17 +144,15 @@ namespace _Project.Develop.UI.Dialogue
             if (!_runner.IsRunning || _runner.IsChoosing)
                 return;
 
-            var writer = bubbles ? bubbles.CurrentWriter : _contentWriter;
-            if (writer && writer.IsWriting)
+            if (_contentWriter.IsWriting)
             {
-                writer.SkipWriter();
+                _contentWriter.SkipWriter();
                 return;
             }
             
             if (notebook && _lineClue)
             {
-                var label = bubbles ? bubbles.CurrentLabel : contentText;
-                notebook.ContinueWithClueText(_lineClue, label, _runner.Continue);
+                notebook.ContinueWithClueText(_lineClue, contentText, _runner.Continue);
                 return;
             }
 

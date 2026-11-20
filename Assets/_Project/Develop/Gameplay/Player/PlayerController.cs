@@ -1,6 +1,7 @@
 using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.Player.Abilities;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace _Project.Develop.Gameplay.Player
         private bool _hasTarget;
         
         private InputController _input;
+        private PlayerAbility _ability;
         private UnityCamera _camera;
         
         public Vector2 Velocity => _rb.linearVelocity;
@@ -33,6 +35,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private void Start()
         {
+            _ability = GetComponent<PlayerAbility>();
             _rb = GetComponent<Rigidbody2D>();
             _camera = UnityCamera.main;
 
@@ -63,7 +66,7 @@ namespace _Project.Develop.Gameplay.Player
                     continue;
 
                 var clue = hit.collider.GetComponentInParent<IWorldClue>();
-                if (clue != null && !clue.IsCollected && clue.CanCollect(_input.ActiveSkill))
+                if (clue != null && !clue.IsCollected && clue.CanCollect(_ability.ActiveSkill))
                     return;
             }
 
