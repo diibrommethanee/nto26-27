@@ -1,5 +1,6 @@
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
+using _Project.Develop.Gameplay.Player.Abilities;
 using UnityEngine;
 using PrimeTween;
 using VContainer;
@@ -15,12 +16,13 @@ namespace _Project.Develop.Gameplay.Player
         [SerializeField] private float hideDuration = 0.15f;
         
         private InputController _input;
+        private PlayerAbility _ability;
         private EvidenceService _evidenceService;
         private UnityCamera _camera;
         
         private IInteractable _currentTarget;
-        private IWorldEvidence _currentHoldTarget;
-        private IWorldEvidence _holdingTarget;
+        private IWorldClue _currentHoldTarget;
+        private IWorldClue _holdingTarget;
         private float _holdProgress;
         
         [Inject]
@@ -32,6 +34,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Start()
         {
+            _ability = GetComponent<PlayerAbility>();
             _camera = UnityCamera.main;
             
             interactIcon.localScale = Vector3.zero;
@@ -103,16 +106,16 @@ namespace _Project.Develop.Gameplay.Player
             var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
 
             IInteractable target = null;
-            IWorldEvidence holdTarget = null;
+            IWorldClue holdTarget = null;
             foreach (var hit in hits)
             {
                 if (hit.collider == null) continue;
 
                 var interactiveCandidate = hit.collider.GetComponentInParent<IInteractable>();
-                var holdCandidate = hit.collider.GetComponentInParent<IWorldEvidence>();
+                var holdCandidate = hit.collider.GetComponentInParent<IWorldClue>();
 
                 if (holdCandidate != null &&
-                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_input.ActiveSkill)))
+                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_ability.ActiveSkill)))
                     holdCandidate = null;
 
                 if (interactiveCandidate == null && holdCandidate == null) continue;
@@ -134,7 +137,7 @@ namespace _Project.Develop.Gameplay.Player
             interactIcon.position = worldPos + iconOffset;
         }
 
-        private void SetTarget(IInteractable target, IWorldEvidence holdTarget)
+        private void SetTarget(IInteractable target, IWorldClue holdTarget)
         {
             if (!ReferenceEquals(holdTarget, _holdingTarget))
                 CancelHold();

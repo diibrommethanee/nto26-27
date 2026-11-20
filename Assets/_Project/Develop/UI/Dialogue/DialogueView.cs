@@ -1,6 +1,9 @@
+using _Project.Develop.Data.Evidence;
 using _Project.Develop.Gameplay.Dialogue;
+using _Project.Develop.UI.Evidence;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using MessagePipe;
 using TMPEffects.Components;
 using TMPro;
@@ -16,6 +19,10 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private TMP_Text contentText;
         [SerializeField] private RectTransform choicesContainer;
         
+        [SerializeField] private EvidenceView notebook;
+
+        private Clue _lineClue;
+
         private CanvasGroup _group;
         private Button _continueButton;
 
@@ -59,14 +66,28 @@ namespace _Project.Develop.UI.Dialogue
             _contentWriter.StopWriter();
             
             var dialogue = message.dialogue;
+            _lineClue = dialogue.clue;
+            var text = dialogue.text ?? string.Empty;
+            if (_lineClue && notebook)
+                text = TagCluePhrases(text);
             characterText.text = !string.IsNullOrWhiteSpace(dialogue.overrideName) ? dialogue.overrideName
                 : dialogue.character != null ? dialogue.character.displayName
                     : string.Empty;
 
             SetVisible(true);
             
-            _contentWriter.SetText(FormatText(dialogue.text));
+            _contentWriter.SetText(FormatText(text));
             _contentWriter.StartWriter();
+        }
+
+        private static string TagCluePhrases(string text)
+        {
+            var index = 0;
+            return Regex.Replace(text, @"<(?<tag>highlight|wave|h|w)>(?<phrase>.*?)</\k<tag>>",
+                match => string.IsNullOrWhiteSpace(match.Groups["phrase"].Value)
+                    ? match.Value
+                    : $"<link=\"{EvidenceView.DialogueClueLinkPrefix}{index++}\">{match.Value}</link>",
+                RegexOptions.Singleline);
         }
 
         private static string FormatText(string text)
@@ -129,6 +150,12 @@ namespace _Project.Develop.UI.Dialogue
                 return;
             }
             
+            if (notebook && _lineClue)
+            {
+                notebook.ContinueWithClueText(_lineClue, contentText, _runner.Continue);
+                return;
+            }
+
             _runner.Continue();
         }
 
