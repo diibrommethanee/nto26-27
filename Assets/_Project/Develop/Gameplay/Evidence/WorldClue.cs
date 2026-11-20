@@ -26,6 +26,7 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool IsCollected { get; private set; }
         public float HoldDuration => holdDuration;
+        public ClueSkillRequirement RequiredSkill => requiredSkill;
 
         public bool CanCollect(SkillType? activeSkill)
         {

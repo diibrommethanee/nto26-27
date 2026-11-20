@@ -24,6 +24,7 @@ namespace _Project.Develop.Gameplay.Player
         private IWorldClue _currentHoldTarget;
         private IWorldClue _holdingTarget;
         private float _holdProgress;
+        private PlayerLasso _lasso;
         
         [Inject]
         private void Construct(InputController input, EvidenceService evidenceService)
@@ -38,6 +39,9 @@ namespace _Project.Develop.Gameplay.Player
             _camera = UnityCamera.main;
             
             interactIcon.localScale = Vector3.zero;
+
+            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability,
+                () => _currentTarget?.Interact(), gameObject);
         }
         
         private void Update()
@@ -49,9 +53,6 @@ namespace _Project.Develop.Gameplay.Player
 
             if (_currentTarget != null)
                 PositionIcon(mousePos);
-
-            if (_input.Actions.Player.Interaction.WasPressedThisFrame())
-                _currentTarget?.Interact();
         }
 
         private void UpdateHoldInteraction()
@@ -112,10 +113,12 @@ namespace _Project.Develop.Gameplay.Player
                 if (hit.collider == null) continue;
 
                 var interactiveCandidate = hit.collider.GetComponentInParent<IInteractable>();
-                var holdCandidate = hit.collider.GetComponentInParent<IWorldClue>();
+                var holdCandidate = hit.collider.GetComponentInParent<WorldClue>();
 
                 if (holdCandidate != null &&
-                    (holdCandidate.IsCollected || !holdCandidate.CanCollect(_ability.ActiveSkill)))
+                    (holdCandidate.IsCollected ||
+                     holdCandidate.RequiredSkill == ClueSkillRequirement.None ||
+                     !holdCandidate.CanCollect(_ability.ActiveSkill)))
                     holdCandidate = null;
 
                 if (interactiveCandidate == null && holdCandidate == null) continue;
@@ -161,5 +164,11 @@ namespace _Project.Develop.Gameplay.Player
                 Tween.Scale(interactIcon, Vector3.one, showDuration, ease: Ease.OutBack);
             }
         }
+
+        private void OnDestroy()
+        {
+            _lasso?.Dispose();
+        }
     }
+
 }

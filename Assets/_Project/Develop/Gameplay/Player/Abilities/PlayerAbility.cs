@@ -14,20 +14,28 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private UnityCamera _camera;
 
         private PlayerSmellAbility _smell;
+        private IBufferedPublisher<SelectedSkillChanged> _selectedSkillPublisher;
         private bool _subscribed;
 
         public SkillType SelectedSkill { get; private set; } = SkillType.Smell;
         public SkillType? ActiveSkill { get; private set; }
 
         [Inject]
-        private void Construct(InputController input, IBufferedPublisher<SmellVisibilityChanged> visibility)
+        private void Construct(InputController input,
+            IBufferedPublisher<SmellVisibilityChanged> visibility,
+            IBufferedPublisher<SelectedSkillChanged> selectedSkillPublisher)
         {
             _input = input;
             _smell = new PlayerSmellAbility(visibility);
+            _selectedSkillPublisher = selectedSkillPublisher;
             if (isActiveAndEnabled) Subscribe();
         }
 
-        private void Start() => _camera = UnityCamera.main;
+        private void Start()
+        {
+            _camera = UnityCamera.main;
+            PublishSelectedSkill();
+        }
 
         private void OnEnable()
         {
@@ -54,7 +62,11 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private void OnSwitchSkill(InputAction.CallbackContext _)
         {
             SelectedSkill = SelectedSkill == SkillType.Smell ? SkillType.Hearing : SkillType.Smell;
+            PublishSelectedSkill();
         }
+
+        private void PublishSelectedSkill() =>
+            _selectedSkillPublisher.Publish(new SelectedSkillChanged(SelectedSkill));
 
         private void OnUseSkill(InputAction.CallbackContext _)
         {

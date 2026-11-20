@@ -31,6 +31,7 @@ namespace _Project.Develop.Infrastructure.DI
             
             builder.RegisterMessageBroker<ZoomModeChanged>(options);
             builder.RegisterMessageBroker<SmellVisibilityChanged>(options);
+            builder.RegisterMessageBroker<SelectedSkillChanged>(options);
             builder.RegisterMessageBroker<DialogueShown>(options);
             builder.RegisterMessageBroker<DialogueEnded>(options);
             builder.RegisterMessageBroker<DialogueChoicesShown>(options);
