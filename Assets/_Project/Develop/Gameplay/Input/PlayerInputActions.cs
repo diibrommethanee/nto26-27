@@ -100,7 +100,7 @@ namespace _Project.Develop.Gameplay.Input
                     ""id"": ""8061e88e-f8b0-4c08-95d7-d47f1fe8483b"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Tap(duration=0.3,pressPoint=0.5)"",
                     ""initialStateCheck"": false,
                     ""priority"": 0
                 },
@@ -131,6 +131,26 @@ namespace _Project.Develop.Gameplay.Input
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""SwitchSkill"",
+                    ""type"": ""Button"",
+                    ""id"": ""aac15050-ce89-42a0-9f08-dd541d95679a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""UseSkill"",
+                    ""type"": ""Button"",
+                    ""id"": ""d3f30a52-463a-4d7e-a8ab-abe42f514a22"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": ""Hold(duration=0.3)"",
                     ""initialStateCheck"": false,
                     ""priority"": 0
                 }
@@ -177,6 +197,28 @@ namespace _Project.Develop.Gameplay.Input
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Interaction"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3dac92c6-d535-4d37-b4d6-004b22da1b3a"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": ""Tap(duration=0.2)"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchSkill"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""80490c63-494b-4bdb-af27-4ee4730e0eb7"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": ""Hold(duration=0.2)"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""UseSkill"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -828,6 +870,8 @@ namespace _Project.Develop.Gameplay.Input
             m_Player_CameraPan = m_Player.FindAction("CameraPan", throwIfNotFound: true);
             m_Player_MousePosition = m_Player.FindAction("MousePosition", throwIfNotFound: true);
             m_Player_Interaction = m_Player.FindAction("Interaction", throwIfNotFound: true);
+            m_Player_SwitchSkill = m_Player.FindAction("SwitchSkill", throwIfNotFound: true);
+            m_Player_UseSkill = m_Player.FindAction("UseSkill", throwIfNotFound: true);
             // Camera
             m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
             m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
@@ -930,6 +974,8 @@ namespace _Project.Develop.Gameplay.Input
         private readonly InputAction m_Player_CameraPan;
         private readonly InputAction m_Player_MousePosition;
         private readonly InputAction m_Player_Interaction;
+        private readonly InputAction m_Player_SwitchSkill;
+        private readonly InputAction m_Player_UseSkill;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -957,6 +1003,14 @@ namespace _Project.Develop.Gameplay.Input
             /// Provides access to the underlying input action "Player/Interaction".
             /// </summary>
             public InputAction @Interaction => m_Wrapper.m_Player_Interaction;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/SwitchSkill".
+            /// </summary>
+            public InputAction @SwitchSkill => m_Wrapper.m_Player_SwitchSkill;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/UseSkill".
+            /// </summary>
+            public InputAction @UseSkill => m_Wrapper.m_Player_UseSkill;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -995,6 +1049,12 @@ namespace _Project.Develop.Gameplay.Input
                 @Interaction.started += instance.OnInteraction;
                 @Interaction.performed += instance.OnInteraction;
                 @Interaction.canceled += instance.OnInteraction;
+                @SwitchSkill.started += instance.OnSwitchSkill;
+                @SwitchSkill.performed += instance.OnSwitchSkill;
+                @SwitchSkill.canceled += instance.OnSwitchSkill;
+                @UseSkill.started += instance.OnUseSkill;
+                @UseSkill.performed += instance.OnUseSkill;
+                @UseSkill.canceled += instance.OnUseSkill;
             }
 
             /// <summary>
@@ -1018,6 +1078,12 @@ namespace _Project.Develop.Gameplay.Input
                 @Interaction.started -= instance.OnInteraction;
                 @Interaction.performed -= instance.OnInteraction;
                 @Interaction.canceled -= instance.OnInteraction;
+                @SwitchSkill.started -= instance.OnSwitchSkill;
+                @SwitchSkill.performed -= instance.OnSwitchSkill;
+                @SwitchSkill.canceled -= instance.OnSwitchSkill;
+                @UseSkill.started -= instance.OnUseSkill;
+                @UseSkill.performed -= instance.OnUseSkill;
+                @UseSkill.canceled -= instance.OnUseSkill;
             }
 
             /// <summary>
@@ -1453,6 +1519,20 @@ namespace _Project.Develop.Gameplay.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnInteraction(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "SwitchSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnSwitchSkill(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "UseSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnUseSkill(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

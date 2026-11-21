@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eafa34a0de8532b4aad173f06963d2d5, type: 3}
+  m_Name: Hypothesis1
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.Hypothesis
+  title: "\u0413\u043B\u0430\u0432\u0430 0 \u0433\u0438\u043F\u043E\u0442\u0435\u0437\u0430"
+  nodes:
+  - type: 0
+    text: "\u042D\u0442\u043E\u0442 \u043F\u0438\u0440\u043E\u0433 \u0431\u044B\u043B \u0443\u043A\u0440\u0430\u0434\u0435\u043D"
+    correctClue: {fileID: 0}
+    correctAnswerFill: 
+  - type: 1
+    text: 
+    correctClue: {fileID: 11400000, guid: b4487bb94e07e0e48a213ab6e4fbb2a7, type: 2}
+    correctAnswerFill: "\u0441\u043B\u043E\u043D\u043E\u043C"
+  - type: 0
+    text: "\u0430 \u043E\u043D \u0431\u044B\u043B"
+    correctClue: {fileID: 0}
+    correctAnswerFill: 
+  - type: 1
+    text: 
+    correctClue: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+    correctAnswerFill: "\u043A\u0440\u0443\u0442\u044B\u043C"
+  reward:
+    rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }

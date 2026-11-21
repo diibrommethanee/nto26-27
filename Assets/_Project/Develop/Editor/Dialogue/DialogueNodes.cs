@@ -1,5 +1,6 @@
 using System;
 using _Project.Develop.Data.Dialogue;
+using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Npc;
 using _Project.Develop.Data.Questing.Quests;
 using Unity.GraphToolkit.Editor;
@@ -28,6 +29,8 @@ namespace _Project.Develop.Editor.Dialogue
             context.AddInputPort<string>("Text").AsTextArea(5, 8).Build();
 
             context.AddInputPort<Quest>("Quest").WithDisplayName("Quest").Build();
+            
+            context.AddInputPort<Clue>("Evidence").WithDisplayName("Clue").Build();
 
             context.AddInputPort<bool>("PublishTalked").WithDisplayName("Publish Talked").WithDefaultValue(false).Build();
             
@@ -92,6 +95,14 @@ namespace _Project.Develop.Editor.Dialogue
                 {
                     context.AddInputPort<NpcData>($"Character{i}").WithDisplayName("Character").Build();
                     context.AddInputPort<int>($"MoodThreshold{i}").WithDisplayName("Threshold").WithDefaultValue(0).Build();
+                }
+                else if (condition == ChoiceConditionType.HasClue)
+                {
+                    context.AddInputPort<Clue>($"Evidence{i}").WithDisplayName("Clue").Build();
+                }
+                else if (condition == ChoiceConditionType.HasHypothesis)
+                {
+                    context.AddInputPort<Hypothesis>($"Hypothesis{i}").WithDisplayName("Hypothesis").Build();
                 }
 
                 context.AddOutputPort($"Out{i}").WithDisplayName(string.Empty).WithCapacity(PortCapacity.Single).Build();
