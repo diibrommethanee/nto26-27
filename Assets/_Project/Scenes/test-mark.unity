@@ -6475,6 +6475,7 @@ MonoBehaviour:
   threadContainer: {fileID: 46106089481541086}
   notebookButton: {fileID: 6454474946867833675}
   cluePrefab: {fileID: 8551615079845308726, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
+  wordCluePrefab: {fileID: 3651951977518508176, guid: 9dfb3a903c884ed093e9d4f2182d3082, type: 3}
   threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
   currentHypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
   openDuration: 0.32
