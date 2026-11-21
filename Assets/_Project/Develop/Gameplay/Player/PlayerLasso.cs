@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Player.Abilities;
@@ -10,7 +12,7 @@ using UnityCamera = UnityEngine.Camera;
 
 namespace _Project.Develop.Gameplay.Player
 {
-    internal sealed class PlayerLasso : IDisposable
+    internal class PlayerLasso : IDisposable
     {
         private const float Radius = 3f;
         private const float CloseDistance = 1.25f;
@@ -21,7 +23,7 @@ namespace _Project.Develop.Gameplay.Player
         private readonly EvidenceService _evidence;
         private readonly UnityCamera _camera;
         private readonly PlayerAbility _ability;
-        private readonly Action _onClick;
+        private readonly CancellationToken _destroyToken;
         private readonly List<Vector2> _points = new();
         private readonly LineRenderer _line;
         private readonly Material _material;
@@ -30,13 +32,13 @@ namespace _Project.Develop.Gameplay.Player
         private bool _drawing;
 
         public PlayerLasso(InputController input, EvidenceService evidence, UnityCamera camera,
-            PlayerAbility ability, Action onClick, GameObject owner)
+            PlayerAbility ability, GameObject owner)
         {
             _input = input;
             _evidence = evidence;
             _camera = camera;
             _ability = ability;
-            _onClick = onClick;
+            _destroyToken = owner.GetCancellationTokenOnDestroy();
 
             _line = owner.AddComponent<LineRenderer>();
             _line.useWorldSpace = true;
@@ -68,12 +70,21 @@ namespace _Project.Develop.Gameplay.Player
 
         private void Begin(Vector2 position)
         {
+            BeginPressAsync(position).Forget();
+        }
+
+        private async UniTask BeginPressAsync(Vector2 position)
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate, _destroyToken);
+
+            if (_input.CutsceneActive || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+                return;
+
             _held = true;
             _drawing = false;
             _points.Clear();
             _startPosition = position;
-            if (_ability.ActiveSkill != null || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
-                return;
+            if (_ability.ActiveSkill != null) return;
             _points.Add(ToWorld(_startPosition));
             _line.enabled = true;
             DrawLine();
@@ -81,11 +92,18 @@ namespace _Project.Develop.Gameplay.Player
 
         private void End()
         {
+            FinishPressAsync().Forget();
+        }
+
+        private async UniTask FinishPressAsync()
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate, _destroyToken);
+
             if (!_held)
                 return;
 
             _held = false;
-            if (_drawing)
+            if (_drawing && !_input.CutsceneActive)
                 CollectEnclosedClue();
 
             _points.Clear();

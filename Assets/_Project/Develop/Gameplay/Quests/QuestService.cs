@@ -39,8 +39,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void OnStartQuest(StartQuestEvent evt)
         {
-            if (StartQuest(evt.Quest)) Debug.Log("Quest started");
-            else  Debug.Log("Quest not started");
+            if (!StartQuest(evt.Quest)) Debug.Log("Quest not started");
         }
         
         public bool StartQuest(Quest data)
@@ -101,7 +100,6 @@ namespace _Project.Develop.Gameplay.Quests
                     continue;
 
                 step.AddProgress(amount);
-                Debug.Log("Updated quest progress");
 
                 if (!step.IsCompleted)
                     continue;
@@ -131,8 +129,6 @@ namespace _Project.Develop.Gameplay.Quests
             
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data));
-            
-            Debug.Log("Completed quest");
         }
 
         public void Dispose()

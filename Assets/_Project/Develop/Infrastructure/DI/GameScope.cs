@@ -7,6 +7,7 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Player;
 using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Timeline;
 using _Project.Develop.Gameplay.Train;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Infrastructure.EntryPoints;
@@ -29,8 +30,14 @@ namespace _Project.Develop.Infrastructure.DI
             
             var options = new MessagePipeOptions();
             
+            builder.RegisterMessageBroker<ForceDayPhase>(options);
+            builder.RegisterMessageBroker<DayEndingCutsceneFinished>(options);
+            builder.RegisterMessageBroker<DayPhaseChanged>(options);
+            builder.RegisterEntryPoint<DayService>().AsSelf();
+
             builder.RegisterMessageBroker<ZoomModeChanged>(options);
             builder.RegisterMessageBroker<SmellVisibilityChanged>(options);
+            builder.RegisterMessageBroker<HearingChanged>(options);
             builder.RegisterMessageBroker<SelectedSkillChanged>(options);
             builder.RegisterMessageBroker<DialogueShown>(options);
             builder.RegisterMessageBroker<DialogueEnded>(options);

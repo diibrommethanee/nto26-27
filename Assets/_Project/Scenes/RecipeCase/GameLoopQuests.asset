@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acb436ead6900ed499fbeba2f1f6e886, type: 3}
+  m_Name: GameLoopQuests
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Questing.QuestDatabase
+  quests:
+  - {fileID: 11400000, guid: d13fef282d33d884aa6c3235592bdfb2, type: 2}
+  - {fileID: 11400000, guid: 7c298333ce840bb48a80569543eb2fb4, type: 2}

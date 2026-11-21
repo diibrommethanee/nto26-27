@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 272a0125864fef54f9c61f713b3ad565, type: 3}
+  m_Name: CaseBoard
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.EvidenceDatabase
+  recipes:
+  - first: {fileID: 11400000, guid: d93a9d1323f532c4885358bbb1a55405, type: 2}
+    second: {fileID: 11400000, guid: 1099d8a75894c894083363e8d0a36574, type: 2}
+    result: {fileID: 11400000, guid: 4764b1f9a7550364f938f3d7e1f8ba7a, type: 2}
+  - first: {fileID: 11400000, guid: d93a9d1323f532c4885358bbb1a55405, type: 2}
+    second: {fileID: 11400000, guid: b0aa5b34513fb914db57651066fb19c0, type: 2}
+    result: {fileID: 11400000, guid: 4764b1f9a7550364f938f3d7e1f8ba7a, type: 2}
