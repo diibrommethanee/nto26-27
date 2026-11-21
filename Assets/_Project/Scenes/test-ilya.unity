@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3869782}
   m_Layer: 5
-  m_Name: EvidenceContainer
+  m_Name: ClueContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -373,7 +373,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1897585335}
+      - m_Target: {fileID: 1897585340}
         m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Close
         m_Mode: 1
@@ -4513,7 +4513,7 @@ MonoBehaviour:
   characterText: {fileID: 1821942173}
   contentText: {fileID: 1466968596}
   choicesContainer: {fileID: 463161105}
-  notebook: {fileID: 1897585335}
+  notebook: {fileID: 0}
 --- !u!222 &1262669473
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6645,9 +6645,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1897585336}
   - component: {fileID: 1897585339}
-  - component: {fileID: 1897585335}
   - component: {fileID: 1897585338}
   - component: {fileID: 1897585337}
+  - component: {fileID: 1897585340}
   m_Layer: 5
   m_Name: Evidence View
   m_TagString: Untagged
@@ -6655,18 +6655,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1897585335
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1897585334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
 --- !u!224 &1897585336
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6738,6 +6726,33 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
+--- !u!114 &1897585340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1897585334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ec1cbca13affa144b643a908489a3cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
+  board: {fileID: 1101049614}
+  clueContainer: {fileID: 3869782}
+  threadContainer: {fileID: 1613925127}
+  notebookButton: {fileID: 1929716189}
+  cluePrefab: {fileID: 3651951977518508176, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
+  wordCluePrefab: {fileID: 3651951977518508176, guid: 9dfb3a903c884ed093e9d4f2182d3082, type: 3}
+  threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
+  currentHypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
+  openDuration: 0.32
+  closeDuration: 0.18
+  slideDistance: 30
+  closedScale: 0.94
+  clueFlyDuration: 0.55
+  clueFlyArc: 90
+  clueFlyIconSize: 48
 --- !u!1 &1929716188
 GameObject:
   m_ObjectHideFlags: 0
@@ -6820,7 +6835,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1897585335}
+      - m_Target: {fileID: 1897585340}
         m_TargetAssemblyTypeName: _Project.Develop.UI.Evidence.EvidenceView, UI
         m_MethodName: Open
         m_Mode: 1
@@ -7869,7 +7884,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31ae675b219575647808981b334ac6c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueDebugSpawner
-  boardController: {fileID: 1897585335}
+  boardController: {fileID: 1897585340}
   clue: {fileID: 0}
   spawnPosition: {x: 0, y: 0}
 --- !u!1660057539 &9223372036854775807

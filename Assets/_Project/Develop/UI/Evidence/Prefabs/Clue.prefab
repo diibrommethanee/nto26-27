@@ -98,8 +98,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5832834103288292970}
-  - component: {fileID: 8551615079845308726}
   - component: {fileID: 1914053283363301551}
+  - component: {fileID: 3651951977518508176}
   m_Layer: 0
   m_Name: Clue
   m_TagString: Untagged
@@ -129,24 +129,6 @@ RectTransform:
   m_AnchoredPosition: {x: 56, y: 90.29468}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &8551615079845308726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3420552595341122491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ec1cbca13affa144b643a908489a3cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueView
-  icon: {fileID: 9215240495425225474}
-  selectedVisual: {fileID: 1601964822342704618}
-  spawnDuration: 0.3
-  selectScale: 1.05
-  hoverScale: 1.03
-  dragScale: 1.08
 --- !u!225 &1914053283363301551
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -159,6 +141,25 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &3651951977518508176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3420552595341122491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c8a064b0e84444f97d67ae9235547f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueView
+  icon: {fileID: 9215240495425225474}
+  title: {fileID: 1172714359621074421}
+  selectedVisual: {fileID: 1601964822342704618}
+  spawnDuration: 0.3
+  selectScale: 1.05
+  hoverScale: 1.03
+  dragScale: 1.08
 --- !u!1 &3886968458326215822
 GameObject:
   m_ObjectHideFlags: 0

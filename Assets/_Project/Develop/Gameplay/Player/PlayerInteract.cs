@@ -46,6 +46,11 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Update()
         {
+            if (_input.Actions.Player.enabled)
+                _lasso.Tick();
+            else
+                _lasso.Cancel();
+
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
             UpdateTarget(mousePos);
 
