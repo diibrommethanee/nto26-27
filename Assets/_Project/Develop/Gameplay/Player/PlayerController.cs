@@ -24,6 +24,7 @@ namespace _Project.Develop.Gameplay.Player
         private InputController _input;
         private PlayerAbility _ability;
         private UnityCamera _camera;
+        private Vector2 _moveStartPosition;
         
         public Vector2 Velocity => _rb.linearVelocity;
 
@@ -39,7 +40,13 @@ namespace _Project.Develop.Gameplay.Player
             _rb = GetComponent<Rigidbody2D>();
             _camera = UnityCamera.main;
 
+            _input.Actions.Player.MoveTo.started += OnMoveStarted;
             _input.Actions.Player.MoveTo.performed += OnMoveTo;
+        }
+
+        private void OnMoveStarted(InputAction.CallbackContext _)
+        {
+            _moveStartPosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
         }
 
         private void OnMoveTo(InputAction.CallbackContext _)
@@ -55,6 +62,8 @@ namespace _Project.Develop.Gameplay.Player
                 return;
             
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            if (Vector2.Distance(_moveStartPosition, mousePos) >= 12f)
+                return;
             if (!_camera.pixelRect.Contains(mousePos))
                 return;
 
@@ -119,6 +128,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private void OnDestroy()
         {
+            _input.Actions.Player.MoveTo.started -= OnMoveStarted;
             _input.Actions.Player.MoveTo.performed -= OnMoveTo;
         }
     }

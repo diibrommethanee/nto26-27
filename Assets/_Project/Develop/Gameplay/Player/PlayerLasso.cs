@@ -26,7 +26,6 @@ namespace _Project.Develop.Gameplay.Player
         private readonly LineRenderer _line;
         private readonly Material _material;
         private Vector2 _startPosition;
-        private float _pressedAt;
         private bool _held;
         private bool _drawing;
 
@@ -48,44 +47,39 @@ namespace _Project.Develop.Gameplay.Player
             _line.startColor = _line.endColor = Color.yellow;
             _line.enabled = false;
 
-            _input.Actions.Camera.Mode.started += OnPressed;
-            _input.Actions.Camera.Mode.canceled += OnReleased;
-            _input.Actions.Player.MousePosition.performed += OnMouseMoved;
         }
 
-        private void OnPressed(InputAction.CallbackContext _)
+        public void Tick()
+        {
+            if (Mouse.current == null) return;
+            var button = Mouse.current.leftButton;
+            var position = Mouse.current.position.ReadValue();
+            if (button.wasPressedThisFrame) Begin(position);
+            if (_held && button.isPressed && _points.Count > 0)
+            {
+                if (!_drawing && Vector2.Distance(_startPosition, position) < StartMovePixels) return;
+                _drawing = true;
+                var point = ToWorld(position);
+                if (Vector2.Distance(_points[_points.Count - 1], point) > 0.02f) _points.Add(point);
+                DrawLine();
+            }
+            if (button.wasReleasedThisFrame) End();
+        }
+
+        private void Begin(Vector2 position)
         {
             _held = true;
             _drawing = false;
             _points.Clear();
-            _pressedAt = Time.unscaledTime;
-            if (_ability.ActiveSkill != null)
+            _startPosition = position;
+            if (_ability.ActiveSkill != null || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
                 return;
-
-            _startPosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                return;
-
             _points.Add(ToWorld(_startPosition));
             _line.enabled = true;
             DrawLine();
         }
 
-        private void OnMouseMoved(InputAction.CallbackContext context)
-        {
-            if (!_held || _points.Count == 0)
-                return;
-
-            var position = context.ReadValue<Vector2>();
-            if (!_drawing && Vector2.Distance(_startPosition, position) < StartMovePixels)
-                return;
-
-            _drawing = true;
-            _points.Add(ToWorld(position));
-            DrawLine();
-        }
-
-        private void OnReleased(InputAction.CallbackContext _)
+        private void End()
         {
             if (!_held)
                 return;
@@ -93,9 +87,16 @@ namespace _Project.Develop.Gameplay.Player
             _held = false;
             if (_drawing)
                 CollectEnclosedClue();
-            else if (Time.unscaledTime - _pressedAt < 0.2f)
-                _onClick?.Invoke();
 
+            _points.Clear();
+            _line.positionCount = 0;
+            _line.enabled = false;
+        }
+
+        public void Cancel()
+        {
+            _held = false;
+            _drawing = false;
             _points.Clear();
             _line.positionCount = 0;
             _line.enabled = false;
@@ -172,9 +173,7 @@ namespace _Project.Develop.Gameplay.Player
 
         public void Dispose()
         {
-            _input.Actions.Camera.Mode.started -= OnPressed;
-            _input.Actions.Camera.Mode.canceled -= OnReleased;
-            _input.Actions.Player.MousePosition.performed -= OnMouseMoved;
+            Cancel();
             UnityEngine.Object.Destroy(_line);
             UnityEngine.Object.Destroy(_material);
         }

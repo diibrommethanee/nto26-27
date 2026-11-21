@@ -26,6 +26,7 @@ namespace _Project.Develop.Gameplay.Input
         private float _modePressedAt = float.PositiveInfinity;
         private Vector2 _modeStartPosition;
         private bool _modeMoved;
+        private bool _notebookOpen;
 
 
         public void Start()
@@ -60,6 +61,15 @@ namespace _Project.Develop.Gameplay.Input
                 ExitZoomMode();
         }
 
+        public void SetNotebookOpen(bool isOpen)
+        {
+            if (_notebookOpen == isOpen)
+                return;
+
+            _notebookOpen = isOpen;
+            RefreshPlayerActions();
+        }
+
         public void Tick()
         {
             if (!Actions.Camera.Mode.IsPressed())
@@ -87,7 +97,7 @@ namespace _Project.Develop.Gameplay.Input
             _modeMoved = false;
             var wasZooming = IsZoomMode;
             Actions.Camera.Zoom.Disable();
-            Actions.Player.Enable();
+            RefreshPlayerActions();
             if (wasZooming)
                 _zoomModePublisher.Publish(new ZoomModeChanged(false));
         }
@@ -95,9 +105,17 @@ namespace _Project.Develop.Gameplay.Input
         private void ExitZoomMode()
         {
             Actions.Camera.Zoom.Disable();
-            Actions.Player.Enable();
+            RefreshPlayerActions();
             _modePressedAt = float.PositiveInfinity;
             _zoomModePublisher.Publish(new ZoomModeChanged(false));
+        }
+
+        private void RefreshPlayerActions()
+        {
+            if (_notebookOpen || IsZoomMode)
+                Actions.Player.Disable();
+            else
+                Actions.Player.Enable();
         }
 
         public void Dispose()

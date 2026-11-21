@@ -29,6 +29,7 @@ namespace _Project.Develop.UI.Evidence
 
         [Header("Prefabs")]
         [SerializeField] private ClueView cluePrefab;
+        [SerializeField] private ClueView wordCluePrefab;
         [SerializeField] private ClueThreadView threadPrefab;
         [SerializeField] private Hypothesis currentHypothesis;
 
@@ -80,6 +81,7 @@ namespace _Project.Develop.UI.Evidence
             _openScale = board.localScale;
             _openY = board.anchoredPosition.y;
             _isOpen = _canvasGroup.interactable && _canvasGroup.blocksRaycasts && _canvasGroup.alpha > 0.99f;
+            _input.SetNotebookOpen(_isOpen);
             _canvasGroup.alpha = _isOpen ? 1f : 0f;
             SetInteractive(_isOpen);
             if (!_isOpen)
@@ -317,7 +319,10 @@ namespace _Project.Develop.UI.Evidence
 
         private void AddClueCard(Clue clue, Vector2 position)
         {
-            Instantiate(cluePrefab, clueContainer).Initialize(clue, board, position, SelectClue);
+            if (clue is WordClue wordClue)
+                Instantiate(wordCluePrefab, clueContainer).Initialize(wordClue, board, position, SelectClue);
+            else
+                Instantiate(cluePrefab, clueContainer).Initialize(clue, board, position, SelectClue);
             _cardCount++;
         }
 
@@ -348,6 +353,7 @@ namespace _Project.Develop.UI.Evidence
                 return;
 
             _isOpen = open;
+            _input.SetNotebookOpen(open);
             _transition.Stop();
             SetInteractive(false);
             var duration = open ? openDuration : closeDuration;

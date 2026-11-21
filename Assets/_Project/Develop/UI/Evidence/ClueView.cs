@@ -11,7 +11,8 @@ namespace _Project.Develop.UI.Evidence
     public class ClueView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler,
         IPointerEnterHandler, IPointerExitHandler
     {
-        [SerializeField] private UnityEngine.UI.Image icon;
+        [SerializeField] protected UnityEngine.UI.Image icon;
+        [SerializeField] protected TMP_Text title;
         [SerializeField] private GameObject selectedVisual;
         [SerializeField] private float spawnDuration = 0.3f;
         [SerializeField] private float selectScale = 1.05f;
@@ -34,18 +35,27 @@ namespace _Project.Develop.UI.Evidence
         public Clue Data { get; private set; }
         public RectTransform Rect => (RectTransform)transform;
 
-        public void Initialize(Clue data, RectTransform board, Vector2 position, Action<ClueView> onSelected)
+        public virtual void Initialize(Clue data, RectTransform board, Vector2 position, Action<ClueView> onSelected)
         {
             Data = data;
             _board = board;
             _onSelected = onSelected;
-            icon.sprite = data.icon;
-            GetComponentInChildren<TMP_Text>(true).text = data.title;
+            if (data is WordClue wordClue)
+            {
+                icon.sprite = wordClue.noteSprite != null ? wordClue.noteSprite : data.icon;
+                title.text = wordClue.text;
+            }
+            else
+            {
+                icon.sprite = data.icon;
+                title.text = data.title;
+            }
             _baseScale = Rect.localScale;
             _selectionScale = selectedVisual.transform.localScale;
             selectedVisual.SetActive(false);
 
-            Rect.anchoredPosition = position + Vector2.down * 24f;
+            position = ClampToBoard(position);
+            Rect.anchoredPosition = ClampToBoard(position + Vector2.down * 24f);
             Rect.localScale = _baseScale * 0.8f;
             _scaleTween = Tween.Scale(Rect, _baseScale, spawnDuration, Ease.OutBack);
             _spawnMove = Tween.UIAnchoredPositionY(Rect, position.y, spawnDuration, Ease.OutCubic);
@@ -113,13 +123,25 @@ namespace _Project.Develop.UI.Evidence
                 UpdateScale();
             }
 
-            var position = point + _dragOffset;
-            var bounds = _board.rect;
-            var halfWidth = Rect.rect.width * Rect.lossyScale.x / _board.lossyScale.x * 0.5f;
-            var halfHeight = Rect.rect.height * Rect.lossyScale.y / _board.lossyScale.y * 0.5f;
-            position.x = Mathf.Clamp(position.x, bounds.xMin + halfWidth, bounds.xMax - halfWidth);
-            position.y = Mathf.Clamp(position.y, bounds.yMin + halfHeight, bounds.yMax - halfHeight);
+            var position = ClampToBoard(point + _dragOffset);
             Rect.position = _board.TransformPoint(position);
+        }
+
+        private Vector2 ClampToBoard(Vector2 position)
+        {
+            var bounds = _board.rect;
+            var scale = Rect.lossyScale;
+            var boardScale = _board.lossyScale;
+            var halfWidth = Rect.rect.width * Mathf.Abs(scale.x / boardScale.x) * 0.5f;
+            var halfHeight = Rect.rect.height * Mathf.Abs(scale.y / boardScale.y) * 0.5f;
+
+            var minX = bounds.xMin + halfWidth;
+            var maxX = bounds.xMax - halfWidth;
+            var minY = bounds.yMin + halfHeight;
+            var maxY = bounds.yMax - halfHeight;
+            position.x = minX <= maxX ? Mathf.Clamp(position.x, minX, maxX) : bounds.center.x;
+            position.y = minY <= maxY ? Mathf.Clamp(position.y, minY, maxY) : bounds.center.y;
+            return position;
         }
 
         public void OnPointerUp(PointerEventData eventData)
