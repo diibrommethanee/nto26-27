@@ -20,7 +20,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private IBufferedPublisher<SelectedSkillChanged> _selectedSkillPublisher;
         private bool _subscribed;
 
-        public SkillType SelectedSkill { get; private set; } = SkillType.Smell;
+        public SkillType SelectedSkill { get; private set; } = SkillType.Hearing;
         public SkillType? ActiveSkill { get; private set; }
 
         [Inject]
@@ -72,7 +72,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         }
 
         private void PublishSelectedSkill() =>
-            _selectedSkillPublisher.Publish(new SelectedSkillChanged(SelectedSkill));
+            _selectedSkillPublisher.Publish(new SelectedSkillChanged(SelectedSkill, ActiveSkill == SelectedSkill));
 
         private void OnUseSkill(InputAction.CallbackContext _)
         {
@@ -103,6 +103,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             if (wasSmelling != isSmelling)
                 _smell.SetActive(isSmelling);
             if (wasHearing != (skill == SkillType.Hearing)) _hearing.SetActive(skill == SkillType.Hearing);
+            PublishSelectedSkill();
         }
 
         private bool IsPointerOverCollectableClue()
