@@ -6,9 +6,12 @@ namespace _Project.Develop.Gameplay.Player.Abilities
     {
         public SkillType Skill { get; }
 
-        public SelectedSkillChanged(SkillType skill)
+        public bool IsActive { get; }
+
+        public SelectedSkillChanged(SkillType skill, bool isActive = false)
         {
             Skill = skill;
+            IsActive = isActive;
         }
     }
 }

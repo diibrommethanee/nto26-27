@@ -261,15 +261,16 @@ namespace _Project.Develop.UI.Evidence
             label.text = phrase;
             rect.sizeDelta = label.GetPreferredValues(phrase) + new Vector2(8, 4);
 
+            var scaleTween = Tween.Scale(rect, 0.35f, clueFlyDuration, Ease.InCubic);
             try
             {
                 var target = canvas.InverseTransformPoint(notebookButton.position);
-                Tween.Scale(rect, 0.35f, clueFlyDuration, Ease.InCubic);
                 await Tween.LocalPosition(rect, target, clueFlyDuration, Ease.InOutCubic)
                     .SetCancellationToken(destroyCancellationToken);
             }
             finally
             {
+                scaleTween.Stop();
                 Destroy(flight);
             }
         }

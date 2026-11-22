@@ -59,13 +59,15 @@ Shader "UI/Surface Graphic"
     float rimOn = step(.01, rimWidth);
     float2 centred = i.uv - .5;
     float2 radial = centred / max(length(centred), .001);
-    float2 orbit = float2(cos(t * .53), sin(t * .53));
-    float gleam = pow(saturate(.5 + .5 * dot(radial, orbit)), 14) * _Shimmer;
-    float pearl = .5 + .5 * sin(dot(centred, float2(5.1, -3.4)) + t * .38);
+    // A narrow reflection stays on the upper shoulder of the frame.
+    float angle = 2.16 + .055 * sin(t * .30);
+    float2 orbit = float2(cos(angle), sin(angle));
+    float gleam = pow(saturate(.5 + .5 * dot(radial, orbit)), 26) * _Shimmer;
+    float pearl = smoothstep(-.35, .55, dot(centred, float2(-.35, .8)));
     float3 enamel = _Fill.rgb * lerp(.74, 1.12, i.uv.y);
-    enamel += _Edge.rgb * (.035 + .09 * pearl) * _Shimmer;
+    enamel += _Edge.rgb * (.012 + .035 * pearl) * _Shimmer;
     float bevel = exp2(-depth / max(1, 1.8 * rimWidth)) * rimOn;
-    float3 body = enamel + bevel * lerp(_Edge.rgb, _Accent.rgb, gleam) * (.18 + .42 * gleam);
+    float3 body = enamel + bevel * lerp(_Edge.rgb, _Accent.rgb, gleam) * (.13 + .32 * gleam);
     // A fine recessed line follows the stable inner silhouette.
     float inset = abs(d + 2.6 * rimWidth + _Shape.w);
     float fillet = (1 - smoothstep(.25, .25 + aa, inset)) * rimOn;

@@ -2,6 +2,7 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Player.Abilities;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using PrimeTween;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
@@ -21,6 +22,7 @@ namespace _Project.Develop.Gameplay.Player
         private UnityCamera _camera;
         
         private IInteractable _currentTarget;
+        private IInteractable _pressedInteractionTarget;
         private IWorldClue _currentHoldTarget;
         private IWorldClue _holdingTarget;
         private float _holdProgress;
@@ -40,8 +42,7 @@ namespace _Project.Develop.Gameplay.Player
             
             interactIcon.localScale = Vector3.zero;
 
-            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability,
-                () => _currentTarget?.Interact(), gameObject);
+            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability, gameObject);
         }
         
         private void Update()
@@ -58,6 +59,28 @@ namespace _Project.Develop.Gameplay.Player
 
             if (_currentTarget != null)
                 PositionIcon(mousePos);
+        }
+
+        private void LateUpdate()
+        {
+            var interaction = _input.Actions.Player.Interaction;
+            if (!interaction.enabled || _input.CutsceneActive || _input.IsZoomMode)
+            {
+                _pressedInteractionTarget = null;
+                return;
+            }
+
+            bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (interaction.WasPressedThisFrame())
+                _pressedInteractionTarget = pointerOverUi ? null : _currentTarget;
+
+            if (!interaction.WasReleasedThisFrame())
+                return;
+
+            var target = _pressedInteractionTarget;
+            _pressedInteractionTarget = null;
+            if (!pointerOverUi && ReferenceEquals(target, _currentTarget))
+                target?.Interact();
         }
 
         private void UpdateHoldInteraction()

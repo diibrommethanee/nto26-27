@@ -123,7 +123,7 @@ namespace _Project.Develop.UI
         {
             if (_camera == null && Time.unscaledTime >= _nextSearch)
             {
-                _camera = FindFirstObjectByType<CameraController>();
+                _camera = FindAnyObjectByType<CameraController>();
                 _nextSearch = Time.unscaledTime + 0.5f;
             }
             var active = _camera != null && _camera.isActiveAndEnabled;

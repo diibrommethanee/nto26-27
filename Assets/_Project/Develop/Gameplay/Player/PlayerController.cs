@@ -58,7 +58,7 @@ namespace _Project.Develop.Gameplay.Player
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
 
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (_input.CutsceneActive || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
                 return;
             
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
@@ -93,7 +93,7 @@ namespace _Project.Develop.Gameplay.Player
         {
             var velocity = _rb.linearVelocity;
 
-            if (!_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= stats.stoppingDistance)
+            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= stats.stoppingDistance)
             {
                 _hasTarget = false;
                 velocity.x = 0f;

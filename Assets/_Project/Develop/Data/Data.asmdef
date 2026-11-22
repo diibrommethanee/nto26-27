@@ -1,6 +1,7 @@
-﻿{
+{
     "name": "Data",
     "references": [
-        "NaughtyAttributes.Core"
+        "NaughtyAttributes.Core",
+        "Unity.RenderPipelines.Core.Runtime"
     ]
 }

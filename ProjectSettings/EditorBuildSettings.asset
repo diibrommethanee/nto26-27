@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Bootstrap.unity
     guid: 7b248f6b01419eb41ad07c28cd050bd3
   - enabled: 1
-    path: Assets/_Project/Scenes/test-mark.unity
-    guid: 59575dd29b8cd924491df478511f768b
+    path: Assets/_Project/Scenes/Game.unity
+    guid: 5561d8add629a514a8a0c1c5b9c049ba
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
