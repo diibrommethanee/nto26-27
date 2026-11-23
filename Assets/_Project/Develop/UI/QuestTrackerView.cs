@@ -1,7 +1,9 @@
 using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Questing.Quests;
+using _Project.Develop.Data.Surfaces;
 using _Project.Develop.Gameplay.Quests;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.UI.Surface;
 using PrimeTween;
 using System;
 using MessagePipe;
@@ -20,6 +22,8 @@ namespace _Project.Develop.UI
         [SerializeField] private TextMeshProUGUI currentStepText;
 
         private CanvasGroup _group;
+        private SurfaceGraphic _cover;
+        private SurfaceStyle _defaultCoverStyle;
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
         private IDisposable _zoomSubscription;
@@ -54,6 +58,8 @@ namespace _Project.Develop.UI
         private void Start()
         {
             _group = GetComponent<CanvasGroup>();
+            _cover = GetComponent<SurfaceGraphic>();
+            _defaultCoverStyle = _cover.style;
             
             _group.alpha = 0;
             _group.blocksRaycasts = false;
@@ -85,6 +91,7 @@ namespace _Project.Develop.UI
             }
 
             _currentQuest = quest;
+            _cover.style = quest.surfaceStyle != null ? quest.surfaceStyle : _defaultCoverStyle;
             _currentStepId = null;
             _isCompleted = false;
 
@@ -125,6 +132,7 @@ namespace _Project.Develop.UI
             }
 
             _currentQuest = quest;
+            _cover.style = quest.surfaceStyle != null ? quest.surfaceStyle : _defaultCoverStyle;
             _currentStepId = evt.StepId;
             _isCompleted = false;
 

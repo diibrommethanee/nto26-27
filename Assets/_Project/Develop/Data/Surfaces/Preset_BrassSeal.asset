@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df43e7a9fed8b0d41a3a670dab1e80b9, type: 3}
-  m_Name: BrassSeal
+  m_Name: Preset_BrassSeal
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Surface.SurfaceStyle
   fill: {r: 0.7254902, g: 0.5254902, b: 0.40392157, a: 1}
   edge: {r: 0.8392157, g: 0.6862745, b: 0.53333336, a: 1}
@@ -20,3 +20,16 @@ MonoBehaviour:
   border: 2
   ripple: 0.6
   shimmer: 0.8
+  texture: 3
+  customTexture: {fileID: 0}
+  textureMapping: 0
+  textureOpacity: 0.2
+  textureTileSize: 95
+  textureTint: {r: 1, g: 1, b: 1, a: 1}
+  pattern: 0
+  customPattern: {fileID: 0}
+  patternTint: {r: 1, g: 0.9411765, b: 0.8, a: 1}
+  patternOpacity: 0.1
+  patternSpacing: 42
+  patternSize: 0.26
+  staggerPattern: 1
