@@ -33,6 +33,12 @@ namespace _Project.Develop.Gameplay.NPC
             };
         }
         
+        internal void EndDialogueOnExit()
+        {
+            if (_dialogueRunner.Interlocutor == npcData)
+                _dialogueRunner.Stop();
+        }
+
         public void Interact()
         {
             if (_dialogueRunner.IsRunning)

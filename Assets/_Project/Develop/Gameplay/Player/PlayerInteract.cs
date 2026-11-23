@@ -1,9 +1,10 @@
+using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
+using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using PrimeTween;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
 
@@ -11,13 +12,9 @@ namespace _Project.Develop.Gameplay.Player
 {
     public class PlayerInteract : MonoBehaviour
     {
-        [SerializeField] private Transform interactIcon;
-        [SerializeField] private Vector3 iconOffset = new(0.5f, -0.5f);
-        [SerializeField] private float showDuration = 0.25f;
-        [SerializeField] private float hideDuration = 0.15f;
-        
         private InputController _input;
         private PlayerAbility _ability;
+        private PlayerController _player;
         private EvidenceService _evidenceService;
         private UnityCamera _camera;
         
@@ -27,22 +24,23 @@ namespace _Project.Develop.Gameplay.Player
         private IWorldClue _holdingTarget;
         private float _holdProgress;
         private PlayerLasso _lasso;
+        private PlayerStats _stats;
         
         [Inject]
-        private void Construct(InputController input, EvidenceService evidenceService)
+        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats)
         {
             _input = input;
             _evidenceService = evidenceService;
+            _stats = stats;
         }
         
         private void Start()
         {
             _ability = GetComponent<PlayerAbility>();
+            _player = GetComponent<PlayerController>();
             _camera = UnityCamera.main;
-            
-            interactIcon.localScale = Vector3.zero;
 
-            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability, gameObject);
+            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability, gameObject, _stats);
         }
         
         private void Update()
@@ -56,9 +54,6 @@ namespace _Project.Develop.Gameplay.Player
             UpdateTarget(mousePos);
 
             UpdateHoldInteraction();
-
-            if (_currentTarget != null)
-                PositionIcon(mousePos);
         }
 
         private void LateUpdate()
@@ -79,7 +74,12 @@ namespace _Project.Develop.Gameplay.Player
 
             var target = _pressedInteractionTarget;
             _pressedInteractionTarget = null;
-            if (!pointerOverUi && ReferenceEquals(target, _currentTarget))
+            if (pointerOverUi || !ReferenceEquals(target, _currentTarget))
+                return;
+
+            if (target is NpcInteract npc)
+                _player.ApproachNpc(npc);
+            else
                 target?.Interact();
         }
 
@@ -159,14 +159,6 @@ namespace _Project.Develop.Gameplay.Player
             if (!ReferenceEquals(target, _currentTarget) || !ReferenceEquals(holdTarget, _currentHoldTarget))
                 SetTarget(target, holdTarget);
         }
-        
-        private void PositionIcon(Vector2 screenPos)
-        {
-            var worldPos = _camera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -_camera.transform.position.z));
-            worldPos.z = 0f;
-            
-            interactIcon.position = worldPos + iconOffset;
-        }
 
         private void SetTarget(IInteractable target, IWorldClue holdTarget)
         {
@@ -175,22 +167,6 @@ namespace _Project.Develop.Gameplay.Player
 
             _currentTarget = target;
             _currentHoldTarget = holdTarget;
-            Tween.StopAll(onTarget: interactIcon);
-            
-            if (target == null)
-            {
-                if (interactIcon.localScale == Vector3.zero)
-                    return;
-                
-                Tween.Scale(interactIcon, Vector3.zero, hideDuration, ease: Ease.InBack);
-            }
-            else
-            {
-                if (interactIcon.localScale == Vector3.one)
-                    return;
-                
-                Tween.Scale(interactIcon, Vector3.one, showDuration, ease: Ease.OutBack);
-            }
         }
 
         private void OnDestroy()

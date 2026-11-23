@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: Npc2
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Npc.NpcData
   displayName: NPC 2
+  initialMood: 0
   dialogue: {fileID: 7194093555672020370, guid: 86f5de605fcd0be4784abdfb0f5de284, type: 3}
+  surfaceStyle: {fileID: 11400000, guid: 5adcfb948c2e5cc4795c460665d6d457, type: 2}

@@ -1,9 +1,12 @@
 using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Npc;
+using _Project.Develop.Data.Surfaces;
 using _Project.Develop.Gameplay.NPC;
+using _Project.Develop.Gameplay.Input;
 using PrimeTween;
 using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.UI.Evidence;
+using _Project.Develop.UI.Surface;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -31,9 +34,21 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private Button worldContinue;
         [SerializeField] private RectTransform worldBlob;
         [SerializeField] private NpcInteract[] speakers;
+        [SerializeField] private NpcData playerSpeaker;
+        [SerializeField] private Transform playerDialogueAnchor;
         [SerializeField] private Transform worldFallbackAnchor;
 
         private TMPWriter _worldWriter;
+        private SurfaceGraphic _worldSurface;
+        private SurfaceStyle _defaultWorldStyle;
+        private CanvasGroup _worldGroup;
+        private InputController _input;
+        private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IDisposable _zoomSubscription;
+        private Tween _zoomFade;
+        private float _zoomVisibility;
+        private bool _zoomActive;
+        private bool _panelVisible;
         private Tween _blobEntrance;
         private Vector3 _canvasWorldScale;
         private TMPWriter ActiveWriter => worldCanvas ? _worldWriter : _contentWriter;
@@ -54,9 +69,12 @@ namespace _Project.Develop.UI.Dialogue
 
         [Inject]
         public void Construct(DialogueRunner runner, ISubscriber<DialogueShown> dialogueSubscriber,
-            ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber)
+            ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber,
+            InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _runner = runner;
+            _input = input;
+            _zoomMode = zoomMode;
             _dialogueSubscription = dialogueSubscriber.Subscribe(OnDialogueShown);
             _endedSubscription = endedSubscriber.Subscribe(OnDialogueEnded);
             _choicesSubscription = choicesSubscriber.Subscribe(OnChoicesShown);
@@ -66,12 +84,18 @@ namespace _Project.Develop.UI.Dialogue
         {
             _group = GetComponent<CanvasGroup>();
             _choiceTemplate = choicesContainer.GetComponentInChildren<Button>(true);
+            _zoomActive = _input.IsZoomMode;
+            _zoomVisibility = _zoomActive ? 0f : 1f;
             SetVisible(false);
 
             if (worldCanvas)
             {
                 _canvasWorldScale = worldCanvas.transform.lossyScale;
                 _worldWriter = worldContent.GetComponent<TMPWriter>();
+                _worldSurface = worldBlob.GetComponent<SurfaceGraphic>();
+                _defaultWorldStyle = _worldSurface.style;
+                if (!worldCanvas.TryGetComponent(out _worldGroup))
+                    _worldGroup = worldCanvas.gameObject.AddComponent<CanvasGroup>();
                 worldContinue.onClick.AddListener(OnContinueClicked);
                 HideWorldLine();
             }
@@ -82,6 +106,9 @@ namespace _Project.Develop.UI.Dialogue
                 ClearText();
                 _continueButton.onClick.AddListener(OnContinueClicked);
             }
+
+            ApplyZoomVisibility(_zoomVisibility);
+            _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
         }
 
         private void OnDialogueShown(DialogueShown message)
@@ -115,13 +142,20 @@ namespace _Project.Develop.UI.Dialogue
 
         private void ShowWorldLine(NpcData speaker, string speakerName, string text)
         {
-            var anchor = FindAnchor(speaker) ?? FindAnchor(_runner.Interlocutor) ?? worldFallbackAnchor;
+            var styleOwner = speaker != null ? speaker : _runner.Interlocutor;
+            var speakerStyle = styleOwner != null ? styleOwner.surfaceStyle : null;
+            _worldSurface.style = speakerStyle != null ? speakerStyle : _defaultWorldStyle;
+
+            var isPlayerSpeaking = speaker != null && speaker == playerSpeaker;
+            var anchor = isPlayerSpeaking ? playerDialogueAnchor
+                : FindAnchor(speaker) ?? FindAnchor(_runner.Interlocutor) ?? worldFallbackAnchor;
 
             var canvasTransform = worldCanvas.transform;
             canvasTransform.SetParent(null, false);
             canvasTransform.SetPositionAndRotation(anchor.position, Quaternion.identity);
             canvasTransform.localScale = _canvasWorldScale;
-            canvasTransform.SetParent(anchor, true);
+            if (!isPlayerSpeaking)
+                canvasTransform.SetParent(anchor, true);
 
             var opensRight = anchor.position.x >= anchor.parent.position.x;
             worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0.5f);
@@ -149,6 +183,38 @@ namespace _Project.Develop.UI.Dialogue
                 if (npc && npc.gameObject.activeInHierarchy && npc.Data == speaker)
                     return npc.DialogueAnchor;
             return null;
+        }
+
+        private void OnZoomModeChanged(ZoomModeChanged message)
+        {
+            if (_zoomActive == message.IsActive)
+                return;
+
+            _zoomActive = message.IsActive;
+            _zoomFade.Stop();
+            ApplyZoomVisibility(_zoomVisibility);
+
+            var target = _zoomActive ? 0f : 1f;
+            if (_zoomVisibility == target)
+                return;
+
+            _zoomFade = Tween.Custom(this, _zoomVisibility, target, _zoomActive ? .22f : .3f,
+                (view, alpha) => view.ApplyZoomVisibility(alpha), Ease.InOutSine, useUnscaledTime: true);
+        }
+
+        private void ApplyZoomVisibility(float alpha)
+        {
+            _zoomVisibility = alpha;
+            var canInteract = !_zoomActive && alpha >= .999f;
+
+            _group.alpha = _panelVisible ? alpha : 0f;
+            _group.interactable = _group.blocksRaycasts = _panelVisible && canInteract;
+
+            if (_worldGroup != null)
+            {
+                _worldGroup.alpha = alpha;
+                _worldGroup.interactable = _worldGroup.blocksRaycasts = canInteract;
+            }
         }
 
         private void HideWorldLine()
@@ -246,9 +312,8 @@ namespace _Project.Develop.UI.Dialogue
 
         private void SetVisible(bool visible)
         {
-            _group.alpha = visible ? 1f : 0f;
-            _group.interactable = visible;
-            _group.blocksRaycasts = visible;
+            _panelVisible = visible;
+            ApplyZoomVisibility(_zoomVisibility);
         }
         
         private void ClearText()
@@ -264,6 +329,8 @@ namespace _Project.Develop.UI.Dialogue
             _dialogueSubscription?.Dispose();
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
+            _zoomSubscription?.Dispose();
+            _zoomFade.Stop();
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
             if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);

@@ -1,9 +1,10 @@
 using _Project.Develop.Data.Player;
+using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -15,29 +16,37 @@ namespace _Project.Develop.Gameplay.Player
     [RequireComponent(typeof(Rigidbody2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
-        [SerializeField, Expandable] private PlayerStats stats;
+        [SerializeField] private ParticleSystem moveTargetParticles;
         
         private Rigidbody2D _rb;
+        private Collider2D _bodyCollider;
+        private NpcInteract _pendingNpc;
         private float _targetX;
         private bool _hasTarget;
         
+        private PlayerStats _stats;
         private InputController _input;
+        private DialogueRunner _dialogue;
         private PlayerAbility _ability;
         private UnityCamera _camera;
         private Vector2 _moveStartPosition;
+        private bool _moveStartedDuringChoice;
         
         public Vector2 Velocity => _rb.linearVelocity;
 
         [Inject]
-        private void Construct(InputController input)
+        private void Construct(InputController input, DialogueRunner dialogue, PlayerStats stats)
         {
             _input = input;
+            _dialogue = dialogue;
+            _stats = stats;
         }
 
         private void Start()
         {
             _ability = GetComponent<PlayerAbility>();
             _rb = GetComponent<Rigidbody2D>();
+            _bodyCollider = GetComponent<Collider2D>();
             _camera = UnityCamera.main;
 
             _input.Actions.Player.MoveTo.started += OnMoveStarted;
@@ -47,10 +56,14 @@ namespace _Project.Develop.Gameplay.Player
         private void OnMoveStarted(InputAction.CallbackContext _)
         {
             _moveStartPosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            _moveStartedDuringChoice = _dialogue.IsChoosing;
         }
 
         private void OnMoveTo(InputAction.CallbackContext _)
         {
+            if (_moveStartedDuringChoice)
+                return;
+
             MoveToAsync().Forget();
         }
         
@@ -62,7 +75,7 @@ namespace _Project.Develop.Gameplay.Player
                 return;
             
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            if (Vector2.Distance(_moveStartPosition, mousePos) >= 12f)
+            if (Vector2.Distance(_moveStartPosition, mousePos) >= _stats.startMovePixels)
                 return;
             if (!_camera.pixelRect.Contains(mousePos))
                 return;
@@ -84,27 +97,82 @@ namespace _Project.Develop.Gameplay.Player
             if (!plane.Raycast(ray, out var distance))
                 return;
 
-            _targetX = ray.GetPoint(distance).x;
-            _hasTarget = true;
+            _pendingNpc = null;
+            var target = ray.GetPoint(distance);
+            SetMoveTarget(target.x, target);
         }
 
+        private void SetMoveTarget(float targetX, Vector3 markerPosition)
+        {
+            _targetX = targetX;
+            _hasTarget = true;
+
+            moveTargetParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            moveTargetParticles.transform.position = markerPosition;
+            moveTargetParticles.Play();
+        }
+
+
+        internal void ApproachNpc(NpcInteract npc)
+        {
+            if (_dialogue.IsRunning)
+                return;
+
+            var zone = npc.GetComponentInChildren<NpcDialogueExit>();
+            _pendingNpc = npc;
+            if (zone.Contains(_bodyCollider))
+            {
+                TryStartNpcDialogue(npc);
+                return;
+            }
+
+            var bounds = zone.Bounds;
+            var direction = _rb.position.x < bounds.center.x ? 1f : -1f;
+            var nearEdge = direction > 0 ? bounds.min.x : bounds.max.x;
+            var inset = Mathf.Max(.5f, _stats.stoppingDistance * 2f);
+            var targetX = Mathf.MoveTowards(nearEdge, bounds.center.x, inset);
+            var bodyBounds = _bodyCollider.bounds;
+            var centerOffset = bodyBounds.center.x - _rb.position.x;
+            // Movement flips the player scale opposite to the direction of travel.
+            if (Mathf.Sign(transform.localScale.x) != -direction)
+                centerOffset = -centerOffset;
+
+            var leadingEdgeOffset = centerOffset + direction * bodyBounds.extents.x;
+            var marker = new Vector3(nearEdge - leadingEdgeOffset, bodyBounds.min.y, transform.position.z);
+            SetMoveTarget(targetX, marker);
+        }
+
+        internal void TryStartNpcDialogue(NpcInteract npc)
+        {
+            if (_pendingNpc != npc)
+                return;
+
+            _pendingNpc = null;
+            if (_input.CutsceneActive)
+                return;
+
+            _hasTarget = false;
+            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+            npc.Interact();
+        }
 
         private void FixedUpdate()
         {
             var velocity = _rb.linearVelocity;
 
-            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= stats.stoppingDistance)
+            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= _stats.stoppingDistance)
             {
                 _hasTarget = false;
+                _pendingNpc = null;
                 velocity.x = 0f;
             }
             else
             {
                 var distance = _targetX - _rb.position.x;
-                var brakingSpeed = Mathf.Sqrt(2f * stats.acceleration * Mathf.Abs(distance));
-                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(stats.speed, brakingSpeed);
+                var brakingSpeed = Mathf.Sqrt(2f * _stats.acceleration * Mathf.Abs(distance));
+                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(_stats.speed, brakingSpeed);
 
-                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, stats.acceleration * Time.fixedDeltaTime);
+                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, _stats.acceleration * Time.fixedDeltaTime);
 
                 var maxSpeed = Mathf.Abs(distance) / Time.fixedDeltaTime;
                 velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
@@ -122,6 +190,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private void OnDisable()
         {
+            _pendingNpc = null;
             _hasTarget = false;
             _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
         }

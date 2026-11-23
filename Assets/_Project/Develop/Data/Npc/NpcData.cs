@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using _Project.Develop.Data.Dialogue;
 using _Project.Develop.Data.Questing.Quests;
-using NaughtyAttributes;
+using _Project.Develop.Data.Surfaces;
 using UnityEngine;
 
 namespace _Project.Develop.Data.Npc
@@ -9,10 +9,12 @@ namespace _Project.Develop.Data.Npc
     [CreateAssetMenu(fileName = "NpcData", menuName = "Configs/Npc Data")]
     public class NpcData : QuestTarget
     {
-        [BoxGroup] public string displayName;
-        [BoxGroup, Range(-100, 100)] public int initialMood;
+        public string displayName;
+        [Range(-100, 100)] public int initialMood;
         
-        [BoxGroup, Space(5)] public DialogueDefinition dialogue;
+        [Space(5)] public DialogueDefinition dialogue;
+
+        public SurfaceStyle surfaceStyle;
 
         [NonSerialized] public NpcState state;
     }
