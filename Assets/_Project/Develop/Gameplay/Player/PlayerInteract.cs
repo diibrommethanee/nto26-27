@@ -1,3 +1,4 @@
+using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.NPC;
@@ -23,12 +24,14 @@ namespace _Project.Develop.Gameplay.Player
         private IWorldClue _holdingTarget;
         private float _holdProgress;
         private PlayerLasso _lasso;
+        private PlayerStats _stats;
         
         [Inject]
-        private void Construct(InputController input, EvidenceService evidenceService)
+        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats)
         {
             _input = input;
             _evidenceService = evidenceService;
+            _stats = stats;
         }
         
         private void Start()
@@ -37,7 +40,7 @@ namespace _Project.Develop.Gameplay.Player
             _player = GetComponent<PlayerController>();
             _camera = UnityCamera.main;
 
-            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability, gameObject);
+            _lasso = new PlayerLasso(_input, _evidenceService, _camera, _ability, gameObject, _stats);
         }
         
         private void Update()

@@ -5,7 +5,6 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -17,7 +16,6 @@ namespace _Project.Develop.Gameplay.Player
     [RequireComponent(typeof(Rigidbody2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
-        [SerializeField, Expandable] private PlayerStats stats;
         [SerializeField] private ParticleSystem moveTargetParticles;
         
         private Rigidbody2D _rb;
@@ -26,6 +24,7 @@ namespace _Project.Develop.Gameplay.Player
         private float _targetX;
         private bool _hasTarget;
         
+        private PlayerStats _stats;
         private InputController _input;
         private DialogueRunner _dialogue;
         private PlayerAbility _ability;
@@ -36,10 +35,11 @@ namespace _Project.Develop.Gameplay.Player
         public Vector2 Velocity => _rb.linearVelocity;
 
         [Inject]
-        private void Construct(InputController input, DialogueRunner dialogue)
+        private void Construct(InputController input, DialogueRunner dialogue, PlayerStats stats)
         {
             _input = input;
             _dialogue = dialogue;
+            _stats = stats;
         }
 
         private void Start()
@@ -75,7 +75,7 @@ namespace _Project.Develop.Gameplay.Player
                 return;
             
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            if (Vector2.Distance(_moveStartPosition, mousePos) >= 12f)
+            if (Vector2.Distance(_moveStartPosition, mousePos) >= _stats.startMovePixels)
                 return;
             if (!_camera.pixelRect.Contains(mousePos))
                 return;
@@ -129,7 +129,7 @@ namespace _Project.Develop.Gameplay.Player
             var bounds = zone.Bounds;
             var direction = _rb.position.x < bounds.center.x ? 1f : -1f;
             var nearEdge = direction > 0 ? bounds.min.x : bounds.max.x;
-            var inset = Mathf.Max(.5f, stats.stoppingDistance * 2f);
+            var inset = Mathf.Max(.5f, _stats.stoppingDistance * 2f);
             var targetX = Mathf.MoveTowards(nearEdge, bounds.center.x, inset);
             var bodyBounds = _bodyCollider.bounds;
             var centerOffset = bodyBounds.center.x - _rb.position.x;
@@ -160,7 +160,7 @@ namespace _Project.Develop.Gameplay.Player
         {
             var velocity = _rb.linearVelocity;
 
-            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= stats.stoppingDistance)
+            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= _stats.stoppingDistance)
             {
                 _hasTarget = false;
                 _pendingNpc = null;
@@ -169,10 +169,10 @@ namespace _Project.Develop.Gameplay.Player
             else
             {
                 var distance = _targetX - _rb.position.x;
-                var brakingSpeed = Mathf.Sqrt(2f * stats.acceleration * Mathf.Abs(distance));
-                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(stats.speed, brakingSpeed);
+                var brakingSpeed = Mathf.Sqrt(2f * _stats.acceleration * Mathf.Abs(distance));
+                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(_stats.speed, brakingSpeed);
 
-                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, stats.acceleration * Time.fixedDeltaTime);
+                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, _stats.acceleration * Time.fixedDeltaTime);
 
                 var maxSpeed = Mathf.Abs(distance) / Time.fixedDeltaTime;
                 velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);

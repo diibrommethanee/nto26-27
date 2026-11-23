@@ -1,4 +1,5 @@
 using _Project.Develop.Data.Evidence;
+using _Project.Develop.Data.Player;
 using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Train;
 using _Project.Develop.Gameplay.Dialogue;
@@ -23,6 +24,7 @@ namespace _Project.Develop.Infrastructure.DI
         [SerializeField, Space(5)] private TrainSettings trainSettings;
         [SerializeField] private QuestDatabase questDatabase;
         [SerializeField] private EvidenceDatabase evidenceDatabase;
+        [SerializeField] private PlayerStats playerStats;
         
         protected override void Configure(IContainerBuilder builder)
         {
@@ -65,6 +67,7 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterInstance(trainSettings);
             builder.RegisterEntryPoint<TrainMovement>().AsSelf();
             
+            builder.RegisterInstance(playerStats);
             builder.RegisterInstance(evidenceDatabase);
             builder.Register<EvidenceService>(Lifetime.Scoped);
             
