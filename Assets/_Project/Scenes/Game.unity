@@ -183,7 +183,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 8
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3674408430764154164, guid: 5273a9c931d972d449b59231a33b13e1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -205,8 +205,8 @@ Transform:
   m_GameObject: {fileID: 17054785}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 37.62, y: -1.6223664, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 59.54, y: -1.76, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -4271,51 +4271,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ac8d99b8f8b4cb999d15f0d34a82f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.TeaCeremonyView
-  steps:
-  - type: 0
-    item: {fileID: 814676886}
-    target: {fileID: 1936305715}
-    liquid: {fileID: 0}
-    herbs: []
-    desiredFill: 0.72
-    pourSeconds: 4
-    rotationToOpen: 35
-    rotationPerPixel: 0.35
-  - type: 0
-    item: {fileID: 1278010911}
-    target: {fileID: 814676886}
-    liquid: {fileID: 0}
-    herbs: []
-    desiredFill: 0.72
-    pourSeconds: 4
-    rotationToOpen: 35
-    rotationPerPixel: 0.35
-  - type: 1
-    item: {fileID: 0}
-    target: {fileID: 1278010911}
-    liquid: {fileID: 0}
-    herbs:
-    - item: {fileID: 1576384425}
-      buff: 1
-    - item: {fileID: 1762116831}
-      buff: 2
-    - item: {fileID: 681577857}
-      buff: 3
-    desiredFill: 0.72
-    pourSeconds: 4
-    rotationToOpen: 35
-    rotationPerPixel: 0.35
-  - type: 2
-    item: {fileID: 1307141379}
-    target: {fileID: 0}
-    liquid: {fileID: 0}
-    herbs: []
-    desiredFill: 0.72
-    pourSeconds: 4
-    rotationToOpen: 35
-    rotationPerPixel: 0.35
-  playerStats: {fileID: 11400000, guid: d2dc13e9a0482fa4597d2973a3a671d0, type: 2}
-  buffMultiplier: 1.25
 --- !u!1 &384504739
 GameObject:
   m_ObjectHideFlags: 0
@@ -6981,7 +6936,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 8
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3104136162644108126, guid: a3e52cd5e7e6053488dfb5df2eee6e62, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -7003,8 +6958,8 @@ Transform:
   m_GameObject: {fileID: 824123357}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 25.897543, y: 7.7264285, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.35, y: -1.76, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -9436,7 +9391,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 8
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3225704462273082920, guid: 582f56a71199d8a48bdaa9aa2d388363, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -9458,8 +9413,8 @@ Transform:
   m_GameObject: {fileID: 1371725666}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 26.39, y: -8.570292, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 41.61, y: -1.76, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -9630,8 +9585,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1441402764}
   - component: {fileID: 1441402766}
-  - component: {fileID: 1441402765}
   - component: {fileID: 1441402767}
+  - component: {fileID: 1441402768}
   m_Layer: 0
   m_Name: Paper surface
   m_TagString: Untagged
@@ -9658,28 +9613,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 16, y: 16}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1441402765
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1441402763}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48c01fd3ea5a01944b34d6ce2406b19b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UI::_Project.Develop.UI.Surface.SurfaceGraphic
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.8207547, g: 0.8207547, b: 0.8207547, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  style: {fileID: 11400000, guid: ff85f8a98c5bccc4c8fa5a91a1831d0b, type: 2}
-  parts: []
 --- !u!222 &1441402766
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9718,6 +9651,36 @@ MonoBehaviour:
   positionTilt: {x: 1.35, y: 0.8}
   rotationTilt: {x: 0.17, y: 0.25}
   smoothTilt: 3.6
+--- !u!114 &1441402768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441402763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: -8883170349454603622, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &1444670277
 GameObject:
   m_ObjectHideFlags: 0
@@ -9987,8 +9950,8 @@ Transform:
   m_GameObject: {fileID: 1472554548}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.32, y: -4.7071, z: 0}
-  m_LocalScale: {x: 20, y: 2, z: 1}
+  m_LocalPosition: {x: 28.3247, y: -4.4692, z: 0}
+  m_LocalScale: {x: 76.015816, y: 0.9533733, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 926947315}
@@ -10086,7 +10049,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 7
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.88235295, g: 0.91041124, b: 1, a: 1}
@@ -11174,8 +11137,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.43}
   m_AnchorMax: {x: 1, y: 0.82}
-  m_AnchoredPosition: {x: 0, y: 6}
-  m_SizeDelta: {x: 0, y: 12}
+  m_AnchoredPosition: {x: -276.84998, y: -160.08}
+  m_SizeDelta: {x: -553.7, y: 344.17}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1602820348
 MonoBehaviour:
@@ -15279,7 +15242,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 8
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4910970582343433247, guid: 574f8398475c8664dbcdf08d36522509, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -15301,8 +15264,8 @@ Transform:
   m_GameObject: {fileID: 1891417275}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 55.47549, y: 7.1754293, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 20.91, y: -1.76, z: 0}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -16229,7 +16192,7 @@ Transform:
   m_GameObject: {fileID: 2113724529}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.12, y: -3.43, z: 0}
+  m_LocalPosition: {x: 62.65, y: -3.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -23231,7 +23194,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 700, y: 700}
+  m_SizeDelta: {x: 1200, y: 700}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &8850988947199874577
 GameObject:
