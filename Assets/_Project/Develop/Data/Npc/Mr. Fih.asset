@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99d03e892c15452bb6b0abdc1730a7d2, type: 3}
-  m_Name: Npc1
+  m_Name: Mr. Fih
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Npc.NpcData
-  displayName: NPC 1
+  displayName: Mr. Fih
   initialMood: 0
   dialogue: {fileID: 7194093555672020370, guid: 2b5203dd98cc6184fbf3a5aa25cb6412, type: 3}
