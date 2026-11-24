@@ -57,7 +57,7 @@
                     "priority": 0
                 },
                 {
-                    "name": "ToggleSkill",
+                    "name": "UseSkill",
                     "type": "Button",
                     "id": "d3f30a52-463a-4d7e-a8ab-abe42f514a22",
                     "expectedControlType": "",
@@ -116,7 +116,7 @@
                     "name": "",
                     "id": "3dac92c6-d535-4d37-b4d6-004b22da1b3a",
                     "path": "<Mouse>/middleButton",
-                    "interactions": "",
+                    "interactions": "Tap(duration=0.2)",
                     "processors": "",
                     "groups": "",
                     "action": "SwitchSkill",
@@ -126,11 +126,11 @@
                 {
                     "name": "",
                     "id": "80490c63-494b-4bdb-af27-4ee4730e0eb7",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "Hold(duration=0.2)",
                     "processors": "",
                     "groups": "",
-                    "action": "ToggleSkill",
+                    "action": "UseSkill",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -13,12 +13,14 @@ namespace _Project.Develop.Gameplay.Camera
 {
     [RequireComponent(typeof(CinemachineCamera))]
     [RequireComponent(typeof(CinemachineFollow))]
+    [RequireComponent(typeof(CinemachineConfiner2D))]
     public class CameraController : MonoBehaviour
     {
         [SerializeField, Expandable] private CameraSettings settings;
         
         private CinemachineCamera _cinemachineCamera;
         private CinemachineFollow _follow;
+        private CinemachineConfiner2D _confiner;
         
         private InputController _input;
         private UnityCamera _camera;
@@ -46,6 +48,7 @@ namespace _Project.Develop.Gameplay.Camera
         {
             _cinemachineCamera = GetComponent<CinemachineCamera>();
             _follow = GetComponent<CinemachineFollow>();
+            _confiner = GetComponent<CinemachineConfiner2D>();
 
             _camera = UnityCamera.main;
 
@@ -72,7 +75,7 @@ namespace _Project.Develop.Gameplay.Camera
                 return;
             
             Pulse(ctx.ReadValue<Vector2>().y);
-            _targetPanOffset = Mathf.Clamp(_targetPanOffset + ctx.ReadValue<Vector2>().y * settings.panSensitivity, -settings.maxPanOffset, settings.maxPanOffset);
+            _targetPanOffset += ctx.ReadValue<Vector2>().y * settings.panSensitivity;
         }
 
         private void OnZoom(InputAction.CallbackContext ctx)
@@ -92,7 +95,7 @@ namespace _Project.Develop.Gameplay.Camera
             var mouseX = _camera.ScreenToViewportPoint(Mouse.current.position.ReadValue()).x;
             var horizontalOffset = (mouseX - 0.5f) * 2f;
 
-            _targetPanOffset = Mathf.Clamp(_targetPanOffset + horizontalOffset * _camera.aspect * (_targetZoom - nextZoom), -settings.maxPanOffset, settings.maxPanOffset);
+            _targetPanOffset += horizontalOffset * _camera.aspect * (_targetZoom - nextZoom);
             if (!Mathf.Approximately(_targetZoom, nextZoom)) Pulse(ctx.ReadValue<Vector2>().y);
             _targetZoom = nextZoom;
         }
@@ -106,12 +109,32 @@ namespace _Project.Develop.Gameplay.Camera
 
         private void Update()
         {
+            DiscardPanBeyondConfiner();
             _currentPanOffset = Mathf.SmoothDamp(_currentPanOffset, _targetPanOffset, ref _panVelocity, settings.panSmoothTime);
             _follow.FollowOffset = _initialFollowOffset + Vector3.right * _currentPanOffset;
 
             _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, settings.zoomSmoothTime);
             ScrollPulse = Mathf.MoveTowards(ScrollPulse, 0f, Time.unscaledDeltaTime * 3.5f);
-            _cinemachineCamera.Lens.OrthographicSize = _currentZoom;
+            if (_cinemachineCamera.Lens.OrthographicSize != _currentZoom)
+            {
+                _cinemachineCamera.Lens.OrthographicSize = _currentZoom;
+                _confiner.InvalidateLensCache();
+            }
+        }
+
+        private void DiscardPanBeyondConfiner()
+        {
+            var state = _cinemachineCamera.State;
+            var correction = state.PositionCorrection.x;
+            if (!_confiner.CameraWasDisplaced(_cinemachineCamera) || Mathf.Abs(correction) < 0.01f)
+                return;
+
+            var direction = -Mathf.Sign(correction);
+            var edgeOffset = state.RawPosition.x + correction - _cinemachineCamera.Follow.position.x - _initialFollowOffset.x;
+            var edgeDistance = Mathf.Max(0f, edgeOffset * direction);
+            _targetPanOffset = Mathf.Min(_targetPanOffset * direction, edgeDistance) * direction;
+            _currentPanOffset = Mathf.Min(_currentPanOffset * direction, edgeDistance) * direction;
+            _panVelocity = Mathf.Min(_panVelocity * direction, 0f) * direction;
         }
         
         private void OnDestroy()

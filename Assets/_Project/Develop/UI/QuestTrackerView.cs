@@ -1,6 +1,10 @@
 using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Questing.Quests;
+using _Project.Develop.Data.Surfaces;
 using _Project.Develop.Gameplay.Quests;
+using _Project.Develop.Gameplay.Input;
+using _Project.Develop.UI.Surface;
+using PrimeTween;
 using System;
 using MessagePipe;
 using TMPro;
@@ -18,6 +22,12 @@ namespace _Project.Develop.UI
         [SerializeField] private TextMeshProUGUI currentStepText;
 
         private CanvasGroup _group;
+        private SurfaceGraphic _cover;
+        private SurfaceStyle _defaultCoverStyle;
+        private InputController _input;
+        private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IDisposable _zoomSubscription;
+        private Tween _zoomFade;
 
         private ISubscriber<QuestStepCompletedEvent> _subscriber;
         private ISubscriber<StartQuestEvent> _startedSubscriber;
@@ -35,17 +45,21 @@ namespace _Project.Develop.UI
         public void Construct(ISubscriber<QuestStepCompletedEvent> subscriber,
             ISubscriber<StartQuestEvent> startedSubscriber,
             ISubscriber<QuestCompletedEvent> completedSubscriber,
-            IQuestRegistry registry)
+            IQuestRegistry registry, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _subscriber = subscriber;
             _startedSubscriber = startedSubscriber;
             _completedSubscriber = completedSubscriber;
             _registry = registry;
+            _input = input;
+            _zoomMode = zoomMode;
         }
 
         private void Start()
         {
             _group = GetComponent<CanvasGroup>();
+            _cover = GetComponent<SurfaceGraphic>();
+            _defaultCoverStyle = _cover.style;
             
             _group.alpha = 0;
             _group.blocksRaycasts = false;
@@ -53,6 +67,7 @@ namespace _Project.Develop.UI
             _subscription = _subscriber.Subscribe(OnStepUpdated);
             _startedSubscription = _startedSubscriber.Subscribe(OnQuestStarted);
             _completedSubscription = _completedSubscriber.Subscribe(OnQuestCompleted);
+            _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
         }
 
         private void OnQuestCompleted(QuestCompletedEvent evt)
@@ -76,11 +91,11 @@ namespace _Project.Develop.UI
             }
 
             _currentQuest = quest;
+            _cover.style = quest.surfaceStyle != null ? quest.surfaceStyle : _defaultCoverStyle;
             _currentStepId = null;
             _isCompleted = false;
 
-            _group.alpha = 1;
-            _group.blocksRaycasts = true;
+            if (!_input.IsZoomMode && !_zoomFade.isAlive) ShowTracker();
             
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
@@ -117,19 +132,40 @@ namespace _Project.Develop.UI
             }
 
             _currentQuest = quest;
+            _cover.style = quest.surfaceStyle != null ? quest.surfaceStyle : _defaultCoverStyle;
             _currentStepId = evt.StepId;
             _isCompleted = false;
 
-            _group.alpha = 1;
-            _group.blocksRaycasts = true;
+            if (!_input.IsZoomMode && !_zoomFade.isAlive) ShowTracker();
             
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
             currentStepText.text = step.title;
         }
 
+        private void OnZoomModeChanged(ZoomModeChanged message)
+        {
+            _zoomFade.Stop();
+            if (!_currentQuest) return;
+
+            _group.interactable = _group.blocksRaycasts = false;
+            var visible = !message.IsActive;
+            _zoomFade = Tween.Alpha(_group, visible ? 1f : 0f, visible ? 0.28f : 0.18f,
+                Ease.OutCubic, useUnscaledTime: true);
+            if (visible)
+                _zoomFade.OnComplete(this, view => view.ShowTracker());
+        }
+
+        private void ShowTracker()
+        {
+            _group.alpha = 1f;
+            _group.interactable = _group.blocksRaycasts = true;
+        }
+
         private void OnDestroy()
         {
+            _zoomSubscription?.Dispose();
+            _zoomFade.Stop();
             _subscription?.Dispose();
             _startedSubscription?.Dispose();
             _completedSubscription?.Dispose();

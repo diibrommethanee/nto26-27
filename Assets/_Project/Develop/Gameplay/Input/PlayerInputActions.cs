@@ -145,7 +145,7 @@ namespace _Project.Develop.Gameplay.Input
                     ""priority"": 0
                 },
                 {
-                    ""name"": ""ToggleSkill"",
+                    ""name"": ""UseSkill"",
                     ""type"": ""Button"",
                     ""id"": ""d3f30a52-463a-4d7e-a8ab-abe42f514a22"",
                     ""expectedControlType"": """",
@@ -204,7 +204,7 @@ namespace _Project.Develop.Gameplay.Input
                     ""name"": """",
                     ""id"": ""3dac92c6-d535-4d37-b4d6-004b22da1b3a"",
                     ""path"": ""<Mouse>/middleButton"",
-                    ""interactions"": """",
+                    ""interactions"": ""Tap(duration=0.2)"",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""SwitchSkill"",
@@ -214,11 +214,11 @@ namespace _Project.Develop.Gameplay.Input
                 {
                     ""name"": """",
                     ""id"": ""80490c63-494b-4bdb-af27-4ee4730e0eb7"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": ""Hold(duration=0.2)"",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ToggleSkill"",
+                    ""action"": ""UseSkill"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -871,7 +871,7 @@ namespace _Project.Develop.Gameplay.Input
             m_Player_MousePosition = m_Player.FindAction("MousePosition", throwIfNotFound: true);
             m_Player_Interaction = m_Player.FindAction("Interaction", throwIfNotFound: true);
             m_Player_SwitchSkill = m_Player.FindAction("SwitchSkill", throwIfNotFound: true);
-            m_Player_ToggleSkill = m_Player.FindAction("ToggleSkill", throwIfNotFound: true);
+            m_Player_UseSkill = m_Player.FindAction("UseSkill", throwIfNotFound: true);
             // Camera
             m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
             m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
@@ -975,7 +975,7 @@ namespace _Project.Develop.Gameplay.Input
         private readonly InputAction m_Player_MousePosition;
         private readonly InputAction m_Player_Interaction;
         private readonly InputAction m_Player_SwitchSkill;
-        private readonly InputAction m_Player_ToggleSkill;
+        private readonly InputAction m_Player_UseSkill;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -1008,9 +1008,9 @@ namespace _Project.Develop.Gameplay.Input
             /// </summary>
             public InputAction @SwitchSkill => m_Wrapper.m_Player_SwitchSkill;
             /// <summary>
-            /// Provides access to the underlying input action "Player/ToggleSkill".
+            /// Provides access to the underlying input action "Player/UseSkill".
             /// </summary>
-            public InputAction @ToggleSkill => m_Wrapper.m_Player_ToggleSkill;
+            public InputAction @UseSkill => m_Wrapper.m_Player_UseSkill;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -1052,9 +1052,9 @@ namespace _Project.Develop.Gameplay.Input
                 @SwitchSkill.started += instance.OnSwitchSkill;
                 @SwitchSkill.performed += instance.OnSwitchSkill;
                 @SwitchSkill.canceled += instance.OnSwitchSkill;
-                @ToggleSkill.started += instance.OnToggleSkill;
-                @ToggleSkill.performed += instance.OnToggleSkill;
-                @ToggleSkill.canceled += instance.OnToggleSkill;
+                @UseSkill.started += instance.OnUseSkill;
+                @UseSkill.performed += instance.OnUseSkill;
+                @UseSkill.canceled += instance.OnUseSkill;
             }
 
             /// <summary>
@@ -1081,9 +1081,9 @@ namespace _Project.Develop.Gameplay.Input
                 @SwitchSkill.started -= instance.OnSwitchSkill;
                 @SwitchSkill.performed -= instance.OnSwitchSkill;
                 @SwitchSkill.canceled -= instance.OnSwitchSkill;
-                @ToggleSkill.started -= instance.OnToggleSkill;
-                @ToggleSkill.performed -= instance.OnToggleSkill;
-                @ToggleSkill.canceled -= instance.OnToggleSkill;
+                @UseSkill.started -= instance.OnUseSkill;
+                @UseSkill.performed -= instance.OnUseSkill;
+                @UseSkill.canceled -= instance.OnUseSkill;
             }
 
             /// <summary>
@@ -1527,12 +1527,12 @@ namespace _Project.Develop.Gameplay.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnSwitchSkill(InputAction.CallbackContext context);
             /// <summary>
-            /// Method invoked when associated input action "ToggleSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// Method invoked when associated input action "UseSkill" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
             /// </summary>
             /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-            void OnToggleSkill(InputAction.CallbackContext context);
+            void OnUseSkill(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

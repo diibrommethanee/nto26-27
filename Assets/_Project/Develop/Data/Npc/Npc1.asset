@@ -15,3 +15,4 @@ MonoBehaviour:
   displayName: NPC 1
   initialMood: 0
   dialogue: {fileID: 7194093555672020370, guid: 2b5203dd98cc6184fbf3a5aa25cb6412, type: 3}
+  surfaceStyle: {fileID: 11400000, guid: f6ca5e6728c79634dbd56b33a293e421, type: 2}

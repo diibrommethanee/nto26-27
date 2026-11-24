@@ -1,5 +1,5 @@
 using System;
-using _Project.Develop.Gameplay.Evidence;
+using MessagePipe;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer.Unity;
@@ -15,23 +15,45 @@ namespace _Project.Develop.Gameplay.Input
     public class InputController : IStartable, ITickable, IDisposable
     {
         public PlayerInputActions Actions { get; } = new();
-        private float _modePressedAt = float.PositiveInfinity;
-        private UnityEngine.Camera _camera;
+        private readonly IPublisher<ZoomModeChanged> _zoomModePublisher;
+        public bool IsZoomMode => Actions.Camera.Zoom.enabled;
 
-        public SkillType SelectedSkill { get; private set; } = SkillType.Smell;
-        public SkillType? ActiveSkill { get; private set; }
+        public InputController(IPublisher<ZoomModeChanged> zoomModePublisher)
+        {
+            _zoomModePublisher = zoomModePublisher;
+        }
+
+        private float _modePressedAt = float.PositiveInfinity;
+        private bool _notebookOpen;
+
 
         public void Start()
         {
-            _camera = UnityEngine.Camera.main;
             Actions.Enable();
             Actions.Camera.Zoom.Disable();
 
             Actions.Camera.Mode.started += OnZoomPressed;
             Actions.Camera.Mode.canceled += OnZoomReleased;
 
-            Actions.Player.SwitchSkill.performed += OnSwitchSkill;
-            Actions.Player.ToggleSkill.performed += OnToggleSkill;
+        }
+
+        public bool CutsceneActive { get; private set; }
+
+        public void SetCutsceneActive(bool active)
+        {
+            CutsceneActive = active;
+            if (active)
+            {
+                if (IsZoomMode) ExitZoomMode();
+                _modePressedAt = float.PositiveInfinity;
+                Actions.Camera.Disable();
+                Actions.Player.Disable();
+            }
+            else
+            {
+                Actions.Player.Enable();
+                Actions.Camera.Mode.Enable();
+            }
         }
 
         private void OnZoomPressed(InputAction.CallbackContext _)
@@ -40,8 +62,18 @@ namespace _Project.Develop.Gameplay.Input
             Actions.Player.CameraPan.Disable();
         }
 
+        public void SetNotebookOpen(bool isOpen)
+        {
+            if (_notebookOpen == isOpen)
+                return;
+
+            _notebookOpen = isOpen;
+            RefreshPlayerActions();
+        }
+
         public void Tick()
         {
+            if (CutsceneActive) return;
             if (!Actions.Camera.Mode.IsPressed())
             {
                 if (!float.IsPositiveInfinity(_modePressedAt))
@@ -54,63 +86,40 @@ namespace _Project.Develop.Gameplay.Input
 
             Actions.Player.Disable();
             Actions.Camera.Zoom.Enable();
+            _zoomModePublisher.Publish(new ZoomModeChanged(true));
         }
 
         private void OnZoomReleased(InputAction.CallbackContext _)
         {
             _modePressedAt = float.PositiveInfinity;
+            if (CutsceneActive) return;
+            var wasZooming = IsZoomMode;
             Actions.Camera.Zoom.Disable();
-            Actions.Player.Enable();
+            RefreshPlayerActions();
+            if (wasZooming)
+                _zoomModePublisher.Publish(new ZoomModeChanged(false));
         }
 
-        private void OnSwitchSkill(InputAction.CallbackContext _)
+        private void ExitZoomMode()
         {
-            SelectedSkill = SelectedSkill == SkillType.Smell
-                ? SkillType.Hearing
-                : SkillType.Smell;
+            Actions.Camera.Zoom.Disable();
+            RefreshPlayerActions();
+            _modePressedAt = float.PositiveInfinity;
+            _zoomModePublisher.Publish(new ZoomModeChanged(false));
         }
 
-        private void OnToggleSkill(InputAction.CallbackContext _)
+        private void RefreshPlayerActions()
         {
-            if (IsPointerOverWorldEvidence())
-                return;
-
-            ToggleSelectedSkill();
-        }
-
-        private bool IsPointerOverWorldEvidence()
-        {
-            if (_camera == null)
-                return false;
-
-            var mousePosition = Actions.Player.MousePosition.ReadValue<Vector2>();
-            var ray = _camera.ScreenPointToRay(mousePosition);
-            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
-
-            foreach (var hit in hits)
-            {
-                if (hit.collider != null && hit.collider.GetComponentInParent<IWorldEvidence>() != null)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private void ToggleSelectedSkill()
-        {
-            ActiveSkill = ActiveSkill == SelectedSkill
-                ? null
-                : SelectedSkill;
-
-            Debug.Log("toggle selected skill: " + ActiveSkill);
+            if (_notebookOpen || IsZoomMode)
+                Actions.Player.Disable();
+            else
+                Actions.Player.Enable();
         }
 
         public void Dispose()
         {
             Actions.Camera.Mode.started -= OnZoomPressed;
             Actions.Camera.Mode.canceled -= OnZoomReleased;
-            Actions.Player.SwitchSkill.performed -= OnSwitchSkill;
-            Actions.Player.ToggleSkill.performed -= OnToggleSkill;
 
             Actions.Disable();
             Actions.Dispose();
