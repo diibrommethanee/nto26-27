@@ -15,6 +15,7 @@
     "com.unity.2d.tilemap": "1.0.0",
     "com.unity.2d.tilemap.extras": "9.0.1",
     "com.unity.2d.tooling": "4.0.1",
+    "com.h8man.2d.navmeshplus": "https://github.com/h8man/NavMeshPlus.git#d615919ce2d1472e21ea1c761882cc02d7ba4469",
     "com.unity.ai.navigation": "2.0.16",
     "com.unity.cinemachine": "6.6.0",
     "com.unity.collab-proxy": "2.13.6",

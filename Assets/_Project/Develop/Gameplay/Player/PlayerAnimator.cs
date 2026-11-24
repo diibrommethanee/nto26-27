@@ -20,7 +20,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private void Update()
         {
-            var walking = !Mathf.Approximately(_player.Velocity.x, 0f);
+            var walking = _player.Velocity.sqrMagnitude > 0.0001f;
             _anim.SetBool(Walk, walking);
 
             if (walking && !footstepSparks.isPlaying)

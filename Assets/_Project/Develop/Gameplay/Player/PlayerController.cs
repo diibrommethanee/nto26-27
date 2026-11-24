@@ -6,6 +6,7 @@ using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -13,16 +14,15 @@ using UnityCamera = UnityEngine.Camera;
 
 namespace _Project.Develop.Gameplay.Player
 {
-    [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(NavMeshAgent), typeof(Rigidbody2D))]
     public class PlayerController : MonoBehaviour, IPlayerController
     {
         [SerializeField] private ParticleSystem moveTargetParticles;
         
-        private Rigidbody2D _rb;
+        private NavMeshAgent _agent;
+        private NavMeshPath _path;
         private Collider2D _bodyCollider;
         private NpcInteract _pendingNpc;
-        private float _targetX;
-        private bool _hasTarget;
         
         private PlayerStats _stats;
         private InputController _input;
@@ -32,7 +32,17 @@ namespace _Project.Develop.Gameplay.Player
         private Vector2 _moveStartPosition;
         private bool _moveStartedDuringChoice;
         
-        public Vector2 Velocity => _rb.linearVelocity;
+        public Vector2 Velocity => _agent.velocity;
+
+        private void Awake()
+        {
+            _agent = GetComponent<NavMeshAgent>();
+            
+            _agent.updateRotation = false;
+            _agent.updateUpAxis = false;
+            
+            _path = new NavMeshPath();
+        }
 
         [Inject]
         private void Construct(InputController input, DialogueRunner dialogue, PlayerStats stats)
@@ -45,7 +55,9 @@ namespace _Project.Develop.Gameplay.Player
         private void Start()
         {
             _ability = GetComponent<PlayerAbility>();
-            _rb = GetComponent<Rigidbody2D>();
+            _agent.speed = _stats.speed;
+            _agent.acceleration = _stats.acceleration;
+            _agent.stoppingDistance = _stats.stoppingDistance;
             _bodyCollider = GetComponent<Collider2D>();
             _camera = UnityCamera.main;
 
@@ -64,23 +76,24 @@ namespace _Project.Develop.Gameplay.Player
             if (_moveStartedDuringChoice)
                 return;
 
-            MoveToAsync().Forget();
+            var mousePosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            if (Vector2.Distance(_moveStartPosition, mousePosition) >= _stats.startMovePixels)
+                return;
+
+            MoveToAsync(mousePosition).Forget();
         }
         
-        private async UniTask MoveToAsync()
+        private async UniTask MoveToAsync(Vector2 mousePosition)
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
 
             if (_input.CutsceneActive || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
                 return;
             
-            var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
-            if (Vector2.Distance(_moveStartPosition, mousePos) >= _stats.startMovePixels)
-                return;
-            if (!_camera.pixelRect.Contains(mousePos))
+            if (!_camera.pixelRect.Contains(mousePosition))
                 return;
 
-            var ray = _camera.ScreenPointToRay(mousePos);
+            var ray = _camera.ScreenPointToRay(mousePosition);
             var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
             foreach (var hit in hits)
             {
@@ -99,17 +112,20 @@ namespace _Project.Develop.Gameplay.Player
 
             _pendingNpc = null;
             var target = ray.GetPoint(distance);
-            SetMoveTarget(target.x, target);
+            TrySetMoveTarget(target);
         }
 
-        private void SetMoveTarget(float targetX, Vector3 markerPosition)
+        private bool TrySetMoveTarget(Vector3 destination)
         {
-            _targetX = targetX;
-            _hasTarget = true;
+            if (!NavMesh.SamplePosition(destination, out var hit, 0.6f, _agent.areaMask) ||
+                !_agent.CalculatePath(hit.position, _path) ||
+                _path.status != NavMeshPathStatus.PathComplete || !_agent.SetPath(_path))
+                return false;
 
             moveTargetParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            moveTargetParticles.transform.position = markerPosition;
+            moveTargetParticles.transform.position = hit.position;
             moveTargetParticles.Play();
+            return true;
         }
 
 
@@ -127,19 +143,11 @@ namespace _Project.Develop.Gameplay.Player
             }
 
             var bounds = zone.Bounds;
-            var direction = _rb.position.x < bounds.center.x ? 1f : -1f;
-            var nearEdge = direction > 0 ? bounds.min.x : bounds.max.x;
             var inset = Mathf.Max(.5f, _stats.stoppingDistance * 2f);
-            var targetX = Mathf.MoveTowards(nearEdge, bounds.center.x, inset);
-            var bodyBounds = _bodyCollider.bounds;
-            var centerOffset = bodyBounds.center.x - _rb.position.x;
-            // Movement flips the player scale opposite to the direction of travel.
-            if (Mathf.Sign(transform.localScale.x) != -direction)
-                centerOffset = -centerOffset;
-
-            var leadingEdgeOffset = centerOffset + direction * bodyBounds.extents.x;
-            var marker = new Vector3(nearEdge - leadingEdgeOffset, bodyBounds.min.y, transform.position.z);
-            SetMoveTarget(targetX, marker);
+            var target = bounds.ClosestPoint(transform.position);
+            target = Vector3.MoveTowards(target, bounds.center, inset);
+            if (!TrySetMoveTarget(target))
+                _pendingNpc = null;
         }
 
         internal void TryStartNpcDialogue(NpcInteract npc)
@@ -151,39 +159,24 @@ namespace _Project.Develop.Gameplay.Player
             if (_input.CutsceneActive)
                 return;
 
-            _hasTarget = false;
-            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+            _agent.ResetPath();
             npc.Interact();
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
-            var velocity = _rb.linearVelocity;
-
-            if (_input.CutsceneActive || !_hasTarget || Mathf.Abs(_targetX - _rb.position.x) <= _stats.stoppingDistance)
+            if (_input.CutsceneActive)
             {
-                _hasTarget = false;
                 _pendingNpc = null;
-                velocity.x = 0f;
-            }
-            else
-            {
-                var distance = _targetX - _rb.position.x;
-                var brakingSpeed = Mathf.Sqrt(2f * _stats.acceleration * Mathf.Abs(distance));
-                var targetSpeed = Mathf.Sign(distance) * Mathf.Min(_stats.speed, brakingSpeed);
-
-                velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, _stats.acceleration * Time.fixedDeltaTime);
-
-                var maxSpeed = Mathf.Abs(distance) / Time.fixedDeltaTime;
-                velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+                if (_agent.hasPath)
+                    _agent.ResetPath();
+                return;
             }
 
-            _rb.linearVelocity = velocity;
-
-            if (!Mathf.Approximately(velocity.x, 0f))
+            if (!Mathf.Approximately(Velocity.x, 0f))
             {
                 var scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(velocity.x);
+                scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(Velocity.x);
                 transform.localScale = scale;
             }
         }
@@ -191,8 +184,8 @@ namespace _Project.Develop.Gameplay.Player
         private void OnDisable()
         {
             _pendingNpc = null;
-            _hasTarget = false;
-            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+            if (_agent.isOnNavMesh)
+                _agent.ResetPath();
         }
 
         private void OnDestroy()
