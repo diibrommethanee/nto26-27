@@ -282,7 +282,7 @@ MonoBehaviour:
     - rid: 3967460729282625856
       type: {class: 'Constant`1[[System.String, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: "\u041D\u0435 \u0441\u043F\u0435\u0448\u0438, \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C. \u0422\u0443\u0442 \u043C\u043D\u043E\u0433\u043E \u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043D\u043E\u0433\u043E...<!wait=0.5> <size=90%>\u0438\u043B\u0438 \u043F\u0440\u043E\u0441\u0442\u043E \u043C\u043D\u043E\u0433\u043E <wave>\u043F\u044B\u043B\u0438</wave>, \u043A\u0430\u043A \u043F\u043E\u0432\u0435\u0437\u0451\u0442.</size>"
+        m_Value: "\u041D\u0435 \u0441\u043F\u0435\u0448\u0438, \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C. \u0422\u0443\u0442 \u043C\u043D\u043E\u0433\u043E \u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043D\u043E\u0433\u043E...<!wait=0.5> <size=90%>\u0438\u043B\u0438 \u043F\u0440\u043E\u0441\u0442\u043E \u043C\u043D\u043E\u0433\u043E <wave><b>\u043F\u044B\u043B\u0438</b></wave>, \u043A\u0430\u043A \u043F\u043E\u0432\u0435\u0437\u0451\u0442.</size>"
     - rid: 3967460729282625857
       type: {class: 'Constant`1[[_Project.Develop.Data.Questing.Quests.Quest, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
