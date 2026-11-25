@@ -13,11 +13,16 @@ MonoBehaviour:
   m_Name: Introduction
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Questing.Quests.Quest
   questName: "\u0417\u043D\u0430\u043A\u043E\u043C\u0441\u0442\u0432\u043E"
-  description: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C"
-  steps: []
+  description: 
+  steps:
+  - id: 
+    title: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C"
+    target: {fileID: 0}
+    eventType: 0
+    requiredAmount: 0
   reward:
     dialogueNpc: {fileID: 0}
     dialogue: {fileID: 0}
     moodNpc: {fileID: 0}
     moodIncrease: 0
-  surfaceStyle: {fileID: 0}
+  surfaceStyle: {fileID: 11400000, guid: 72dd97d2464e47f438db479bb484f0a7, type: 2}
