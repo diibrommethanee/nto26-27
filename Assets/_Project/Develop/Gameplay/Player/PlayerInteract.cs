@@ -3,6 +3,7 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Timeline;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using VContainer;
@@ -20,18 +21,20 @@ namespace _Project.Develop.Gameplay.Player
         
         private IInteractable _currentTarget;
         private IInteractable _pressedInteractionTarget;
-        private IWorldClue _currentHoldTarget;
-        private IWorldClue _holdingTarget;
-        private float _holdProgress;
+        private WorldClue _currentPickup;
+        private WorldClue _pressedPickup;
         private PlayerLasso _lasso;
         private PlayerStats _stats;
+        private DayService _dayService;
         
         [Inject]
-        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats)
+        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats,
+            DayService dayService)
         {
             _input = input;
             _evidenceService = evidenceService;
             _stats = stats;
+            _dayService = dayService;
         }
         
         private void Start()
@@ -45,7 +48,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Update()
         {
-            if (_input.Actions.Player.enabled)
+            if (_input.Actions.Player.enabled && _dayService.RemainingMinutes > 0)
                 _lasso.Tick();
             else
                 _lasso.Cancel();
@@ -53,7 +56,6 @@ namespace _Project.Develop.Gameplay.Player
             var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
             UpdateTarget(mousePos);
 
-            UpdateHoldInteraction();
         }
 
         private void LateUpdate()
@@ -62,18 +64,29 @@ namespace _Project.Develop.Gameplay.Player
             if (!interaction.enabled || _input.CutsceneActive || _input.IsZoomMode)
             {
                 _pressedInteractionTarget = null;
+                _pressedPickup = null;
                 return;
             }
 
             bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
             if (interaction.WasPressedThisFrame())
+            {
                 _pressedInteractionTarget = pointerOverUi ? null : _currentTarget;
+                _pressedPickup = pointerOverUi ? null : _currentPickup;
+            }
 
             if (!interaction.WasReleasedThisFrame())
                 return;
 
             var target = _pressedInteractionTarget;
             _pressedInteractionTarget = null;
+            var pickup = _pressedPickup;
+            _pressedPickup = null;
+            if (!pointerOverUi && pickup != null && pickup == _currentPickup)
+            {
+                pickup.Collect(_evidenceService);
+                return;
+            }
             if (pointerOverUi || !ReferenceEquals(target, _currentTarget))
                 return;
 
@@ -83,90 +96,30 @@ namespace _Project.Develop.Gameplay.Player
                 target?.Interact();
         }
 
-        private void UpdateHoldInteraction()
-        {
-            var leftMouse = _input.Actions.Player.MoveTo;
-            var holdTarget = _currentHoldTarget;
-
-            if (leftMouse.WasPressedThisFrame())
-            {
-                CancelHold();
-                if (holdTarget != null && !holdTarget.IsCollected)
-                {
-                    _holdingTarget = holdTarget;
-                    _holdProgress = 0f;
-                    _holdingTarget.SetHoldProgress(0f);
-                }
-            }
-
-            if (_holdingTarget == null)
-                return;
-
-            if (!leftMouse.IsPressed() || !ReferenceEquals(holdTarget, _holdingTarget))
-            {
-                CancelHold();
-                return;
-            }
-
-            var duration = Mathf.Max(0.01f, _holdingTarget.HoldDuration);
-            _holdProgress = Mathf.Min(1f, _holdProgress + Time.deltaTime / duration);
-            _holdingTarget.SetHoldProgress(_holdProgress);
-
-            if (_holdProgress < 1f)
-                return;
-
-            var completedTarget = _holdingTarget;
-            _holdingTarget = null;
-            completedTarget.Collect(_evidenceService);
-        }
-
-        private void CancelHold()
-        {
-            if (_holdingTarget != null && !_holdingTarget.IsCollected)
-                _holdingTarget.SetHoldProgress(0f);
-
-            _holdingTarget = null;
-            _holdProgress = 0f;
-        }
-        
         private void UpdateTarget(Vector2 mousePosition)
         {
+            _currentTarget = null;
+            _currentPickup = null;
             var ray = _camera.ScreenPointToRay(mousePosition);
-            var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
-
-            IInteractable target = null;
-            IWorldClue holdTarget = null;
-            foreach (var hit in hits)
+            foreach (var hit in Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity))
             {
-                if (hit.collider == null) continue;
+                if (hit.collider == null)
+                    continue;
 
-                var interactiveCandidate = hit.collider.GetComponentInParent<IInteractable>();
-                var holdCandidate = hit.collider.GetComponentInParent<WorldClue>();
+                var pickup = hit.collider.GetComponentInParent<WorldClue>();
+                if (_dayService.RemainingMinutes > 0 && pickup != null && pickup.IsPickup && !pickup.IsCollected && pickup.CanCollect(_ability.ActiveSkill))
+                {
+                    _currentPickup = pickup;
+                    return;
+                }
 
-                if (holdCandidate != null &&
-                    (holdCandidate.IsCollected ||
-                     holdCandidate.RequiredSkill == ClueSkillRequirement.None ||
-                     !holdCandidate.CanCollect(_ability.ActiveSkill)))
-                    holdCandidate = null;
-
-                if (interactiveCandidate == null && holdCandidate == null) continue;
-
-                target = interactiveCandidate;
-                holdTarget = holdCandidate;
-                break;
+                var target = hit.collider.GetComponentInParent<IInteractable>();
+                if (target != null)
+                {
+                    _currentTarget = target;
+                    return;
+                }
             }
-
-            if (!ReferenceEquals(target, _currentTarget) || !ReferenceEquals(holdTarget, _currentHoldTarget))
-                SetTarget(target, holdTarget);
-        }
-
-        private void SetTarget(IInteractable target, IWorldClue holdTarget)
-        {
-            if (!ReferenceEquals(holdTarget, _holdingTarget))
-                CancelHold();
-
-            _currentTarget = target;
-            _currentHoldTarget = holdTarget;
         }
 
         private void OnDestroy()

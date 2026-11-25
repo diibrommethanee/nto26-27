@@ -24,14 +24,15 @@ namespace _Project.Develop.UI.Evidence
 
         [Header("References")]
         [SerializeField] private RectTransform board;
-        [SerializeField] private RectTransform clueContainer;
-        [SerializeField] private RectTransform threadContainer;
         [SerializeField] private RectTransform notebookButton;
 
         [Header("Prefabs")]
         [SerializeField] private ClueView cluePrefab;
         [SerializeField] private ClueView wordCluePrefab;
         [SerializeField] private ClueThreadView threadPrefab;
+        [SerializeField] private Sprite redSticker;
+        [SerializeField] private Sprite blueSticker;
+        [SerializeField] private Sprite greenSticker;
         [Header("Notebook Pages")]
         [SerializeField] private Image matLeft;
         [SerializeField] private Image matRight;
@@ -50,7 +51,8 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField, Min(8f)] private float clueFlyIconSize = 48f;
 
         private readonly HashSet<(ClueView, ClueView)> _combinedPairs = new();
-        private int _cardCount;
+        private readonly Dictionary<Clue, ClueView> _cards = new();
+        private readonly List<ClueThreadView> _threads = new();
         private EvidenceService _evidence;
         private CanvasGroup _canvasGroup;
         private CanvasGroup _notebookButtonGroup;
@@ -97,7 +99,7 @@ namespace _Project.Develop.UI.Evidence
                 board.anchoredPosition -= Vector2.up * slideDistance;
             }
 
-            _pages = new NotebookPages(board, clueContainer, threadContainer, matLeft, matRight,
+            _pages = new NotebookPages(board, matLeft, matRight,
                 surfaceLeft, surfaceRight, _evidence, ClearSelection);
             if (hypotheses.Count == 0 && currentHypothesis != null)
                 _pages.Add(currentHypothesis);
@@ -109,12 +111,22 @@ namespace _Project.Develop.UI.Evidence
             _evidence.HypothesisUnlocked += OnHypothesisUnlocked;
             _evidence.ClueCollected += OnClueCollected;
             foreach (var clue in _evidence.Collected)
-                AddClueCard(clue, GetAutomaticSpawnPosition());
+                AddClueCard(clue, null);
         }
 
         private void OnHypothesisUnlocked(Hypothesis hypothesis)
         {
+            ClearSelection();
             _pages.Add(hypothesis);
+            _pages.Stop();
+            var destination = _pages.ClueArea(hypothesis);
+            foreach (var clue in _evidence.Collected)
+            {
+                if (clue.hypothesis == hypothesis && _cards.TryGetValue(clue, out var card) && card.Rect.parent != destination)
+                    card.MoveToPage(destination, GetAutomaticSpawnPosition(destination));
+            }
+            foreach (var thread in _threads)
+                thread.RefreshPage(board);
             _pages.Stop();
         }
 
@@ -154,8 +166,8 @@ namespace _Project.Develop.UI.Evidence
             {
                 _selected = card;
                 card.SetSelected(true);
-                if (_preview == null)
-                    _preview = Instantiate(threadPrefab, threadContainer);
+                _preview = Instantiate(threadPrefab, card.Rect.parent);
+                _preview.transform.SetAsFirstSibling();
 
                 _preview.FollowMouse(card.Rect);
                 return;
@@ -167,7 +179,7 @@ namespace _Project.Develop.UI.Evidence
 
         private void ConnectClues(ClueView first, ClueView second)
         {
-            if (first == second ||
+            if (first == second || first.Rect.parent != second.Rect.parent ||
                 _combinedPairs.Contains((first, second)) ||
                 _combinedPairs.Contains((second, first)) ||
                 !_evidence.TryCombine(first.Data, second.Data, out var result))
@@ -175,6 +187,7 @@ namespace _Project.Develop.UI.Evidence
 
             _combinedPairs.Add((first, second));
             _preview.Connect(first.Rect, second.Rect);
+            _threads.Add(_preview);
             _preview = null;
 
             var midpoint = (first.Rect.anchoredPosition + second.Rect.anchoredPosition) * 0.5f;
@@ -189,7 +202,12 @@ namespace _Project.Develop.UI.Evidence
             _selected.SetSelected(false);
             _selected = null;
             if (_preview != null)
+            {
                 _preview.Hide();
+                _preview.transform.SetParent(board, false);
+                Destroy(_preview.gameObject);
+                _preview = null;
+            }
         }
 
         public void SpawnClue(Clue clue, Vector2 position)
@@ -225,9 +243,9 @@ namespace _Project.Develop.UI.Evidence
             if (dialogueLabel && notebookButton)
                 await FlyDialogueClueAsync(dialogueLabel);
             else if (sourceWorldPosition is Vector3 worldPosition && notebookButton != null)
-                await FlyClueToNotebookAsync(clue.icon, worldPosition);
+                await FlyClueToNotebookAsync(_evidence.GetClueSprite(clue) ?? GetArtwork(clue), worldPosition);
 
-            AddClueCard(clue, boardPosition ?? GetAutomaticSpawnPosition());
+            AddClueCard(clue, boardPosition);
         }
 
         private UniTask FlyDialogueClueAsync(TMP_Text source)
@@ -342,23 +360,45 @@ namespace _Project.Develop.UI.Evidence
             }
         }
 
-        private void AddClueCard(Clue clue, Vector2 position)
+        private void AddClueCard(Clue clue, Vector2? position)
         {
-            if (clue is WordClue wordClue)
-                Instantiate(wordCluePrefab, clueContainer).Initialize(wordClue, board, position, SelectClue);
-            else
-                Instantiate(cluePrefab, clueContainer).Initialize(clue, board, position, SelectClue);
-            _cardCount++;
+            ClearSelection();
+            var area = _pages.ClueArea(clue.hypothesis);
+            var prefab = clue.icon != null ? cluePrefab : wordCluePrefab;
+            var spawnPosition = position ?? GetAutomaticSpawnPosition(area);
+            var card = Instantiate(prefab, area);
+            _cards.Add(clue, card);
+            _pages.ShowCluePage(clue.hypothesis);
+            card.Initialize(clue, area, spawnPosition, SelectClue, GetArtwork(clue));
         }
 
-        private Vector2 GetAutomaticSpawnPosition()
+        private Sprite GetArtwork(Clue clue)
         {
-            var index = _cardCount;
-            return new Vector2((index % 3) * 24f, -(index / 3) * 24f);
+            if (clue.icon != null)
+                return clue.icon;
+
+            return clue.sticker switch
+            {
+                ClueSticker.Blue => blueSticker,
+                ClueSticker.Green => greenSticker,
+                _ => redSticker
+            };
+        }
+
+        private Vector2 GetAutomaticSpawnPosition(RectTransform area)
+        {
+            var index = 0;
+            foreach (var card in _cards.Values)
+                if (card.Rect.parent == area)
+                    index++;
+            return new Vector2((index % 2 == 0 ? -1f : 1f) * area.rect.width * .24f,
+                area.rect.yMax - 100f - index / 2 * 92f);
         }
 
         public void SetCurrentHypothesis(Hypothesis hypothesis)
         {
+            if (hypothesis != null)
+                _evidence.UnlockHypothesis(hypothesis);
             _pages.Show(hypothesis);
         }
 
