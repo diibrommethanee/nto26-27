@@ -38,6 +38,13 @@ namespace _Project.Develop.Gameplay.Evidence
             _collected.Add(clue);
             if (sourceSprite != null)
                 _collectedSprites.Add(clue, sourceSprite);
+            var reward = clue.reward;
+            if (reward.dialogueNpc != null && reward.dialogue != null)
+                reward.dialogueNpc.state.dialogue = reward.dialogue;
+
+            if (reward.moodNpc != null && reward.moodIncrease > 0)
+                reward.moodNpc.state.mood += reward.moodIncrease;
+
             ClueCollected?.Invoke(clue, sourceWorldPosition, boardPosition);
             return true;
         }
