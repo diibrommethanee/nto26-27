@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using MessagePipe;
+using TMPEffects.CharacterData;
 using TMPEffects.Components;
 using TMPro;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private NpcData playerSpeaker;
         [SerializeField] private Transform playerDialogueAnchor;
 
+        private const float MinWorldBlobHeight = 110f;
         private TMPWriter _worldWriter;
         private SurfaceGraphic _worldSurface;
         private SurfaceStyle _defaultWorldStyle;
@@ -94,7 +96,10 @@ namespace _Project.Develop.UI.Dialogue
             if (worldCanvas)
             {
                 _canvasWorldScale = worldCanvas.transform.lossyScale;
+                worldContent.verticalAlignment = VerticalAlignmentOptions.Top;
                 _worldWriter = worldContent.GetComponent<TMPWriter>();
+                _worldWriter.OnCharacterShown.AddListener(OnWorldCharacterShown);
+                _worldWriter.OnSkipWriter.AddListener(OnWorldWriterSkipped);
                 _worldSurface = worldBlob.GetComponent<SurfaceGraphic>();
                 _defaultWorldStyle = _worldSurface.style;
                 if (!worldCanvas.TryGetComponent(out _worldGroup))
@@ -167,9 +172,7 @@ namespace _Project.Develop.UI.Dialogue
             worldCharacter.gameObject.SetActive(!string.IsNullOrEmpty(speakerName));
             worldBlob.sizeDelta = new Vector2(
                 Mathf.Clamp(worldContent.GetPreferredValues(text).x + 64f, 270f, 520f),
-                120f);
-            worldBlob.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
-                Mathf.Max(110f, worldContent.GetPreferredValues(text, worldBlob.rect.width - 64f, 0).y + 80f));
+                MinWorldBlobHeight);
 
             _blobEntrance.Stop();
             worldBlob.localScale = Vector3.one * 0.94f;
@@ -177,6 +180,34 @@ namespace _Project.Develop.UI.Dialogue
             if (_worldWriter.IsWriting) _worldWriter.StopWriter();
             _worldWriter.SetText(text);
             _worldWriter.StartWriter();
+        }
+
+        private void OnWorldCharacterShown(TMPWriter writer, CharData character)
+        {
+            var index = character.info.index;
+            if (worldContent.textInfo.characterInfo[index].isVisible)
+                ResizeWorldBlob(index);
+        }
+
+        private void OnWorldWriterSkipped(TMPWriter writer, int endIndex)
+        {
+            var characters = worldContent.textInfo.characterInfo;
+            var index = endIndex - 1;
+            while (index >= 0 && !characters[index].isVisible)
+                index--;
+
+            if (index >= 0)
+                ResizeWorldBlob(index);
+        }
+
+        private void ResizeWorldBlob(int characterIndex)
+        {
+            var textInfo = worldContent.textInfo;
+            var lineIndex = textInfo.characterInfo[characterIndex].lineNumber;
+            var textHeight = textInfo.lineInfo[0].ascender - textInfo.lineInfo[lineIndex].descender;
+            var height = Mathf.Max(MinWorldBlobHeight, textHeight + 80f);
+            if (!Mathf.Approximately(worldBlob.rect.height, height))
+                worldBlob.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
         }
 
         private Transform FindAnchor(NpcData speaker)
@@ -342,6 +373,11 @@ namespace _Project.Develop.UI.Dialogue
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
             if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);
+            if (_worldWriter)
+            {
+                _worldWriter.OnCharacterShown.RemoveListener(OnWorldCharacterShown);
+                _worldWriter.OnSkipWriter.RemoveListener(OnWorldWriterSkipped);
+            }
             _blobEntrance.Stop();
         }
     }

@@ -3585,7 +3585,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.5516887, y: -0.6178677}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -3595,7 +3595,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 4.5, y: 3}
+  m_Size: {x: 5.6033773, y: 4.2357354}
   m_EdgeRadius: 0
 --- !u!1 &240293153
 GameObject:
@@ -4629,7 +4629,7 @@ Transform:
   m_GameObject: {fileID: 404348659}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.74, y: -2.87, z: 0}
+  m_LocalPosition: {x: 18.48, y: -2.87, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7209,8 +7209,8 @@ MonoBehaviour:
     _serializedList: []
   preview: 0
   useDefaultDatabase: 1
-  useDefaultKeywordDatabase: 1
-  initDatabase: 0
+  useDefaultKeywordDatabase: 0
+  initDatabase: 1
   previewUpdatesPerSecond: 60
   previewTimeScale: 1
 --- !u!114 &903440554
@@ -7272,8 +7272,8 @@ MonoBehaviour:
   sceneCommands:
     _serializedList: []
   useDefaultDatabase: 1
-  useDefaultKeywordDatabase: 1
-  initDatabase: 0
+  useDefaultKeywordDatabase: 0
+  initDatabase: 1
   eventsEnabled: 1
   commandsEnabled: 1
 --- !u!1 &904479461
@@ -11502,7 +11502,7 @@ MonoBehaviour:
   player: {fileID: 5301033638596137933}
   wave: {fileID: 908675742}
   status: {fileID: 903440551}
-  offsetAbovePlayer: {x: 0, y: 1.75}
+  offsetAbovePlayer: {x: 0, y: 3.65}
 --- !u!114 &1693272835
 MonoBehaviour:
   m_ObjectHideFlags: 0
