@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99d03e892c15452bb6b0abdc1730a7d2, type: 3}
   m_Name: Mr. Fih
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Npc.NpcData
-  displayName: Mr. Fih
+  displayName: "\u041C\u0438\u0441\u0442\u0435\u0440 \u0424\u0438\u0445"
   initialMood: 0
   dialogue: {fileID: 7194093555672020370, guid: 2b5203dd98cc6184fbf3a5aa25cb6412, type: 3}
