@@ -1,8 +1,11 @@
 using System;
 using _Project.Develop.Gameplay.Input;
 using MessagePipe;
+using TMPEffects.Components;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using VContainer;
 
 namespace _Project.Develop.Gameplay.Timeline
@@ -14,6 +17,8 @@ namespace _Project.Develop.Gameplay.Timeline
     {
         [SerializeField] private GameObject teaStage;
         [SerializeField] private Canvas hud;
+        [SerializeField] private TMPWriter notebookWriter;
+        [SerializeField] private Button newDayButton;
 
         private InputController _input;
         private IPublisher<DayEndingCutsceneFinished> _finished;
@@ -22,6 +27,13 @@ namespace _Project.Develop.Gameplay.Timeline
         private bool _playing;
         private bool _hudWasEnabled;
         private bool _ending;
+
+        private void Awake()
+        {
+            newDayButton.gameObject.SetActive(false);
+            newDayButton.onClick.AddListener(StartNewDay);
+            notebookWriter.OnFinishWriter.AddListener(ShowNewDayButton);
+        }
 
         [Inject]
         private void Construct(IBufferedSubscriber<DayPhaseChanged> phases, InputController input,
@@ -52,6 +64,8 @@ namespace _Project.Develop.Gameplay.Timeline
             else
             {
                 _director.Stop();
+                _playing = false;
+                _input.SetCutsceneActive(false);
                 teaStage.SetActive(false);
                 hud.enabled = _hudWasEnabled;
             }
@@ -65,9 +79,21 @@ namespace _Project.Develop.Gameplay.Timeline
             if (_ending) _finished.Publish(new DayEndingCutsceneFinished());
         }
 
+        private void ShowNewDayButton(TMPWriter writer)
+        {
+            if (_ending) newDayButton.gameObject.SetActive(true);
+        }
+
+        private void StartNewDay()
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
         private void OnDestroy()
         {
             _subscription?.Dispose();
+            if (notebookWriter != null) notebookWriter.OnFinishWriter.RemoveListener(ShowNewDayButton);
+            if (newDayButton != null) newDayButton.onClick.RemoveListener(StartNewDay);
             if (_director != null) _director.stopped -= OnStopped;
         }
     }
