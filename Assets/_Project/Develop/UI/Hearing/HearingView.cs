@@ -21,6 +21,7 @@ namespace _Project.Develop.UI.Hearing
         private const float FadeSeconds = 0.75f;
 
         [SerializeField] private GameObject panel;
+        [SerializeField] private Sprite hearingIcon;
         [SerializeField] private HearingSource[] sources;
         [SerializeField] private PlayerAbility player;
         [SerializeField] private HearingWave wave;
@@ -230,7 +231,7 @@ namespace _Project.Develop.UI.Hearing
             if (!_decoded || _source == null) return;
 
             _caughtElapsed = 0f;
-            _evidence.Collect(_source.clue, _source.transform.position);
+            _evidence.Collect(_source.clue, _source.transform.position, sourceSprite: hearingIcon);
         }
 
         private void UpdateCaught()
