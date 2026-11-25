@@ -6,6 +6,7 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.UI.Surface;
 using PrimeTween;
 using System;
+using System.Linq;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
@@ -100,17 +101,10 @@ namespace _Project.Develop.UI
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
 
-            if (quest.steps != null && quest.steps.Count > 0 && quest.steps[0] != null)
-            {
-                var firstStep = quest.steps[0];
-                _currentStepId = firstStep.id;
-                currentStepText.text = firstStep.title;
-            }
-            else
-            {
-                currentStepText.text = string.Empty;
-                Debug.LogWarning($"[QuestTracker] Quest '{quest.name}' has no steps.");
-            }
+            var firstStep = quest.steps.FirstOrDefault(step => step.eventType != QuestEventType.Empty);
+            _currentStepId = firstStep?.id;
+            _isCompleted = firstStep == null;
+            currentStepText.text = firstStep?.title ?? CompletedText;
         }
         
         private void OnStepUpdated(QuestStepCompletedEvent evt)
@@ -133,14 +127,18 @@ namespace _Project.Develop.UI
 
             _currentQuest = quest;
             _cover.style = quest.surfaceStyle != null ? quest.surfaceStyle : _defaultCoverStyle;
-            _currentStepId = evt.StepId;
+            var nextStep = quest.steps
+                .SkipWhile(candidate => candidate != step)
+                .Skip(1)
+                .FirstOrDefault(candidate => candidate.eventType != QuestEventType.Empty);
+            _currentStepId = nextStep?.id;
             _isCompleted = false;
 
             if (!_input.IsZoomMode && !_zoomFade.isAlive) ShowTracker();
             
             titleText.text = quest.questName;
             descriptionText.text = quest.description;
-            currentStepText.text = step.title;
+            currentStepText.text = nextStep?.title ?? CompletedText;
         }
 
         private void OnZoomModeChanged(ZoomModeChanged message)

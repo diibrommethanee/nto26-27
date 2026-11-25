@@ -15,7 +15,9 @@ MonoBehaviour:
   questName: "\u0417\u043D\u0430\u043A\u043E\u043C\u0441\u0442\u0432\u043E"
   description: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C"
   steps: []
-  rewards: []
-  references:
-    version: 2
-    RefIds: []
+  reward:
+    dialogueNpc: {fileID: 0}
+    dialogue: {fileID: 0}
+    moodNpc: {fileID: 0}
+    moodIncrease: 0
+  surfaceStyle: {fileID: 0}
