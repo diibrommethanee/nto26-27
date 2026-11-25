@@ -18,7 +18,7 @@ MonoBehaviour:
   - id: talk_to_wizard
     title: "\u041F\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u0442\u044C \u0441 \u0432\u043E\u043B\u0448\u0435\u0431\u043D\u0438\u043A\u043E\u043C"
     target: {fileID: 11400000, guid: 2a7fdbfeba54b584da5b48e813688e3b, type: 2}
-    eventType: 1
+    eventType: 2
     requiredAmount: 1
   reward:
     dialogueNpc: {fileID: 0}
