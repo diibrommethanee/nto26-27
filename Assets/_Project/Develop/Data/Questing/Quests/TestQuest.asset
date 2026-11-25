@@ -20,8 +20,9 @@ MonoBehaviour:
     target: {fileID: 11400000, guid: 2a7fdbfeba54b584da5b48e813688e3b, type: 2}
     eventType: 1
     requiredAmount: 1
+  reward:
+    dialogueNpc: {fileID: 0}
+    dialogue: {fileID: 0}
+    moodNpc: {fileID: 0}
+    moodIncrease: 0
   surfaceStyle: {fileID: 11400000, guid: 78a893af70cd19b44b01d3e4a6fce493, type: 2}
-  rewards: []
-  references:
-    version: 2
-    RefIds: []
