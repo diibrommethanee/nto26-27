@@ -1,5 +1,6 @@
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
+using _Project.Develop.Gameplay.Timeline;
 using MessagePipe;
 using Cysharp.Threading.Tasks;
 using UnityEngine.EventSystems;
@@ -13,6 +14,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
     public class PlayerAbility : MonoBehaviour
     {
         private InputController _input;
+        private DayService _dayService;
         private UnityCamera _camera;
 
         private PlayerSmellAbility _smell;
@@ -27,9 +29,11 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private void Construct(InputController input,
             IBufferedPublisher<SmellVisibilityChanged> visibility,
             IBufferedPublisher<HearingChanged> hearing,
-            IBufferedPublisher<SelectedSkillChanged> selectedSkillPublisher)
+            IBufferedPublisher<SelectedSkillChanged> selectedSkillPublisher,
+            DayService dayService)
         {
             _input = input;
+            _dayService = dayService;
             _hearing = new PlayerHearingAbility(hearing);
             _smell = new PlayerSmellAbility(visibility);
             _selectedSkillPublisher = selectedSkillPublisher;
@@ -83,8 +87,12 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-            if (isActiveAndEnabled && !IsPointerOverCollectableClue())
-                SetActiveSkill(ActiveSkill == SelectedSkill ? null : SelectedSkill);
+            if (!isActiveAndEnabled || IsPointerOverCollectableClue()) return;
+
+            var activating = ActiveSkill != SelectedSkill;
+            if (activating && !_dayService.TrySpendMinutes(DayService.AbilityCostMinutes)) return;
+
+            SetActiveSkill(activating ? SelectedSkill : null);
         }
 
         public void StopHearing()

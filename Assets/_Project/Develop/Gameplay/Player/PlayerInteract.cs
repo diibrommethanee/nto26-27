@@ -3,6 +3,7 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Timeline;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using VContainer;
@@ -25,13 +26,16 @@ namespace _Project.Develop.Gameplay.Player
         private float _holdProgress;
         private PlayerLasso _lasso;
         private PlayerStats _stats;
+        private DayService _dayService;
         
         [Inject]
-        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats)
+        private void Construct(InputController input, EvidenceService evidenceService, PlayerStats stats,
+            DayService dayService)
         {
             _input = input;
             _evidenceService = evidenceService;
             _stats = stats;
+            _dayService = dayService;
         }
         
         private void Start()
@@ -45,7 +49,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private void Update()
         {
-            if (_input.Actions.Player.enabled)
+            if (_input.Actions.Player.enabled && _dayService.RemainingMinutes > 0)
                 _lasso.Tick();
             else
                 _lasso.Cancel();
@@ -85,6 +89,12 @@ namespace _Project.Develop.Gameplay.Player
 
         private void UpdateHoldInteraction()
         {
+            if (_dayService.RemainingMinutes <= 0)
+            {
+                CancelHold();
+                return;
+            }
+
             var leftMouse = _input.Actions.Player.MoveTo;
             var holdTarget = _currentHoldTarget;
 
