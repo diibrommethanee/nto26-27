@@ -9,15 +9,20 @@ namespace _Project.Develop.Gameplay.Evidence
     {
         private readonly EvidenceDatabase _database;
         private readonly List<Clue> _collected = new();
+        private readonly List<Hypothesis> _unlockedHypotheses = new();
         private readonly Dictionary<Hypothesis, IReadOnlyList<Clue>> _solvedHypotheses = new();
 
         public IReadOnlyList<Clue> Collected { get; }
+        public IReadOnlyList<Hypothesis> UnlockedHypotheses { get; }
+        public event Action<Hypothesis> HypothesisUnlocked;
+        public event Action<Hypothesis> HypothesisPassed;
         public event Action<Clue, Vector3?, Vector2?> ClueCollected;
 
         public EvidenceService(EvidenceDatabase database)
         {
             _database = database;
             Collected = _collected.AsReadOnly();
+            UnlockedHypotheses = _unlockedHypotheses.AsReadOnly();
         }
 
         public bool Collect(Clue clue, Vector3? sourceWorldPosition = null, Vector2? boardPosition = null)
@@ -31,6 +36,15 @@ namespace _Project.Develop.Gameplay.Evidence
             _collected.Add(clue);
             ClueCollected?.Invoke(clue, sourceWorldPosition, boardPosition);
             return true;
+        }
+
+        public void UnlockHypothesis(Hypothesis hypothesis)
+        {
+            if (_unlockedHypotheses.Contains(hypothesis))
+                return;
+
+            _unlockedHypotheses.Add(hypothesis);
+            HypothesisUnlocked?.Invoke(hypothesis);
         }
 
         public bool TryCombine(Clue first, Clue second, out Clue result)
@@ -68,6 +82,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 for (var i = 0; i < answers.Count; i++)
                     snapshot[i] = answers[i];
                 _solvedHypotheses.Add(hypothesis, Array.AsReadOnly(snapshot));
+                HypothesisPassed?.Invoke(hypothesis);
             }
             return true;
         }

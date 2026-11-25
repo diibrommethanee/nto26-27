@@ -31,6 +31,7 @@ namespace _Project.Develop.Editor.Dialogue
             context.AddInputPort<Quest>("Quest").WithDisplayName("Quest").Build();
             
             context.AddInputPort<Clue>("Evidence").WithDisplayName("Clue").Build();
+            context.AddInputPort<Hypothesis>("Hypothesis").Build();
 
             context.AddInputPort<bool>("PublishTalked").WithDisplayName("Publish Talked").WithDefaultValue(false).Build();
             

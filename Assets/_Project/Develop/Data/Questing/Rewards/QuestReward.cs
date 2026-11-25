@@ -1,10 +1,17 @@
 using System;
+using _Project.Develop.Data.Dialogue;
+using _Project.Develop.Data.Npc;
+using UnityEngine;
 
 namespace _Project.Develop.Data.Questing.Rewards
 {
     [Serializable]
-    public abstract class QuestReward
+    public class QuestReward
     {
-        public abstract void Grant();
+        public NpcData dialogueNpc;
+        public DialogueDefinition dialogue;
+
+        public NpcData moodNpc;
+        [Min(0)] public int moodIncrease;
     }
 }

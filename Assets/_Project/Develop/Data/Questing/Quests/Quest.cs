@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _Project.Develop.Data.Questing.Rewards;
+using _Project.Develop.Data.Surfaces;
 using UnityEngine;
 
 namespace _Project.Develop.Data.Questing.Quests
@@ -12,6 +13,8 @@ namespace _Project.Develop.Data.Questing.Quests
         [TextArea] public string description;
         public List<QuestStep> steps;
         
-        [SerializeReference] public List<QuestReward> rewards = new();
+        public QuestReward reward = new();
+
+        [Space(5)] public SurfaceStyle surfaceStyle;
     }
 }

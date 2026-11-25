@@ -8,13 +8,14 @@ using PrimeTween;
 using _Project.Develop.Gameplay.Input;
 using MessagePipe;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using VContainer;
 
 namespace _Project.Develop.UI.Evidence
 {
     [RequireComponent(typeof(CanvasGroup))]
-    public class EvidenceView : MonoBehaviour
+    public class EvidenceView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         public const string DialogueClueLinkPrefix = "dialogue-clue-";
 
@@ -31,7 +32,13 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField] private ClueView cluePrefab;
         [SerializeField] private ClueView wordCluePrefab;
         [SerializeField] private ClueThreadView threadPrefab;
-        [SerializeField] private Hypothesis currentHypothesis;
+        [Header("Notebook Pages")]
+        [SerializeField] private Image matLeft;
+        [SerializeField] private Image matRight;
+        [SerializeField] private Image surfaceLeft;
+        [SerializeField] private Image surfaceRight;
+        [SerializeField] private List<Hypothesis> hypotheses = new();
+        [SerializeField, HideInInspector] private Hypothesis currentHypothesis;
 
         [Header("Animations")]
         [SerializeField] private float openDuration = 0.32f;
@@ -51,7 +58,7 @@ namespace _Project.Develop.UI.Evidence
         private ISubscriber<ZoomModeChanged> _zoomMode;
         private IDisposable _zoomSubscription;
         private Tween _notebookFade;
-        private HypothesisView _hypothesisView;
+        private NotebookPages _pages;
         private ClueView _selected;
         private ClueThreadView _preview;
         private bool _isOpen;
@@ -90,12 +97,25 @@ namespace _Project.Develop.UI.Evidence
                 board.anchoredPosition -= Vector2.up * slideDistance;
             }
 
-            _hypothesisView = board.GetComponentInChildren<HypothesisView>(true);
-            _hypothesisView.Initialize(_evidence);
+            _pages = new NotebookPages(board, clueContainer, threadContainer, matLeft, matRight,
+                surfaceLeft, surfaceRight, _evidence, ClearSelection);
+            if (hypotheses.Count == 0 && currentHypothesis != null)
+                _pages.Add(currentHypothesis);
+            foreach (var hypothesis in hypotheses)
+                _pages.Add(hypothesis);
+            foreach (var hypothesis in _evidence.UnlockedHypotheses)
+                _pages.Add(hypothesis);
+            _pages.ShowFirst();
+            _evidence.HypothesisUnlocked += OnHypothesisUnlocked;
             _evidence.ClueCollected += OnClueCollected;
-            _hypothesisView.Show(currentHypothesis);
             foreach (var clue in _evidence.Collected)
                 AddClueCard(clue, GetAutomaticSpawnPosition());
+        }
+
+        private void OnHypothesisUnlocked(Hypothesis hypothesis)
+        {
+            _pages.Add(hypothesis);
+            _pages.Stop();
         }
 
         private void OnZoomModeChanged(ZoomModeChanged message)
@@ -120,8 +140,12 @@ namespace _Project.Develop.UI.Evidence
             _zoomSubscription?.Dispose();
             _notebookFade.Stop();
             _transition.Stop();
+            _pages?.CancelAnimation();
             if (_evidence != null)
+            {
+                _evidence.HypothesisUnlocked -= OnHypothesisUnlocked;
                 _evidence.ClueCollected -= OnClueCollected;
+            }
         }
 
         private void SelectClue(ClueView card)
@@ -175,7 +199,7 @@ namespace _Project.Develop.UI.Evidence
 
         private void OnClueCollected(Clue clue, Vector3? sourceWorldPosition, Vector2? boardPosition)
         {
-            _hypothesisView.RefreshClues();
+            _pages.RefreshClues();
             var label = !sourceWorldPosition.HasValue && clue == _dialogueClue ? _dialogueLabel : null;
             PresentClueAsync(clue, sourceWorldPosition, boardPosition, label).Forget();
         }
@@ -261,15 +285,16 @@ namespace _Project.Develop.UI.Evidence
             label.text = phrase;
             rect.sizeDelta = label.GetPreferredValues(phrase) + new Vector2(8, 4);
 
+            var scaleTween = Tween.Scale(rect, 0.35f, clueFlyDuration, Ease.InCubic);
             try
             {
                 var target = canvas.InverseTransformPoint(notebookButton.position);
-                Tween.Scale(rect, 0.35f, clueFlyDuration, Ease.InCubic);
                 await Tween.LocalPosition(rect, target, clueFlyDuration, Ease.InOutCubic)
                     .SetCancellationToken(destroyCancellationToken);
             }
             finally
             {
+                scaleTween.Stop();
                 Destroy(flight);
             }
         }
@@ -334,16 +359,25 @@ namespace _Project.Develop.UI.Evidence
 
         public void SetCurrentHypothesis(Hypothesis hypothesis)
         {
-            currentHypothesis = hypothesis;
-            _hypothesisView.Show(hypothesis);
+            _pages.Show(hypothesis);
         }
 
         public void Open() => SetOpen(true);
 
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (_isOpen && _canvasGroup.interactable)
+                _pages.BeginDrag(eventData);
+        }
+
+        public void OnDrag(PointerEventData eventData) => _pages.Drag(eventData);
+
+        public void OnEndDrag(PointerEventData eventData) => _pages.EndDrag(eventData);
+
         public void Close()
         {
             ClearSelection();
-            _hypothesisView.CloseChoices();
+            _pages.Stop();
             SetOpen(false);
         }
 

@@ -1,5 +1,6 @@
 using _Project.Develop.Data.Questing.Quests;
-using _Project.Develop.Data.Npc;
+using _Project.Develop.Data.Evidence;
+using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Npc;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         private readonly List<IDisposable> _subscriptions = new();
 
+        private readonly EvidenceService _evidence;
         private readonly IPublisher<QuestStepCompletedEvent> _stepCompletedPublisher;
         private readonly IPublisher<QuestCompletedEvent> _questCompletedPublisher;
 
@@ -27,8 +29,10 @@ namespace _Project.Develop.Gameplay.Quests
             ISubscriber<NpcTalkedEvent> talkedSubscriber,
             ISubscriber<StartQuestEvent> startQuestSubscriber,
             IPublisher<QuestStepCompletedEvent> stepCompletedPublisher,
-            IPublisher<QuestCompletedEvent> questCompletedPublisher)
+            IPublisher<QuestCompletedEvent> questCompletedPublisher,
+            EvidenceService evidence)
         {
+            _evidence = evidence;
             _stepCompletedPublisher = stepCompletedPublisher;
             _questCompletedPublisher = questCompletedPublisher;
 
@@ -39,8 +43,7 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void OnStartQuest(StartQuestEvent evt)
         {
-            if (StartQuest(evt.Quest)) Debug.Log("Quest started");
-            else  Debug.Log("Quest not started");
+            if (!StartQuest(evt.Quest)) Debug.Log("Quest not started");
         }
         
         public bool StartQuest(Quest data)
@@ -56,8 +59,7 @@ namespace _Project.Develop.Gameplay.Quests
 
             if (progress.IsCompleted)
             {
-                _completedQuests.Add(progress);
-                _questCompletedPublisher.Publish(new QuestCompletedEvent(data));
+                CompleteQuest(progress);
                 return true;
             }
 
@@ -81,9 +83,24 @@ namespace _Project.Develop.Gameplay.Quests
             UpdateProgress(QuestEventType.NpcTalked, evt.Npc, 1);
         }
 
-        private void UpdateProgress(QuestEventType eventType, NpcData targetNpc, int amount)
+        private void OnClueCollected(Clue clue, Vector3? sourceWorldPosition, Vector2? boardPosition)
         {
-            if (amount <= 0 || targetNpc == null)
+            UpdateProgress(QuestEventType.ClueCollected, clue, 1);
+        }
+
+        private void OnHypothesisUnlocked(Hypothesis hypothesis)
+        {
+            UpdateProgress(QuestEventType.HypothesisCollected, hypothesis, 1);
+        }
+
+        private void OnHypothesisPassed(Hypothesis hypothesis)
+        {
+            UpdateProgress(QuestEventType.HypothesisPassed, hypothesis, 1);
+        }
+
+        private void UpdateProgress(QuestEventType eventType, QuestTarget target, int amount)
+        {
+            if (amount <= 0 || target == null)
                 return;
 
             for (var i = _activeQuests.Count - 1; i >= 0; i--)
@@ -97,11 +114,10 @@ namespace _Project.Develop.Gameplay.Quests
                 if (step.Data.eventType != eventType)
                     continue;
 
-                if (step.Data.target != targetNpc)
+                if (step.Data.target != target)
                     continue;
 
                 step.AddProgress(amount);
-                Debug.Log("Updated quest progress");
 
                 if (!step.IsCompleted)
                     continue;
@@ -121,22 +137,23 @@ namespace _Project.Develop.Gameplay.Quests
             _activeQuests.Remove(quest);
             _completedQuests.Add(quest);
 
-            if (quest.Data.rewards != null)
-            {
-                foreach (var reward in quest.Data.rewards)
-                {
-                    reward?.Grant();
-                }
-            }
+            var reward = quest.Data.reward;
+            if (reward.dialogueNpc != null && reward.dialogue != null)
+                reward.dialogueNpc.state.dialogue = reward.dialogue;
+
+            if (reward.moodNpc != null && reward.moodIncrease > 0)
+                reward.moodNpc.state.mood += reward.moodIncrease;
             
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data));
-            
-            Debug.Log("Completed quest");
         }
 
         public void Dispose()
         {
+            _evidence.ClueCollected -= OnClueCollected;
+            _evidence.HypothesisUnlocked -= OnHypothesisUnlocked;
+            _evidence.HypothesisPassed -= OnHypothesisPassed;
+
             foreach (var subscription in _subscriptions)
                 subscription.Dispose();
 
@@ -145,7 +162,9 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void Initialize()
         {
-            
+            _evidence.ClueCollected += OnClueCollected;
+            _evidence.HypothesisUnlocked += OnHypothesisUnlocked;
+            _evidence.HypothesisPassed += OnHypothesisPassed;
         }
     }
 }

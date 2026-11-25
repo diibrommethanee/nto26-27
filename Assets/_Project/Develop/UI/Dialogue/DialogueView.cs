@@ -1,6 +1,12 @@
 using _Project.Develop.Data.Evidence;
+using _Project.Develop.Data.Npc;
+using _Project.Develop.Data.Surfaces;
+using _Project.Develop.Gameplay.NPC;
+using _Project.Develop.Gameplay.Input;
+using PrimeTween;
 using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.UI.Evidence;
+using _Project.Develop.UI.Surface;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -21,6 +27,31 @@ namespace _Project.Develop.UI.Dialogue
         
         [SerializeField] private EvidenceView notebook;
 
+        [Header("World dialogue")]
+        [SerializeField] private Canvas worldCanvas;
+        [SerializeField] private TMP_Text worldCharacter;
+        [SerializeField] private TMP_Text worldContent;
+        [SerializeField] private Button worldContinue;
+        [SerializeField] private RectTransform worldBlob;
+        [SerializeField] private NpcInteract[] speakers;
+        [SerializeField] private NpcData playerSpeaker;
+        [SerializeField] private Transform playerDialogueAnchor;
+        [SerializeField] private Transform worldFallbackAnchor;
+
+        private TMPWriter _worldWriter;
+        private SurfaceGraphic _worldSurface;
+        private SurfaceStyle _defaultWorldStyle;
+        private CanvasGroup _worldGroup;
+        private InputController _input;
+        private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IDisposable _zoomSubscription;
+        private Tween _zoomFade;
+        private float _zoomVisibility;
+        private bool _zoomActive;
+        private bool _panelVisible;
+        private Tween _blobEntrance;
+        private Vector3 _canvasWorldScale;
+        private TMPWriter ActiveWriter => worldCanvas ? _worldWriter : _contentWriter;
         private Clue _lineClue;
 
         private CanvasGroup _group;
@@ -38,9 +69,12 @@ namespace _Project.Develop.UI.Dialogue
 
         [Inject]
         public void Construct(DialogueRunner runner, ISubscriber<DialogueShown> dialogueSubscriber,
-            ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber)
+            ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber,
+            InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _runner = runner;
+            _input = input;
+            _zoomMode = zoomMode;
             _dialogueSubscription = dialogueSubscriber.Subscribe(OnDialogueShown);
             _endedSubscription = endedSubscriber.Subscribe(OnDialogueEnded);
             _choicesSubscription = choicesSubscriber.Subscribe(OnChoicesShown);
@@ -49,35 +83,146 @@ namespace _Project.Develop.UI.Dialogue
         private void Start()
         {
             _group = GetComponent<CanvasGroup>();
-            _continueButton = GetComponent<Button>();
-            
-            _contentWriter = contentText.GetComponent<TMPWriter>();
             _choiceTemplate = choicesContainer.GetComponentInChildren<Button>(true);
-            
-            ClearText();
+            _zoomActive = _input.IsZoomMode;
+            _zoomVisibility = _zoomActive ? 0f : 1f;
             SetVisible(false);
-            
-            _continueButton.onClick.AddListener(OnContinueClicked);
+
+            if (worldCanvas)
+            {
+                _canvasWorldScale = worldCanvas.transform.lossyScale;
+                _worldWriter = worldContent.GetComponent<TMPWriter>();
+                _worldSurface = worldBlob.GetComponent<SurfaceGraphic>();
+                _defaultWorldStyle = _worldSurface.style;
+                if (!worldCanvas.TryGetComponent(out _worldGroup))
+                    _worldGroup = worldCanvas.gameObject.AddComponent<CanvasGroup>();
+                worldContinue.onClick.AddListener(OnContinueClicked);
+                HideWorldLine();
+            }
+            else
+            {
+                _continueButton = GetComponent<Button>();
+                _contentWriter = contentText.GetComponent<TMPWriter>();
+                ClearText();
+                _continueButton.onClick.AddListener(OnContinueClicked);
+            }
+
+            ApplyZoomVisibility(_zoomVisibility);
+            _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
         }
 
         private void OnDialogueShown(DialogueShown message)
         {
             ClearChoices();
-            _contentWriter.StopWriter();
             
             var dialogue = message.dialogue;
             _lineClue = dialogue.clue;
             var text = dialogue.text ?? string.Empty;
             if (_lineClue && notebook)
                 text = TagCluePhrases(text);
-            characterText.text = !string.IsNullOrWhiteSpace(dialogue.overrideName) ? dialogue.overrideName
+            var speakerName = !string.IsNullOrWhiteSpace(dialogue.overrideName) ? dialogue.overrideName
                 : dialogue.character != null ? dialogue.character.displayName
                     : string.Empty;
 
+            text = FormatText(text);
+            if (worldCanvas)
+            {
+                SetVisible(false);
+                ShowWorldLine(dialogue.character, speakerName, text);
+                return;
+            }
+
+            _contentWriter.StopWriter();
+            characterText.text = speakerName;
             SetVisible(true);
-            
-            _contentWriter.SetText(FormatText(text));
+
+            _contentWriter.SetText(text);
             _contentWriter.StartWriter();
+        }
+
+        private void ShowWorldLine(NpcData speaker, string speakerName, string text)
+        {
+            var styleOwner = speaker != null ? speaker : _runner.Interlocutor;
+            var speakerStyle = styleOwner != null ? styleOwner.surfaceStyle : null;
+            _worldSurface.style = speakerStyle != null ? speakerStyle : _defaultWorldStyle;
+
+            var isPlayerSpeaking = speaker != null && speaker == playerSpeaker;
+            var anchor = isPlayerSpeaking ? playerDialogueAnchor
+                : FindAnchor(speaker) ?? FindAnchor(_runner.Interlocutor) ?? worldFallbackAnchor;
+
+            var canvasTransform = worldCanvas.transform;
+            canvasTransform.SetParent(null, false);
+            canvasTransform.SetPositionAndRotation(anchor.position, Quaternion.identity);
+            canvasTransform.localScale = _canvasWorldScale;
+            if (!isPlayerSpeaking)
+                canvasTransform.SetParent(anchor, true);
+
+            var opensRight = anchor.position.x >= anchor.parent.position.x;
+            worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0.5f);
+            worldCanvas.gameObject.SetActive(true);
+            worldCharacter.text = speakerName;
+            worldCharacter.gameObject.SetActive(!string.IsNullOrEmpty(speakerName));
+            worldBlob.sizeDelta = new Vector2(
+                Mathf.Clamp(worldContent.GetPreferredValues(text).x + 64f, 270f, 520f),
+                120f);
+            worldBlob.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                Mathf.Max(110f, worldContent.GetPreferredValues(text, worldBlob.rect.width - 64f, 0).y + 80f));
+
+            _blobEntrance.Stop();
+            worldBlob.localScale = Vector3.one * 0.94f;
+            _blobEntrance = Tween.Scale(worldBlob, 1f, 0.19f, Ease.OutCubic);
+            if (_worldWriter.IsWriting) _worldWriter.StopWriter();
+            _worldWriter.SetText(text);
+            _worldWriter.StartWriter();
+        }
+
+        private Transform FindAnchor(NpcData speaker)
+        {
+            if (!speaker) return null;
+            foreach (var npc in speakers)
+                if (npc && npc.gameObject.activeInHierarchy && npc.Data == speaker)
+                    return npc.DialogueAnchor;
+            return null;
+        }
+
+        private void OnZoomModeChanged(ZoomModeChanged message)
+        {
+            if (_zoomActive == message.IsActive)
+                return;
+
+            _zoomActive = message.IsActive;
+            _zoomFade.Stop();
+            ApplyZoomVisibility(_zoomVisibility);
+
+            var target = _zoomActive ? 0f : 1f;
+            if (_zoomVisibility == target)
+                return;
+
+            _zoomFade = Tween.Custom(this, _zoomVisibility, target, _zoomActive ? .22f : .3f,
+                (view, alpha) => view.ApplyZoomVisibility(alpha), Ease.InOutSine, useUnscaledTime: true);
+        }
+
+        private void ApplyZoomVisibility(float alpha)
+        {
+            _zoomVisibility = alpha;
+            var canInteract = !_zoomActive && alpha >= .999f;
+
+            _group.alpha = _panelVisible ? alpha : 0f;
+            _group.interactable = _group.blocksRaycasts = _panelVisible && canInteract;
+
+            if (_worldGroup != null)
+            {
+                _worldGroup.alpha = alpha;
+                _worldGroup.interactable = _worldGroup.blocksRaycasts = canInteract;
+            }
+        }
+
+        private void HideWorldLine()
+        {
+            if (!worldCanvas) return;
+            _blobEntrance.Stop();
+            if (_worldWriter.IsWriting) _worldWriter.StopWriter();
+            worldCanvas.gameObject.SetActive(false);
         }
 
         private static string TagCluePhrases(string text)
@@ -104,8 +249,12 @@ namespace _Project.Develop.UI.Dialogue
         private void OnChoicesShown(DialogueChoicesShown message)
         {
             ClearChoices();
-            _contentWriter.StopWriter();
-            contentText.enabled = false;
+            HideWorldLine();
+            if (!worldCanvas)
+            {
+                _contentWriter.StopWriter();
+                contentText.enabled = false;
+            }
 
             for (var i = 0; i < message.choices.Count; i++)
             {
@@ -129,14 +278,15 @@ namespace _Project.Develop.UI.Dialogue
             }
 
             _choiceButtons.Clear();
-            contentText.enabled = true;
+            if (!worldCanvas) contentText.enabled = true;
         }
 
         private void OnDialogueEnded(DialogueEnded message)
         {
             ClearChoices();
             SetVisible(false);
-            ClearText();
+            HideWorldLine();
+            if (!worldCanvas) ClearText();
         }
 
         private void OnContinueClicked()
@@ -144,15 +294,16 @@ namespace _Project.Develop.UI.Dialogue
             if (!_runner.IsRunning || _runner.IsChoosing)
                 return;
 
-            if (_contentWriter.IsWriting)
+            var writer = ActiveWriter;
+            if (writer.IsWriting)
             {
-                _contentWriter.SkipWriter();
+                writer.SkipWriter();
                 return;
             }
             
             if (notebook && _lineClue)
             {
-                notebook.ContinueWithClueText(_lineClue, contentText, _runner.Continue);
+                notebook.ContinueWithClueText(_lineClue, worldCanvas ? worldContent : contentText, _runner.Continue);
                 return;
             }
 
@@ -161,9 +312,8 @@ namespace _Project.Develop.UI.Dialogue
 
         private void SetVisible(bool visible)
         {
-            _group.alpha = visible ? 1f : 0f;
-            _group.interactable = visible;
-            _group.blocksRaycasts = visible;
+            _panelVisible = visible;
+            ApplyZoomVisibility(_zoomVisibility);
         }
         
         private void ClearText()
@@ -179,8 +329,12 @@ namespace _Project.Develop.UI.Dialogue
             _dialogueSubscription?.Dispose();
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
+            _zoomSubscription?.Dispose();
+            _zoomFade.Stop();
 
-            _continueButton.onClick.RemoveListener(OnContinueClicked);
+            if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
+            if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);
+            _blobEntrance.Stop();
         }
     }
 }

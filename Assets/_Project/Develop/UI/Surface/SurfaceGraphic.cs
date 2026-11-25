@@ -1,3 +1,4 @@
+using _Project.Develop.Data.Surfaces;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -53,6 +54,15 @@ namespace _Project.Develop.UI.Surface
             mat.SetColor("_Fill", style.fill);
             mat.SetColor("_Edge", style.edge);
             mat.SetColor("_Accent", style.accent);
+            mat.SetTexture("_SurfaceTexture", style.customTexture);
+            mat.SetColor("_TextureTint", style.textureTint);
+            mat.SetVector("_TextureSettings", new Vector4((float)(style.texture == SurfaceTexture.Custom && !style.customTexture ? SurfaceTexture.None : style.texture), style.textureOpacity,
+                Mathf.Max(1, style.textureTileSize), (float)style.textureMapping));
+            mat.SetTexture("_PatternTexture", style.customPattern);
+            mat.SetColor("_PatternTint", style.patternTint);
+            mat.SetVector("_PatternSettings", new Vector4((float)(style.pattern == SurfacePattern.Custom && !style.customPattern ? SurfacePattern.None : style.pattern), style.patternOpacity,
+                Mathf.Max(1, style.patternSpacing), style.patternSize));
+            mat.SetFloat("_StaggerPattern", style.staggerPattern ? 1 : 0);
         }
 
         protected override void OnDestroy()
