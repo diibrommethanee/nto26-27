@@ -185,7 +185,7 @@ namespace _Project.Develop.UI.Dialogue
             if (speaker == _interaction.Npc)
                 return _interaction.DialogueAnchor;
 
-            foreach (var npc in FindObjectsByType<NpcInteract>(FindObjectsSortMode.None))
+            foreach (var npc in FindObjectsByType<NpcInteract>(FindObjectsInactive.Exclude))
                 if (npc && npc.gameObject.activeInHierarchy && npc.Data == speaker)
                     return npc.DialogueAnchor;
             return null;
@@ -234,7 +234,7 @@ namespace _Project.Develop.UI.Dialogue
         private static string TagCluePhrases(string text)
         {
             var index = 0;
-            return Regex.Replace(text, @"<(?<tag>highlight|wave|h|w)>(?<phrase>.*?)</\k<tag>>",
+            return Regex.Replace(text, @"<(?<tag>highlight|h)>(?<phrase>.*?)</\k<tag>>",
                 match => string.IsNullOrWhiteSpace(match.Groups["phrase"].Value)
                     ? match.Value
                     : $"<link=\"{EvidenceView.DialogueClueLinkPrefix}{index++}\">{match.Value}</link>",
