@@ -1,9 +1,10 @@
+using _Project.Develop.Data.Questing.Quests;
 using UnityEngine;
 
 namespace _Project.Develop.Data.Evidence
 {
     [CreateAssetMenu(menuName = "Configs/Evidence/Clue")]
-    public class Clue : ScriptableObject
+    public class Clue : QuestTarget
     {
         public string title;
         [TextArea] public string description;

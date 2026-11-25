@@ -1,7 +1,7 @@
 using _Project.Develop.Data.Evidence;
 using UnityEngine;
 
-namespace _Project.Develop.Gameplay.Hearing
+namespace _Project.Develop.Gameplay.Abilities.Hearing
 {
     public class HearingSource : MonoBehaviour
     {

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Editor.Dialogue
 {
-    [ScriptedImporter(13, DialogueGraph.AssetExtension)]
+    [ScriptedImporter(14, DialogueGraph.AssetExtension)]
     public class DialogueGraphImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -57,6 +57,7 @@ namespace _Project.Develop.Editor.Dialogue
                                 text = ReadText(node, "Text"),
                                 quest = ReadValue<Quest>(node, "Quest"),
                                 clue = ReadValue<Clue>(node, "Evidence"),
+                                hypothesis = ReadValue<Hypothesis>(node, "Hypothesis"),
                                 publishTalked = ReadValue<bool>(node, "PublishTalked"),
                                 moodChange = ReadValue<int>(node, "MoodChange"),
                                 nextNodeId = ReadNextNodeId(node)

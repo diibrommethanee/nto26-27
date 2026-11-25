@@ -1,4 +1,3 @@
-using _Project.Develop.Gameplay.Player;
 using System;
 using _Project.Develop.Gameplay.Player.Abilities;
 using MessagePipe;
@@ -6,7 +5,7 @@ using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace _Project.Develop.Gameplay.Scent
+namespace _Project.Develop.Gameplay.Abilities.Scent
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class ScentTrail : MonoBehaviour

@@ -40,6 +40,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                 text = dialogue.text,
                 quest = dialogue.quest,
                 clue = dialogue.clue,
+                hypothesis = dialogue.hypothesis,
                 publishTalked = dialogue.publishTalked,
                 moodChange = dialogue.moodChange,
                 nextNodeId = dialogue.nextNodeId
@@ -65,6 +66,9 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             if (dialogue.clue != null)
                 _evidenceService.Collect(dialogue.clue);
+
+            if (dialogue.hypothesis != null)
+                _evidenceService.UnlockHypothesis(dialogue.hypothesis);
         }
 
         public void Dispose()

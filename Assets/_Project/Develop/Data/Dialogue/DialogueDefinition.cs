@@ -30,6 +30,7 @@ namespace _Project.Develop.Data.Dialogue
         public string text;
         public Quest quest;
         public Clue clue;
+        public Hypothesis hypothesis;
         public bool publishTalked;
         public int moodChange;
         public Hash128 nextNodeId;
