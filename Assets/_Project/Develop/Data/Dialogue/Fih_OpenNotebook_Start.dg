@@ -51,8 +51,8 @@ MonoBehaviour:
           serializedVersion: 2
           x: 124.666664
           y: 191.33333
-          width: 1623.3334
-          height: 326.6667
+          width: 1748
+          height: 350.6667
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 123237456140603396
@@ -207,6 +207,7 @@ MonoBehaviour:
           - Evidence
           - PublishTalked
           - MoodChange
+          - Hypothesis
           m_ValueList:
           - rid: 3967460729282625633
           - rid: 3967460729282625634
@@ -215,6 +216,7 @@ MonoBehaviour:
           - rid: 3967460729282625637
           - rid: 3967460729282625638
           - rid: 3967460729282625639
+          - rid: 3967460729282625803
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -303,7 +305,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 4459184c5fd1c5d3d316d26503be9841
         m_Version: 2
-        m_Position: {x: 1445.2081, y: 210.31972}
+        m_Position: {x: 1446.5415, y: 212.31972}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
@@ -332,7 +334,7 @@ MonoBehaviour:
     - rid: 3967460729282625643
       type: {class: 'Constant`1[[_Project.Develop.Data.Dialogue.DialogueDefinition, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: {fileID: 0}
+        m_Value: {fileID: 7194093555672020370, guid: 5902337e1551f0b41a6e97fd49786b1a, type: 3}
     - rid: 3967460729282625644
       type: {class: EndNode, ns: _Project.Develop.Editor.Dialogue, asm: Assembly-CSharp-Editor}
       data: 
@@ -359,12 +361,14 @@ MonoBehaviour:
           - Evidence
           - PublishTalked
           - MoodChange
+          - Hypothesis
           m_ValueList:
           - rid: 3967460729282625660
           - rid: 3967460729282625661
           - rid: 3967460729282625662
           - rid: 3967460729282625663
           - rid: 3967460729282625664
+          - rid: 3967460729282625804
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -458,12 +462,14 @@ MonoBehaviour:
           - Evidence
           - PublishTalked
           - MoodChange
+          - Hypothesis
           m_ValueList:
           - rid: 3967460729282625669
           - rid: 3967460729282625670
           - rid: 3967460729282625671
           - rid: 3967460729282625672
           - rid: 3967460729282625673
+          - rid: 3967460729282625805
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -514,7 +520,7 @@ MonoBehaviour:
     - rid: 3967460729282625669
       type: {class: 'Constant`1[[System.String, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: "\u042D\u0442\u043E \u043E\u0447\u0435\u043D\u044C \u0443\u0434\u043E\u0431\u043D\u043E, \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u043B\u043E\u0432\u0430 \u0437\u0430\u043D\u044F\u0442\u0430 \u0434\u0440\u0443\u0433\u0438\u043C\u0438 \u0432\u0435\u0449\u0430\u043C\u0438.\n<b>\u041E\u0442\u043A\u0440\u043E\u0439 \u0435\u0433\u043E, </b> \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C"
+        m_Value: "\u042D\u0442\u043E \u043E\u0447\u0435\u043D\u044C \u0443\u0434\u043E\u0431\u043D\u043E, \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u043B\u043E\u0432\u0430 \u0437\u0430\u043D\u044F\u0442\u0430 \u0434\u0440\u0443\u0433\u0438\u043C\u0438 \u0432\u0435\u0449\u0430\u043C\u0438.\n<wave>\u041E\u0442\u043A\u0440\u043E\u0439 \u0435\u0433\u043E, </wave> \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C"
     - rid: 3967460729282625670
       type: {class: 'Constant`1[[_Project.Develop.Data.Questing.Quests.Quest, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
@@ -526,7 +532,7 @@ MonoBehaviour:
     - rid: 3967460729282625672
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: 0
+        m_Value: 1
     - rid: 3967460729282625673
       type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
@@ -566,3 +572,15 @@ MonoBehaviour:
           m_PortDirection: 1
           m_PortOrientation: 0
           m_Title: 
+    - rid: 3967460729282625803
+      type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Hypothesis, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: {fileID: 0}
+    - rid: 3967460729282625804
+      type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Hypothesis, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: {fileID: 0}
+    - rid: 3967460729282625805
+      type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Hypothesis, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: {fileID: 0}
