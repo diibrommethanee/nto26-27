@@ -25,6 +25,7 @@ namespace _Project.Develop.Gameplay.Evidence
         private MaterialPropertyBlock _propertyBlock;
 
         public bool IsCollected { get; private set; }
+        public bool IsPickup => clue.type == ClueType.Collectible;
         public float HoldDuration => holdDuration;
         public ClueSkillRequirement RequiredSkill => requiredSkill;
 
@@ -62,8 +63,10 @@ namespace _Project.Develop.Gameplay.Evidence
 
             SetHoldProgress(1f);
             IsCollected = true;
-            evidenceService.Collect(clue, transform.position);
+            evidenceService.Collect(clue, transform.position, sourceSprite: IsPickup || requiredSkill == ClueSkillRequirement.Hearing ? _sprite.sprite : null);
             _сol.enabled = false;
+            if (IsPickup)
+                gameObject.SetActive(false);
         }
 
         private void OnDisable()

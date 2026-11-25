@@ -3973,7 +3973,7 @@ Transform:
   m_GameObject: {fileID: 330612580}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 7.69, y: -4.01, z: 0}
+  m_LocalPosition: {x: -2.7, y: -4.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10312,7 +10312,7 @@ PlayableDirector:
   m_Enabled: 1
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: 8d3c9749329164740803d60636742255, type: 2}
-  m_InitialState: 1
+  m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 2
   m_InitialTime: 0
@@ -11250,10 +11250,10 @@ RectTransform:
   - {fileID: 1890531561}
   m_Father: {fileID: 268128922267743370}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.43}
-  m_AnchorMax: {x: 1, y: 0.82}
-  m_AnchoredPosition: {x: -276.84998, y: -160.08}
-  m_SizeDelta: {x: -553.7, y: 344.17}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -25}
+  m_SizeDelta: {x: -32, y: -74}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1602820348
 MonoBehaviour:
@@ -11868,7 +11868,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -12.65, y: -2.26}
   m_SizeDelta: {x: 440, y: 155}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1693272834
@@ -11881,6 +11881,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28202ef8fef1042439c4965eeb508bbf, type: 3}
+  hearingIcon: {fileID: 21300000, guid: d2d0779596afdb74db805572dcd6c8f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Hearing.HearingView
   panel: {fileID: 1876181681}
@@ -15311,8 +15312,8 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  columnSpacing: 8
-  rowSpacing: 4
+  columnSpacing: 10
+  rowSpacing: 9
 --- !u!1 &1891417275
 GameObject:
   m_ObjectHideFlags: 0
@@ -15564,15 +15565,16 @@ PolygonCollider2D:
     - - {x: -37.6251, y: -1.5688249}
       - {x: -36.947987, y: -0.82637644}
       - {x: -19.018616, y: -0.8094022}
-      - {x: -17.052225, y: -1.3053137}
-      - {x: 3.4956589, y: -1.3870348}
+      - {x: -17.397568, y: -1.2621456}
+      - {x: 3.5832539, y: -1.2819208}
       - {x: 4.1289797, y: -0.70150745}
       - {x: 23.2, y: -0.56}
       - {x: 23.889227, y: -1.000833}
       - {x: 38.234898, y: -0.7875654}
       - {x: 38.9557, y: -1.6520336}
       - {x: 23.2, y: -1.84}
-      - {x: 3.2, y: -1.85}
+      - {x: 3.0629742, y: -1.7219325}
+      - {x: -17.80224, y: -1.6605403}
       - {x: -18.27885, y: -1.5850605}
   m_UseDelaunayMesh: 1
 --- !u!1 &1936305714
@@ -17056,10 +17058,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 268128922267743370}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.87}
-  m_AnchorMax: {x: 0.68, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -25}
+  m_SizeDelta: {x: -32, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &796577403956547586
 RectTransform:
@@ -20817,16 +20819,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 5809622237658280620}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ec1cbca13affa144b643a908489a3cc, type: 3}
+  m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
   board: {fileID: 8792194156041366760}
-  clueContainer: {fileID: 829683503068795768}
-  threadContainer: {fileID: 46106089481541086}
   notebookButton: {fileID: 6454474946867833675}
   cluePrefab: {fileID: 3651951977518508176, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
   wordCluePrefab: {fileID: 3651951977518508176, guid: 9dfb3a903c884ed093e9d4f2182d3082, type: 3}
   threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
+  redSticker: {fileID: 8093278259594180482, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
+  blueSticker: {fileID: -1812551610301912546, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
+  greenSticker: {fileID: 1012282107878949809, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
   matLeft: {fileID: 1310395944}
   matRight: {fileID: 1188008796}
   surfaceLeft: {fileID: 2106522384}

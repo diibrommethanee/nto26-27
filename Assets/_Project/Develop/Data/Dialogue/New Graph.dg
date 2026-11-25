@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEditor.dll::Unity.GraphToolkit.Editor.Implementation.GraphObjectImp
   m_GraphModel:
-    rid: 3967460729282625864
+    rid: 3967460729282625676
   references:
     version: 2
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 3967460729282625864
+    - rid: 3967460729282625676
       type: {class: GraphModelImp, ns: Unity.GraphToolkit.Editor.Implementation, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
-          m_Value0: 5238434154996137640
-          m_Value1: 14635151963700826924
+          m_Value0: 12714638619975639361
+          m_Value1: 2236343604721027938
         m_HashGuid:
           serializedVersion: 2
-          Hash: a87ed10b1ca8b2482c933fae2b811acb
+          Hash: 41611cb7757873b0620b1deba816091f
         m_Name: 
         m_GraphNodeModels: []
         m_GraphWireModels: []
@@ -36,7 +36,7 @@ MonoBehaviour:
         m_GraphVariableModels: []
         m_GraphPortalModels: []
         m_SectionModels:
-        - rid: 3967460729282625865
+        - rid: 3967460729282625677
         m_LocalSubgraphs: []
         m_LastKnownBounds:
           serializedVersion: 2
@@ -48,19 +48,19 @@ MonoBehaviour:
         m_EntryPoint:
           rid: -2
         m_Graph:
-          rid: 3967460729282625866
-    - rid: 3967460729282625865
+          rid: 3967460729282625678
+    - rid: 3967460729282625677
       type: {class: SectionModel, ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Guid:
-          m_Value0: 10199719699038725197
-          m_Value1: 10578768032150607703
+          m_Value0: 8702917770090468800
+          m_Value1: 2895537121823213441
         m_HashGuid:
           serializedVersion: 2
-          Hash: 4de4c19d06af8c8d575798fd7955cf92
+          Hash: c055ad139af9c67881c73accab032f28
         m_Version: 2
         m_Items: []
         m_Title: 
-    - rid: 3967460729282625866
+    - rid: 3967460729282625678
       type: {class: DialogueGraph, ns: _Project.Develop.Editor.Dialogue, asm: Assembly-CSharp-Editor}
       data: 
