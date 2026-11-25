@@ -9,9 +9,9 @@ namespace _Project.Develop.UI.Hearing
         private const int ArcCount = 3;
         private const float MaxTiltDegrees = 9f;
         private static readonly Color InkColor = new Color32(107, 76, 136, 255);
-        private static readonly Color LockColor = new Color32(145, 87, 120, 255);
+        private static readonly Color LockColor = new Color32(132, 101, 174, 255);
         private static readonly Color EdgeColor = new Color32(245, 226, 241, 255);
-        private static readonly Color FlashColor = new Color32(255, 224, 191, 255);
+        private static readonly Color FlashColor = new Color32(239, 218, 255, 255);
         private static readonly float[] StrokeOffsets = { -5.5f, -3.5f, -2.4f, 0f, 2.4f, 3.5f, 5.5f };
 
         private float _time;
@@ -33,10 +33,9 @@ namespace _Project.Develop.UI.Hearing
             _targetAmplitude = Mathf.Lerp(0.065f, 1f, noise);
         }
 
-        public void AimAtSource(Vector2 direction)
+        public void FacePlayer(Vector2 direction)
         {
-            Vector2 heading = direction.normalized;
-            _tilt = MaxTiltDegrees * 2f * heading.x * heading.y;
+            _tilt = MaxTiltDegrees * direction.normalized.x;
         }
 
         public void SetProgress(float progress) => _progress = progress;
@@ -66,24 +65,31 @@ namespace _Project.Develop.UI.Hearing
         {
             int firstVertex = mesh.currentVertCount;
             int stride = StrokeOffsets.Length;
-            float warmth = Mathf.SmoothStep(0f, 1f, _progress);
-            Color ink = Color.Lerp(Color.Lerp(InkColor, color, 0.15f), LockColor, warmth);
+            float travel = Mathf.Repeat(_time * 0.26f + arc / (float)ArcCount, 1f);
+            float opacity = Mathf.SmoothStep(0f, 1f, travel / 0.14f)
+                * (1f - Mathf.SmoothStep(0f, 1f, (travel - 0.72f) / 0.28f));
+            float arcWidth = rect.width * Mathf.Lerp(0.18f, 0.80f, travel);
+            float baseline = rect.center.y + rect.height * (0.58f - travel * 1.05f);
+            float strokeWidth = Mathf.Lerp(0.68f, 1.12f, travel);
+            float lockBlend = Mathf.SmoothStep(0f, 1f, _progress);
+            Color ink = Color.Lerp(Color.Lerp(InkColor, color, 0.15f), LockColor, lockBlend);
             Color highlight = Color.Lerp(EdgeColor, FlashColor, _flash);
 
             for (int i = 0; i < PointCount; i++)
             {
                 float along = i / (float)(PointCount - 1);
-                Vector2 point = Sample(rect, arc, along);
-                Vector2 tangent = Sample(rect, arc, along + 0.004f) - Sample(rect, arc, along - 0.004f);
+                Vector2 point = Sample(rect, arc, arcWidth, baseline, along);
+                Vector2 tangent = Sample(rect, arc, arcWidth, baseline, along + 0.004f)
+                    - Sample(rect, arc, arcWidth, baseline, along - 0.004f);
                 Vector2 normal = Vector2.Perpendicular(tangent).normalized;
                 float fade = Mathf.SmoothStep(0f, 1f, Mathf.Min(along, 1f - along) * 8f);
-                float width = (0.66f + fade * 0.34f) * (1.12f - arc * 0.16f) * (1f + _flash * 0.18f);
+                float width = (0.66f + fade * 0.34f) * strokeWidth * (1f + _flash * 0.18f);
                 foreach (float offset in StrokeOffsets)
                 {
                     float edge = Mathf.Abs(offset);
                     float rim = Mathf.InverseLerp(2.4f, 3.5f, edge);
                     Color vertexColor = Color.Lerp(ink, highlight, rim);
-                    vertexColor.a *= fade * (1f - Mathf.InverseLerp(3.5f, 5.5f, edge));
+                    vertexColor.a *= opacity * fade * (1f - Mathf.InverseLerp(3.5f, 5.5f, edge));
                     Vector2 vertex = point + normal * (offset * width);
                     Vector2 tiltedVertex = rect.center + (Vector2)(tilt * (vertex - rect.center));
                     mesh.AddVert(tiltedVertex, vertexColor, Vector2.zero);
@@ -100,16 +106,9 @@ namespace _Project.Develop.UI.Hearing
             }
         }
 
-        private Vector2 Sample(Rect rect, int arc, float along)
+        private Vector2 Sample(Rect rect, int arc, float width, float baseline, float along)
         {
             float horizontal = along * 2f - 1f;
-            float width = rect.width * (arc switch
-            {
-                0 => 0.74f,
-                1 => 0.42f,
-                _ => 0.25f
-            });
-            float baseline = rect.center.y + rect.height * (-0.34f + arc * 0.33f);
             float bend = width * 0.105f;
             float envelope = Mathf.Sin(Mathf.PI * Mathf.Clamp01(along));
             float drift = Mathf.PerlinNoise(along * 7f + arc * 4f, _time * 0.33f) - 0.5f;
