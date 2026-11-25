@@ -25,6 +25,7 @@ namespace _Project.Develop.Gameplay.Input
 
         private float _modePressedAt = float.PositiveInfinity;
         private bool _notebookOpen;
+        private bool _hearingActive;
 
 
         public void Start()
@@ -42,16 +43,26 @@ namespace _Project.Develop.Gameplay.Input
         public void SetCutsceneActive(bool active)
         {
             CutsceneActive = active;
-            if (active)
+            RefreshCameraActions();
+            RefreshPlayerActions();
+        }
+
+        public void SetHearingActive(bool active)
+        {
+            _hearingActive = active;
+            RefreshPlayerActions();
+        }
+
+        private void RefreshCameraActions()
+        {
+            if (CutsceneActive)
             {
                 if (IsZoomMode) ExitZoomMode();
                 _modePressedAt = float.PositiveInfinity;
                 Actions.Camera.Disable();
-                Actions.Player.Disable();
             }
             else
             {
-                Actions.Player.Enable();
                 Actions.Camera.Mode.Enable();
             }
         }
@@ -103,17 +114,21 @@ namespace _Project.Develop.Gameplay.Input
         private void ExitZoomMode()
         {
             Actions.Camera.Zoom.Disable();
-            RefreshPlayerActions();
             _modePressedAt = float.PositiveInfinity;
             _zoomModePublisher.Publish(new ZoomModeChanged(false));
         }
 
         private void RefreshPlayerActions()
         {
-            if (_notebookOpen || IsZoomMode)
+            if (CutsceneActive || _notebookOpen || IsZoomMode)
+            {
                 Actions.Player.Disable();
-            else
-                Actions.Player.Enable();
+                return;
+            }
+
+            Actions.Player.Enable();
+            if (_hearingActive || !float.IsPositiveInfinity(_modePressedAt))
+                Actions.Player.CameraPan.Disable();
         }
 
         public void Dispose()

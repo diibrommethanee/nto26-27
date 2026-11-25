@@ -102,7 +102,12 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             var isSmelling = skill == SkillType.Smell;
             if (wasSmelling != isSmelling)
                 _smell.SetActive(isSmelling);
-            if (wasHearing != (skill == SkillType.Hearing)) _hearing.SetActive(skill == SkillType.Hearing);
+            bool isHearing = skill == SkillType.Hearing;
+            if (wasHearing != isHearing)
+            {
+                _input.SetHearingActive(isHearing);
+                _hearing.SetActive(isHearing);
+            }
             PublishSelectedSkill();
         }
 

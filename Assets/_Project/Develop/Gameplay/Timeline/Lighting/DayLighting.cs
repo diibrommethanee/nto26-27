@@ -41,8 +41,7 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
 
         [Button("Start Next Day", EButtonEnableMode.Playmode)]
         private void StartNextDay() => _dayService.TryStartNextDay();
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        
         private void Update()
         {
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
@@ -56,7 +55,6 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
             if (keyboard.digit3Key.wasPressedThisFrame)
                 StartNextDay();
         }
-#endif
 
         private void OnEnable()
         {

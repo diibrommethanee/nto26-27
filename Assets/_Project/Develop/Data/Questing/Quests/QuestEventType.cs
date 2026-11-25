@@ -4,6 +4,8 @@ namespace _Project.Develop.Data.Questing.Quests
     {
         NpcInteracted,
         NpcTalked,
-        ItemCollected
+        ClueCollected,
+        HypothesisCollected,
+        HypothesisPassed
     }
 }

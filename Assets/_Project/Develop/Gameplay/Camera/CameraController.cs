@@ -70,7 +70,7 @@ namespace _Project.Develop.Gameplay.Camera
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             
-            if (_input.Actions.Camera.Mode.IsPressed()) return;
+            if (!_input.Actions.Player.CameraPan.enabled || _input.Actions.Camera.Mode.IsPressed()) return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
             
@@ -90,6 +90,7 @@ namespace _Project.Develop.Gameplay.Camera
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
 
+            if (!_input.Actions.Camera.Zoom.enabled) return;
             var nextZoom = Mathf.Clamp(_targetZoom - ctx.ReadValue<Vector2>().y * settings.zoomSensitivity, settings.minZoom, settings.maxZoom);
 
             var mouseX = _camera.ScreenToViewportPoint(Mouse.current.position.ReadValue()).x;

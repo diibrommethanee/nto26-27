@@ -13,7 +13,7 @@ namespace _Project.Develop.Data.Questing.Quests
         [TextArea] public string description;
         public List<QuestStep> steps;
         
-        [SerializeReference] public List<QuestReward> rewards = new();
+        public QuestReward reward = new();
 
         [Space(5)] public SurfaceStyle surfaceStyle;
     }

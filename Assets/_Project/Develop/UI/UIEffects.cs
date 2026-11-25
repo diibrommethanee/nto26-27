@@ -24,7 +24,6 @@ namespace _Project.Develop.UI
         Wobble = 1 << 6,
         
         MouseTilt = 1 << 7,
-        Appear = 1 << 8
     }
 
     [RequireComponent(typeof(RectTransform))]
@@ -87,14 +86,6 @@ namespace _Project.Develop.UI
             _rect = (RectTransform)transform;
             _baseScale = _rect.localScale;
             TryGetComponent(out _selectable);
-        }
-
-        private void OnEnable()
-        {
-            if (!Has(UIEffectType.Appear)) return;
-
-            _rect.localScale = _baseScale * .965f;
-            AnimateScale(1f, .2f, Ease.OutCubic);
         }
 
 
@@ -234,16 +225,6 @@ namespace _Project.Develop.UI
             var targetScale = _baseScale * multiplier;
             if (_rect.localScale != targetScale)
                 _scaleTween = Tween.Scale(_rect, endValue: targetScale, duration: duration, ease: ease, useUnscaledTime: unscaledTime);
-        }
-
-        private void OnDisable()
-        {
-            _hovering = false;
-            if (_scaleTween.isAlive || HasHoverOrPressScale || Has(UIEffectType.Appear))
-            {
-                _scaleTween.Stop();
-                _rect.localScale = _baseScale;
-            }
         }
 
         public void SlowMouseTilt()
