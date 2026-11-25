@@ -45,10 +45,10 @@ namespace _Project.Develop.Gameplay.NPC
                 return;
 
             var dialogue = npcData.state.dialogue;
+            _interactPublisher.Publish(new NpcInteractedEvent(npcData, dialogueAnchor));
+
             if (dialogue != null)
                 _dialogueRunner.Start(dialogue, npcData);
-            
-            _interactPublisher.Publish(new NpcInteractedEvent(npcData));
         }
 
     }

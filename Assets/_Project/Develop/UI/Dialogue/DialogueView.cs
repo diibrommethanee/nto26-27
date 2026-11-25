@@ -2,6 +2,7 @@ using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Npc;
 using _Project.Develop.Data.Surfaces;
 using _Project.Develop.Gameplay.NPC;
+using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Input;
 using PrimeTween;
 using _Project.Develop.Gameplay.Dialogue;
@@ -33,10 +34,8 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private TMP_Text worldContent;
         [SerializeField] private Button worldContinue;
         [SerializeField] private RectTransform worldBlob;
-        [SerializeField] private NpcInteract[] speakers;
         [SerializeField] private NpcData playerSpeaker;
         [SerializeField] private Transform playerDialogueAnchor;
-        [SerializeField] private Transform worldFallbackAnchor;
 
         private TMPWriter _worldWriter;
         private SurfaceGraphic _worldSurface;
@@ -61,6 +60,8 @@ namespace _Project.Develop.UI.Dialogue
         private Button _choiceTemplate;
 
         private DialogueRunner _runner;
+        private NpcInteractedEvent _interaction;
+        private IDisposable _interactionSubscription;
         private IDisposable _dialogueSubscription;
         private IDisposable _endedSubscription;
         
@@ -70,11 +71,13 @@ namespace _Project.Develop.UI.Dialogue
         [Inject]
         public void Construct(DialogueRunner runner, ISubscriber<DialogueShown> dialogueSubscriber,
             ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber,
+            ISubscriber<NpcInteractedEvent> interactionSubscriber,
             InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _runner = runner;
             _input = input;
             _zoomMode = zoomMode;
+            _interactionSubscription = interactionSubscriber.Subscribe(message => _interaction = message);
             _dialogueSubscription = dialogueSubscriber.Subscribe(OnDialogueShown);
             _endedSubscription = endedSubscriber.Subscribe(OnDialogueEnded);
             _choicesSubscription = choicesSubscriber.Subscribe(OnChoicesShown);
@@ -148,7 +151,7 @@ namespace _Project.Develop.UI.Dialogue
 
             var isPlayerSpeaking = speaker != null && speaker == playerSpeaker;
             var anchor = isPlayerSpeaking ? playerDialogueAnchor
-                : FindAnchor(speaker) ?? FindAnchor(_runner.Interlocutor) ?? worldFallbackAnchor;
+                : FindAnchor(speaker != null ? speaker : _runner.Interlocutor);
 
             var canvasTransform = worldCanvas.transform;
             canvasTransform.SetParent(null, false);
@@ -179,7 +182,10 @@ namespace _Project.Develop.UI.Dialogue
         private Transform FindAnchor(NpcData speaker)
         {
             if (!speaker) return null;
-            foreach (var npc in speakers)
+            if (speaker == _interaction.Npc)
+                return _interaction.DialogueAnchor;
+
+            foreach (var npc in FindObjectsByType<NpcInteract>(FindObjectsSortMode.None))
                 if (npc && npc.gameObject.activeInHierarchy && npc.Data == speaker)
                     return npc.DialogueAnchor;
             return null;
@@ -283,6 +289,7 @@ namespace _Project.Develop.UI.Dialogue
 
         private void OnDialogueEnded(DialogueEnded message)
         {
+            _interaction = default;
             ClearChoices();
             SetVisible(false);
             HideWorldLine();
@@ -326,6 +333,7 @@ namespace _Project.Develop.UI.Dialogue
 
         private void OnDestroy()
         {
+            _interactionSubscription?.Dispose();
             _dialogueSubscription?.Dispose();
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
