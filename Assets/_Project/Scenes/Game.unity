@@ -9596,6 +9596,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1441402764}
   - {fileID: 1364506234}
   m_Father: {fileID: 170271594}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9660,7 +9661,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1441402764
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9673,7 +9674,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8792194156041366760}
+  m_Father: {fileID: 1437062568}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -9897,8 +9898,6 @@ PlayableDirector:
   m_SceneBindings:
   - key: {fileID: 3096386428880481673, guid: 8d3c9749329164740803d60636742255, type: 2}
     value: {fileID: 1450411818}
-  - key: {fileID: 1691999694149056653, guid: 8d3c9749329164740803d60636742255, type: 2}
-    value: {fileID: 64033047}
   - key: {fileID: 6892412636734052083, guid: 8d3c9749329164740803d60636742255, type: 2}
     value: {fileID: 170271596}
   - key: {fileID: -4927738532518022045, guid: 8d3c9749329164740803d60636742255, type: 2}
@@ -11010,7 +11009,7 @@ MonoBehaviour:
   characterText: {fileID: 0}
   contentText: {fileID: 0}
   choicesContainer: {fileID: 1628665871}
-  notebook: {fileID: 0}
+  notebook: {fileID: 5809622237658280621}
   worldCanvas: {fileID: 746341402}
   worldCharacter: {fileID: 728760595}
   worldContent: {fileID: 1517762312}
@@ -17011,7 +17010,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31ae675b219575647808981b334ac6c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.ClueDebugSpawner
-  boardController: {fileID: 0}
+  boardController: {fileID: 5809622237658280621}
   clue: {fileID: 11400000, guid: 3d302f163b6d0f34aadbea9da9182518, type: 2}
   spawnPosition: {x: 0, y: 0}
 --- !u!1 &1874766461783235210
@@ -17024,7 +17023,7 @@ GameObject:
   m_Component:
   - component: {fileID: 829683503068795768}
   m_Layer: 5
-  m_Name: ClueContainer
+  m_Name: EvidenceContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20353,7 +20352,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5809622237658280620}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ec1cbca13affa144b643a908489a3cc, type: 3}
+  m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
   board: {fileID: 8792194156041366760}
