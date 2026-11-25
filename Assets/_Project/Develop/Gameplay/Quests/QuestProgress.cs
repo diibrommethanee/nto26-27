@@ -18,7 +18,10 @@ namespace _Project.Develop.Gameplay.Quests
         public QuestProgress(Quest data)
         {
             Data = data;
-            Steps = data.steps.Select(x => new QuestStepProgress(x)).ToList();
+            Steps = data.steps
+                .Where(step => step.eventType != QuestEventType.Empty)
+                .Select(step => new QuestStepProgress(step))
+                .ToList();
         }
 
         public void AdvanceStep()
