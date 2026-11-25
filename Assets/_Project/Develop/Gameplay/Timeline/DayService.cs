@@ -14,6 +14,11 @@ namespace _Project.Develop.Gameplay.Timeline
 
     public class DayService : IInitializable, IDisposable
     {
+        public const int StartingMinutes = 480;
+        public const int MinutesPerPhase = 120;
+        public const int DialogueCostMinutes = 30;
+        public const int AbilityCostMinutes = 15;
+
         private readonly ISubscriber<ForceDayPhase> _forcePhase;
         private readonly IBufferedPublisher<DayPhaseChanged> _phaseChanged;
         private IDisposable _forcePhaseSubscription;
@@ -46,6 +51,22 @@ namespace _Project.Develop.Gameplay.Timeline
 
         public int DayNumber { get; private set; } = 1;
         public DayPhase Phase { get; private set; } = DayPhase.Morning;
+        public int RemainingMinutes { get; private set; } = StartingMinutes;
+
+        public bool TrySpendMinutes(int minutes)
+        {
+            if (minutes <= 0 || minutes > RemainingMinutes || Phase == DayPhase.Ending)
+                return false;
+
+            RemainingMinutes -= minutes;
+            var spentMinutes = StartingMinutes - RemainingMinutes;
+            if (spentMinutes >= MinutesPerPhase * 2 && Phase < DayPhase.Evening)
+                SetPhase(DayPhase.Evening);
+            else if (spentMinutes >= MinutesPerPhase && Phase < DayPhase.Daytime)
+                SetPhase(DayPhase.Daytime);
+
+            return true;
+        }
 
         public bool TryAdvancePhase()
         {
@@ -78,6 +99,7 @@ namespace _Project.Develop.Gameplay.Timeline
                 return false;
 
             DayNumber++;
+            RemainingMinutes = StartingMinutes;
             SetPhase(DayPhase.Morning);
             return true;
         }

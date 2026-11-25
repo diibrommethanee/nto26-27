@@ -2,6 +2,7 @@ using _Project.Develop.Data.Npc;
 using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Player;
+using _Project.Develop.Gameplay.Timeline;
 using MessagePipe;
 using UnityEngine;
 using VContainer;
@@ -18,13 +19,16 @@ namespace _Project.Develop.Gameplay.NPC
         public Transform DialogueAnchor => dialogueAnchor;
 
         private DialogueRunner _dialogueRunner;
+        private DayService _dayService;
         private IPublisher<NpcInteractedEvent> _interactPublisher;
 
         [Inject]
-        public void Construct(IPublisher<NpcInteractedEvent> interactPublisher, DialogueRunner dialogueRunner)
+        public void Construct(IPublisher<NpcInteractedEvent> interactPublisher, DialogueRunner dialogueRunner,
+            DayService dayService)
         {
             _interactPublisher = interactPublisher;
             _dialogueRunner = dialogueRunner;
+            _dayService = dayService;
             
             npcData.state = new NpcState
             {
@@ -45,6 +49,9 @@ namespace _Project.Develop.Gameplay.NPC
                 return;
 
             var dialogue = npcData.state.dialogue;
+            if (dialogue != null && !_dayService.TrySpendMinutes(DayService.DialogueCostMinutes))
+                return;
+
             _interactPublisher.Publish(new NpcInteractedEvent(npcData, dialogueAnchor));
 
             if (dialogue != null)

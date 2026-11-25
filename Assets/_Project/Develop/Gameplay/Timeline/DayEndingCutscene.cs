@@ -81,7 +81,10 @@ namespace _Project.Develop.Gameplay.Timeline
 
         private void ShowNewDayButton(TMPWriter writer)
         {
-            if (_ending) newDayButton.gameObject.SetActive(true);
+            if (!_ending) return;
+
+            writer.enabled = false;
+            newDayButton.gameObject.SetActive(true);
         }
 
         private void StartNewDay()
