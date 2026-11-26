@@ -13,7 +13,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         private readonly IPublisher<StartQuestEvent> _questPublisher;
         private readonly EvidenceService _evidenceService;
         private readonly IDisposable _endedSubscription;
-        private DialogueNodeData _previousDialogue;
+        internal DialogueNodeData PreviousDialogue { get; set; }
 
         public Type NodeType => typeof(DialogueNodeData);
 
@@ -26,7 +26,7 @@ namespace _Project.Develop.Gameplay.Dialogue
             _publisher = publisher;
             _questPublisher = questPublisher;
             _evidenceService = evidenceService;
-            _endedSubscription = endedSubscriber.Subscribe(_ => _previousDialogue = null);
+            _endedSubscription = endedSubscriber.Subscribe(_ => PreviousDialogue = null);
         }
 
         public DialogueStep Handle(NodeData node)
@@ -35,8 +35,8 @@ namespace _Project.Develop.Gameplay.Dialogue
             var resolved = new DialogueNodeData
             {
                 id = dialogue.id,
-                character = dialogue.inheritCharacter ? _previousDialogue?.character : dialogue.character,
-                overrideName = dialogue.inheritCharacter ? _previousDialogue?.overrideName : dialogue.overrideName,
+                character = dialogue.inheritCharacter ? PreviousDialogue?.character : dialogue.character,
+                overrideName = dialogue.inheritCharacter ? PreviousDialogue?.overrideName : dialogue.overrideName,
                 text = dialogue.text,
                 quest = dialogue.quest,
                 clue = dialogue.clue,
@@ -45,7 +45,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                 moodChange = dialogue.moodChange,
                 nextNodeId = dialogue.nextNodeId
             };
-            _previousDialogue = resolved;
+            PreviousDialogue = resolved;
             _publisher.Publish(new DialogueShown(resolved));
 
             return DialogueStep.Wait(dialogue.nextNodeId, dialogue.publishTalked);
@@ -57,7 +57,7 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             if (dialogue.moodChange != 0)
             {
-                var character = _previousDialogue.character;
+                var character = PreviousDialogue.character;
                 character.state.mood += dialogue.moodChange;
             }
 
@@ -74,7 +74,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         public void Dispose()
         {
             _endedSubscription.Dispose();
-            _previousDialogue = null;
+            PreviousDialogue = null;
         }
     }
 

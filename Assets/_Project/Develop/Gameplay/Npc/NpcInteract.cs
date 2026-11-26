@@ -40,7 +40,7 @@ namespace _Project.Develop.Gameplay.NPC
         internal void EndDialogueOnExit()
         {
             if (_dialogueRunner.Interlocutor == npcData)
-                _dialogueRunner.Stop();
+                _dialogueRunner.Interrupt();
         }
 
         public void Interact()

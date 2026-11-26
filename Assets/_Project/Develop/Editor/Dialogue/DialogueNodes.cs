@@ -11,8 +11,17 @@ namespace _Project.Develop.Editor.Dialogue
     [Serializable, Node("Dialogue", "Assets/_Project/Develop/Editor/Dialogue/Icons/Start.png", "Start")]
     public class StartNode : Node
     {
+        internal const string ResumeOption = "ResumeAfterExit";
+        internal const string ReturnDialoguePort = "ReturnDialogue";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context)
+        {
+            context.AddOption<bool>(ResumeOption).WithDisplayName("Resume Exit").WithDefaultValue(true).Build();
+        }
+
         protected override void OnDefinePorts(IPortDefinitionContext context)
         {
+            context.AddInputPort<DialogueDefinition>(ReturnDialoguePort).WithDisplayName("Return Dialogue").Build();
             context.AddOutputPort("Out").WithDisplayName(string.Empty).WithCapacity(PortCapacity.Single).Build();
         }
     }
