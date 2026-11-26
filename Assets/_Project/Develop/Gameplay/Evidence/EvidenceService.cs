@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Evidence;
 using UnityEngine;
@@ -8,6 +8,10 @@ namespace _Project.Develop.Gameplay.Evidence
     public class EvidenceService
     {
         private readonly EvidenceDatabase _database;
+
+        public bool IsNotebookOpen { get; private set; }
+
+        public void SetNotebookOpen(bool open) => IsNotebookOpen = open;
         private readonly List<Clue> _collected = new();
         private readonly Dictionary<Clue, Sprite> _collectedSprites = new();
         private readonly List<Hypothesis> _unlockedHypotheses = new();

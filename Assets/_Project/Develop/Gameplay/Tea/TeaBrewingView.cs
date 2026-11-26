@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
@@ -12,7 +12,6 @@ namespace _Project.Develop.Gameplay.Tea
         ReadyToPour,
         Pouring,
         WaitingIngredient,
-        AddingIngredient,
         Completed
     }
 
@@ -39,77 +38,107 @@ namespace _Project.Develop.Gameplay.Tea
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Button pourButton;
 
-        [Header("Teapot / Cup")]
+        [Header("Visuals")]
         [SerializeField] private RectTransform teapot;
         [SerializeField] private RectTransform cup;
-
-        [Header("Ingredients")]
+        [SerializeField] private Image teaLiquidImage;
         [SerializeField] private CanvasGroup ingredientsGroup;
         [SerializeField] private List<TeaIngredientOption> ingredients = new();
 
-        [Header("Animation")]
+        [Header("Timings")]
         [SerializeField] private float pourDuration = 1.35f;
-        [SerializeField] private float teapotMoveDuration = 0.45f;
+        [SerializeField] private float ingredientMoveDuration = 0.45f;
+        [SerializeField] private float ingredientDropDuration = 0.35f;
+
+        [Header("Positions")]
         [SerializeField] private Vector2 teapotPourOffset = new(-180f, 140f);
-        [SerializeField] private float teapotPourAngle = 28f;
-        [SerializeField] private float ingredientDropDuration = 0.55f;
+        [SerializeField] private Vector3 teapotPourRotation = new(0f, 0f, -28f);
+        [SerializeField] private Vector2 cupPourOffset = new(85f, 0f);
 
-        public event Action<TeaIngredientOption> Completed;
-        public bool IsCompleted => State == TeaBrewingState.Completed;
-        public TeaBrewingState State { get; private set; } = TeaBrewingState.Idle;
-        public TeaIngredientOption SelectedIngredient { get; private set; }
+        [Header("Tea Colors")]
+        [SerializeField] private Color baseTeaColor = new(0.78f, 0.58f, 0.35f, 0.95f);
+        [SerializeField] private Color mintTeaColor = new(0.72f, 0.86f, 0.58f, 0.95f);
+        [SerializeField] private Color lemonBalmTeaColor = new(0.93f, 0.86f, 0.55f, 0.95f);
+        [SerializeField] private Color thymeTeaColor = new(0.8f, 0.74f, 0.56f, 0.95f);
 
+        private readonly List<Tween> _idleTweens = new();
+        private readonly List<TeaIngredientType> _selectedIngredients = new();
+        private readonly HashSet<TeaIngredientType> _selectedSet = new();
         private Vector2 _teapotStartPos;
         private Vector3 _teapotStartRot;
         private Vector3 _teapotStartScale;
         private Vector2 _cupStartPos;
         private Sequence _activeSequence;
-        private readonly List<Tween> _idleTweens = new();
+        private Tween _autoCompleteTween;
         private bool _initialized;
 
-        private void Awake()
+        public event Action<IReadOnlyList<TeaIngredientType>> Completed;
+
+        public TeaBrewingState State { get; protected set; } = TeaBrewingState.Idle;
+        public IReadOnlyList<TeaIngredientType> SelectedIngredients => _selectedIngredients;
+
+        protected virtual void Awake()
         {
             EnsureInitialized();
-            HideImmediate();
+            if (State == TeaBrewingState.Idle)
+                HideImmediate();
         }
 
-        private void OnDestroy()
+        protected virtual void OnDisable()
         {
-            UnbindButtons();
             KillTweens();
         }
 
         public void Begin()
         {
-            EnsureInitialized();
-            KillTweens();
-            ResetVisuals();
-            gameObject.SetActive(true);
-
-            State = TeaBrewingState.ReadyToPour;
-            SetCanvasGroup(canvasGroup, 1f, true);
-            SetCanvasGroup(ingredientsGroup, 0f, false);
-
-            if (pourButton != null)
-                pourButton.interactable = true;
-
-            foreach (var ingredient in ingredients)
-            {
-                if (ingredient?.button != null)
-                    ingredient.button.interactable = true;
-            }
-
-            PlayIntroAnimation();
-            StartIdleAnimation();
+            BeginBrewing();
         }
 
-        public void HideImmediate()
+        protected void BeginBrewing()
         {
             EnsureInitialized();
             KillTweens();
-            ResetVisuals();
+            ResetToReadyState();
+
+            State = TeaBrewingState.ReadyToPour;
+            gameObject.SetActive(true);
+
+            SetCanvasGroup(canvasGroup, 1f, true);
+            SetCanvasGroup(ingredientsGroup, 0f, false);
+            OnBrewingStarted();
+
+            if (pourButton != null)
+            {
+                pourButton.gameObject.SetActive(true);
+                pourButton.interactable = true;
+            }
+
+            if (teapot != null)
+            {
+                teapot.anchoredPosition = _teapotStartPos + new Vector2(0f, 40f);
+                teapot.localScale = Vector3.zero;
+                Tween.UIAnchoredPosition(teapot, _teapotStartPos, 0.45f, Ease.OutCubic);
+                Tween.Scale(teapot, _teapotStartScale, 0.45f, Ease.OutBack);
+            }
+
+            if (cup != null)
+            {
+                cup.anchoredPosition = _cupStartPos + new Vector2(0f, -30f);
+                Tween.UIAnchoredPosition(cup, _cupStartPos, 0.4f, Ease.OutCubic, startDelay: 0.05f);
+            }
+
+            StartIdleAnimations();
+        }
+
+        public virtual void HideImmediate()
+        {
+            EnsureInitialized();
+            KillTweens();
             State = TeaBrewingState.Idle;
             SetCanvasGroup(canvasGroup, 0f, false);
+            SetCanvasGroup(ingredientsGroup, 0f, false);
+            OnBrewingHidden();
+            gameObject.SetActive(false);
         }
 
         private void EnsureInitialized()
@@ -135,38 +164,13 @@ namespace _Project.Develop.Gameplay.Tea
                 _cupStartPos = cup.anchoredPosition;
         }
 
-        private void BindButtons()
+        private void ResetToReadyState()
         {
-            if (pourButton == null && teapot != null)
-                pourButton = teapot.GetComponent<Button>();
+            _selectedIngredients.Clear();
+            _selectedSet.Clear();
 
             if (pourButton != null)
-                pourButton.onClick.AddListener(OnPourClicked);
-
-            for (int i = 0; i < ingredients.Count; i++)
-            {
-                int index = i;
-                var option = ingredients[index];
-                if (option?.button != null)
-                    option.button.onClick.AddListener(() => OnIngredientClicked(index));
-            }
-        }
-
-        private void UnbindButtons()
-        {
-            if (pourButton != null)
-                pourButton.onClick.RemoveListener(OnPourClicked);
-
-            foreach (var option in ingredients)
-            {
-                if (option?.button != null)
-                    option.button.onClick.RemoveAllListeners();
-            }
-        }
-
-        private void ResetVisuals()
-        {
-            SelectedIngredient = null;
+                pourButton.gameObject.SetActive(true);
 
             if (teapot != null)
             {
@@ -178,42 +182,64 @@ namespace _Project.Develop.Gameplay.Tea
             if (cup != null)
                 cup.anchoredPosition = _cupStartPos;
 
-            SetCanvasGroup(ingredientsGroup, 0f, false);
+            if (teaLiquidImage != null)
+            {
+                var c = baseTeaColor;
+                c.a = 0f;
+                teaLiquidImage.color = c;
+            }
 
             foreach (var option in ingredients)
             {
-                if (option?.visualRoot != null)
-                    option.visualRoot.localScale = Vector3.one;
+                if (option == null)
+                    continue;
+
+                if (option.button != null)
+                    option.button.interactable = true;
+
+                if (option.visualRoot == null)
+                    continue;
+
+                option.visualRoot.gameObject.SetActive(true);
+                option.visualRoot.localScale = Vector3.one;
+                if (option.iconImage != null)
+                {
+                    var color = option.iconImage.color;
+                    color.a = 1f;
+                    option.iconImage.color = color;
+                }
+
             }
         }
 
-        private void PlayIntroAnimation()
+        private void BindButtons()
         {
-            if (canvasGroup != null)
+            if (pourButton != null)
             {
-                canvasGroup.alpha = 0f;
-                Tween.Alpha(canvasGroup, 1f, 0.35f, Ease.OutCubic);
+                pourButton.onClick.RemoveListener(OnPourClicked);
+                pourButton.onClick.AddListener(OnPourClicked);
             }
+
+            for (int i = 0; i < ingredients.Count; i++)
+            {
+                int index = i;
+                var option = ingredients[i];
+                if (option?.button == null)
+                    continue;
+
+                option.button.onClick.RemoveAllListeners();
+                option.button.onClick.AddListener(() => OnIngredientClicked(index));
+            }
+
+            BindAdditionalButtons();
+        }
+
+        private void StartIdleAnimations()
+        {
+            StopIdleAnimations();
 
             if (teapot != null)
-            {
-                teapot.localScale = _teapotStartScale * 0.92f;
-                Tween.Scale(teapot, _teapotStartScale, 0.45f, Ease.OutBack);
-            }
-
-            if (cup != null)
-            {
-                cup.anchoredPosition = _cupStartPos + new Vector2(0f, -30f);
-                Tween.UIAnchoredPosition(cup, _cupStartPos, 0.45f, Ease.OutCubic);
-            }
-        }
-
-        private void StartIdleAnimation()
-        {
-            if (teapot == null)
-                return;
-
-            _idleTweens.Add(Tween.LocalPositionY(teapot, _teapotStartPos.y + 8f, 1.8f, Ease.InOutSine, -1, CycleMode.Yoyo));
+                _idleTweens.Add(Tween.LocalPositionY(teapot, _teapotStartPos.y + 8f, 1.8f, Ease.InOutSine, -1, CycleMode.Yoyo));
         }
 
         private void StopIdleAnimations()
@@ -224,11 +250,59 @@ namespace _Project.Develop.Gameplay.Tea
             _idleTweens.Clear();
         }
 
-        private void OnPourClicked()
+        protected virtual void OnPourClicked()
         {
-            if (State != TeaBrewingState.ReadyToPour)
+            if (State == TeaBrewingState.ReadyToPour)
+                StartPour();
+            else if (State == TeaBrewingState.WaitingIngredient && _selectedIngredients.Count > 0)
+                CompleteBrewing();
+        }
+
+        public bool CanCompleteBrewing => State == TeaBrewingState.WaitingIngredient && _selectedIngredients.Count > 0;
+
+        public virtual void TryCompleteBrewing()
+        {
+            if (CanCompleteBrewing)
+                CompleteBrewing();
+        }
+
+        protected void ScheduleAutoComplete(float delay)
+        {
+            _autoCompleteTween.Stop();
+            if (State != TeaBrewingState.WaitingIngredient)
                 return;
 
+            _autoCompleteTween = Tween.Delay(delay, () =>
+            {
+                if (State != TeaBrewingState.WaitingIngredient)
+                    return;
+
+                CompleteBrewing();
+            });
+        }
+
+        protected void EnterCompletionState()
+        {
+            State = TeaBrewingState.Completed;
+            _autoCompleteTween.Stop();
+
+            if (pourButton != null)
+            {
+                if (teapot != null && pourButton.gameObject == teapot.gameObject)
+                    pourButton.interactable = false;
+                else
+                    pourButton.gameObject.SetActive(false);
+            }
+
+            if (ingredientsGroup != null)
+            {
+                ingredientsGroup.interactable = false;
+                ingredientsGroup.blocksRaycasts = false;
+            }
+        }
+
+        private void StartPour()
+        {
             State = TeaBrewingState.Pouring;
             StopIdleAnimations();
 
@@ -236,38 +310,37 @@ namespace _Project.Develop.Gameplay.Tea
                 pourButton.interactable = false;
 
             Vector2 pourPos = _teapotStartPos + teapotPourOffset;
-            Vector3 pourRot = _teapotStartRot + new Vector3(0f, 0f, teapotPourAngle);
+            Vector2 cupPourPos = _cupStartPos + cupPourOffset;
 
+            _activeSequence.Stop();
             _activeSequence = Sequence.Create();
-            if (teapot != null)
+            _activeSequence.Group(Tween.UIAnchoredPosition(teapot, pourPos, pourDuration * 0.45f, Ease.InOutCubic));
+            _activeSequence.Group(Tween.LocalRotation(teapot, teapotPourRotation, pourDuration * 0.45f, Ease.InOutCubic));
+            _activeSequence.Group(Tween.UIAnchoredPosition(cup, cupPourPos, pourDuration * 0.35f, Ease.OutCubic));
+
+            if (teaLiquidImage != null)
             {
-                _activeSequence.Group(Tween.UIAnchoredPosition(teapot, pourPos, teapotMoveDuration, Ease.InOutCubic));
-                _activeSequence.Group(Tween.LocalRotation(teapot, pourRot, teapotMoveDuration, Ease.InOutCubic));
+                var c = baseTeaColor;
+                c.a = 0f;
+                teaLiquidImage.color = c;
+                _activeSequence.Group(Tween.Alpha(teaLiquidImage, baseTeaColor.a, pourDuration * 0.45f, Ease.OutQuad, startDelay: pourDuration * 0.2f));
             }
 
-            _activeSequence.Chain(Tween.Delay(pourDuration));
-            if (cup != null)
-                _activeSequence.Group(Tween.PunchScale(cup, Vector3.one * 0.04f, pourDuration, 2));
-
-            if (teapot != null)
-            {
-                _activeSequence.Chain(Tween.UIAnchoredPosition(teapot, _teapotStartPos, teapotMoveDuration, Ease.InOutCubic));
-                _activeSequence.Group(Tween.LocalRotation(teapot, _teapotStartRot, teapotMoveDuration, Ease.InOutCubic));
-            }
-
-            _activeSequence.OnComplete(this, target => target.OnPourCompleted());
+            _activeSequence.ChainDelay(pourDuration * 0.3f);
+            _activeSequence.Chain(Tween.UIAnchoredPosition(teapot, _teapotStartPos, 0.45f, Ease.OutCubic));
+            _activeSequence.Group(Tween.LocalRotation(teapot, _teapotStartRot, 0.45f, Ease.OutCubic));
+            _activeSequence.Group(Tween.UIAnchoredPosition(cup, _cupStartPos, 0.35f, Ease.OutCubic));
+            _activeSequence.ChainCallback(this, target => target.OnPourFinished());
         }
 
-        private void OnPourCompleted()
+        private void OnPourFinished()
         {
             State = TeaBrewingState.WaitingIngredient;
-            ShowIngredients();
-        }
-
-        private void ShowIngredients()
-        {
-            if (ingredientsGroup == null)
-                return;
+            if (pourButton != null)
+            {
+                pourButton.interactable = true;
+                SetButtonLabel(pourButton, "Готово");
+            }
 
             SetCanvasGroup(ingredientsGroup, 0f, true);
             Tween.Alpha(ingredientsGroup, 1f, 0.3f, Ease.OutCubic);
@@ -278,8 +351,8 @@ namespace _Project.Develop.Gameplay.Tea
                 if (option?.visualRoot == null)
                     continue;
 
-                option.visualRoot.localScale = Vector3.one * 0.8f;
-                Tween.Scale(option.visualRoot, Vector3.one, 0.32f, Ease.OutBack, startDelay: i * 0.06f);
+                option.visualRoot.localScale = Vector3.zero;
+                Tween.Scale(option.visualRoot, Vector3.one, 0.28f, Ease.OutBack, startDelay: i * 0.06f);
             }
         }
 
@@ -289,71 +362,138 @@ namespace _Project.Develop.Gameplay.Tea
                 return;
 
             var option = ingredients[index];
-            if (option == null)
+            if (option == null || option.type == TeaIngredientType.None)
                 return;
 
-            State = TeaBrewingState.AddingIngredient;
-            SelectedIngredient = option;
+            if (_selectedSet.Contains(option.type))
+                return;
 
-            foreach (var ingredient in ingredients)
-            {
-                if (ingredient?.button != null)
-                    ingredient.button.interactable = false;
-            }
+            if (!CanSelectIngredient())
+                return;
 
-            PlayIngredientAnimation(option);
+            _selectedSet.Add(option.type);
+            _selectedIngredients.Add(option.type);
+            SetIngredientSelectedVisual(option, true);
+            PlayIngredientPickAnimation(option);
+
+            ApplyIngredientAccent();
+
+            OnIngredientSelected();
         }
 
-        private void PlayIngredientAnimation(TeaIngredientOption option)
+        protected virtual bool CanSelectIngredient() => _selectedIngredients.Count < 1;
+
+        protected virtual void OnIngredientSelected()
         {
-            var sequence = Sequence.Create();
+            foreach (var ingredient in ingredients)
+                if (ingredient?.button != null)
+                    ingredient.button.interactable = false;
+
+            ScheduleAutoComplete(0.35f);
+        }
+
+        private void SetIngredientSelectedVisual(TeaIngredientOption option, bool selected)
+        {
+            if (option?.visualRoot == null)
+                return;
+
+            Tween.Scale(option.visualRoot, selected ? Vector3.one * 1.08f : Vector3.one, 0.15f, Ease.OutQuad);
+            if (option.iconImage != null)
+            {
+                var color = option.iconImage.color;
+                color.a = selected ? 1f : 0.75f;
+                option.iconImage.color = color;
+            }
+        }
+
+        private void PlayIngredientPickAnimation(TeaIngredientOption option)
+        {
+            if (option?.visualRoot == null)
+                return;
+
             var visual = option.visualRoot;
-
-            if (visual != null)
-            {
-                Vector2 startPos = visual.anchoredPosition;
-                Vector2 targetPos = cup != null
-                    ? cup.anchoredPosition + new Vector2(0f, 110f)
-                    : startPos + new Vector2(0f, -120f);
-
-                sequence.Group(Tween.UIAnchoredPosition(visual, targetPos, ingredientDropDuration, Ease.InCubic));
-                sequence.Group(Tween.Scale(visual, Vector3.one * 0.55f, ingredientDropDuration, Ease.InQuad));
-                sequence.ChainCallback(this, target => target.ApplyIngredientAccent());
-                sequence.Chain(Tween.Scale(visual, Vector3.zero, 0.18f, Ease.InBack));
-                sequence.ChainCallback(() =>
-                {
-                    visual.anchoredPosition = startPos;
-                    visual.localScale = Vector3.one;
-                });
-            }
-            else
-            {
-                sequence.ChainCallback(this, target => target.ApplyIngredientAccent());
-            }
-
-            sequence.ChainCallback(this, target => target.OnIngredientApplied(option));
+            Tween.PunchScale(visual, Vector3.one * 0.08f, 0.25f, 8);
+            if (cup != null)
+                Tween.PunchScale(cup, Vector3.one * 0.04f, 0.25f, 6);
         }
 
         private void ApplyIngredientAccent()
         {
-            if (cup != null)
-                Tween.PunchScale(cup, Vector3.one * 0.06f, 0.35f, 8);
+            if (teaLiquidImage == null)
+                return;
+
+            var target = GetTeaColor(_selectedIngredients);
+            Tween.Color(teaLiquidImage, target, 0.25f, Ease.OutQuad);
         }
 
-        private void OnIngredientApplied(TeaIngredientOption option)
+        private Color GetTeaColor(IReadOnlyList<TeaIngredientType> selected)
         {
-            State = TeaBrewingState.Completed;
-            SelectedIngredient = option;
+            if (selected == null || selected.Count == 0)
+                return baseTeaColor;
+
+            float r = 0f, g = 0f, b = 0f;
+            for (int i = 0; i < selected.Count; i++)
+            {
+                var c = GetSingleTeaColor(selected[i]);
+                r += c.r;
+                g += c.g;
+                b += c.b;
+            }
+
+            float inv = 1f / selected.Count;
+            return new Color(r * inv, g * inv, b * inv, baseTeaColor.a);
+        }
+
+        private Color GetSingleTeaColor(TeaIngredientType type)
+        {
+            return type switch
+            {
+                TeaIngredientType.Mint => mintTeaColor,
+                TeaIngredientType.LemonBalm => lemonBalmTeaColor,
+                TeaIngredientType.Thyme => thymeTeaColor,
+                _ => baseTeaColor
+            };
+        }
+
+        protected void CompleteBrewing()
+        {
+            if (State != TeaBrewingState.WaitingIngredient && State != TeaBrewingState.Completed)
+                return;
+            if (_selectedIngredients.Count == 0)
+                return;
+
+            if (State != TeaBrewingState.Completed)
+                State = TeaBrewingState.Completed;
+
+            _autoCompleteTween.Stop();
+            if (pourButton != null)
+            {
+                if (teapot != null && pourButton.gameObject == teapot.gameObject)
+                    pourButton.interactable = false;
+                else
+                    pourButton.gameObject.SetActive(false);
+            }
 
             if (ingredientsGroup != null)
             {
                 ingredientsGroup.interactable = false;
                 ingredientsGroup.blocksRaycasts = false;
-                Tween.Alpha(ingredientsGroup, 0.35f, 0.25f, Ease.OutQuad);
             }
 
-            Completed?.Invoke(option);
+            var result = new List<TeaIngredientType>(_selectedIngredients);
+            OnBrewingFinished();
+            OnBrewingCompleted(result);
         }
+
+        protected virtual void OnBrewingCompleted(IReadOnlyList<TeaIngredientType> ingredients)
+        {
+            Completed?.Invoke(ingredients);
+        }
+
+        protected virtual void BindAdditionalButtons() { }
+        protected virtual void OnBrewingStarted() { }
+        protected virtual void OnBrewingHidden() { }
+        protected virtual void OnBrewingFinished() { }
 
         private static void SetCanvasGroup(CanvasGroup group, float alpha, bool interactive)
         {
@@ -365,9 +505,40 @@ namespace _Project.Develop.Gameplay.Tea
             group.blocksRaycasts = interactive;
         }
 
+        protected static void SetButtonLabel(Button button, string text)
+        {
+            if (button == null)
+                return;
+
+            var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (label != null)
+            {
+                label.text = text;
+                return;
+            }
+
+            var legacyLabel = button.GetComponentInChildren<Text>(true);
+            if (legacyLabel != null)
+                legacyLabel.text = text;
+        }
+
+        protected static string GetButtonLabel(Button button)
+        {
+            if (button == null)
+                return null;
+
+            var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (label != null)
+                return label.text;
+
+            var legacyLabel = button.GetComponentInChildren<Text>(true);
+            return legacyLabel != null ? legacyLabel.text : null;
+        }
+
         private void KillTweens()
         {
             _activeSequence.Stop();
+            _autoCompleteTween.Stop();
             StopIdleAnimations();
         }
     }
