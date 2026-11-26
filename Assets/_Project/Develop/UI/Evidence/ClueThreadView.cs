@@ -42,10 +42,10 @@ namespace _Project.Develop.UI.Evidence
             enabled = false;
         }
 
-        public void RefreshPage(RectTransform board)
+        public void RefreshPage(RectTransform board, System.Func<RectTransform, RectTransform> threadArea)
         {
             var together = _first.parent == _second.parent;
-            _container = together ? (RectTransform)_first.parent : board;
+            _container = together ? threadArea((RectTransform)_first.parent) : board;
             _rect.SetParent(_container, false);
             _rect.SetAsFirstSibling();
             if (together)
@@ -74,6 +74,26 @@ namespace _Project.Develop.UI.Evidence
             }
 
             var start = (Vector2)_container.InverseTransformPoint(_first.position);
+            var mask = _container.GetComponent<UnityEngine.UI.RectMask2D>();
+            if (mask != null)
+            {
+                var bounds = _container.rect;
+                var padding = mask.padding;
+                var clearance = _rect.rect.height * 0.5f;
+                var min = bounds.min + new Vector2(padding.x + clearance, padding.y + clearance);
+                var max = bounds.max - new Vector2(padding.z + clearance, padding.w + clearance);
+                start = Vector2.Max(min, Vector2.Min(max, start));
+
+                // Shorten along the thread so the end keeps its original angle.
+                var delta = end - start;
+                var fraction = 1f;
+                if (end.x < min.x || end.x > max.x)
+                    fraction = Mathf.Min(fraction, ((delta.x < 0f ? min.x : max.x) - start.x) / delta.x);
+                if (end.y < min.y || end.y > max.y)
+                    fraction = Mathf.Min(fraction, ((delta.y < 0f ? min.y : max.y) - start.y) / delta.y);
+                end = start + delta * fraction;
+            }
+
             var direction = end - start;
             _rect.localPosition = (start + end) * 0.5f;
             _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, direction.magnitude);

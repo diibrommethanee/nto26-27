@@ -128,7 +128,8 @@ namespace _Project.Develop.UI.Evidence
                 var labels = new List<string> { "______" };
                 foreach (var clue in _evidence.Collected)
                 {
-                    if (string.IsNullOrWhiteSpace(clue.fillWord) || (clue != selected && usedClues.Contains(clue)))
+                    if (clue.hypothesis != _hypothesis || string.IsNullOrWhiteSpace(clue.fillWord) ||
+                        (clue != selected && usedClues.Contains(clue)))
                         continue;
 
                     options.Add(clue);

@@ -19,6 +19,7 @@ namespace _Project.Develop.UI.Evidence
         private readonly List<(Hypothesis Data, HypothesisView View, CanvasGroup Group)> _pages = new();
         private readonly RectTransform _board;
         private readonly List<RectTransform> _clueAreas = new();
+        private readonly Dictionary<RectTransform, RectTransform> _threadAreas = new();
         private readonly RectTransform _pendingClues;
         private readonly Image _matLeft;
         private readonly Image _matRight;
@@ -47,7 +48,7 @@ namespace _Project.Develop.UI.Evidence
         private int _turnDestination;
         private Action<float> _paintTurn;
 
-        private bool HasPendingClues => _pendingClues.childCount > 0;
+        private bool HasPendingClues => _pendingClues.GetComponentInChildren<ClueView>(true) != null;
         private int PageCount => _pages.Count + (HasPendingClues ? 1 : 0);
         private int SpreadCount => Mathf.Max(1, (PageCount + 1) / 2);
 
@@ -56,11 +57,12 @@ namespace _Project.Develop.UI.Evidence
             EvidenceService evidence, Action clearSelection)
         {
             _board = board;
-            _pendingClues = CreateClueArea("Unassigned Clues");
+
             _matLeft = matLeft;
             _matRight = matRight;
             _surfaceLeft = surfaceLeft;
             _surfaceRight = surfaceRight;
+            _pendingClues = CreateClueArea(0, "Pending");
             _evidence = evidence;
             _clearSelection = clearSelection;
             _template = board.GetComponentInChildren<HypothesisView>(true);
@@ -95,7 +97,7 @@ namespace _Project.Develop.UI.Evidence
             view.Show(hypothesis);
             view.gameObject.SetActive(false);
             _pages.Add((hypothesis, view, GetGroup(rect)));
-            _clueAreas.Add(CreateClueArea(hypothesis.name + " Clues"));
+            _clueAreas.Add(CreateClueArea(_pages.Count - 1, $"{_pages.Count}_{hypothesis.name.Replace(' ', '_')}"));
         }
 
         public RectTransform ClueArea(Hypothesis hypothesis)
@@ -112,15 +114,23 @@ namespace _Project.Develop.UI.Evidence
             Render();
         }
 
-        private RectTransform CreateClueArea(string label)
+        private RectTransform CreateClueArea(int index, string pageName)
         {
-            var area = new GameObject(label, typeof(RectTransform), typeof(CanvasGroup), typeof(RectMask2D));
-            area.layer = _board.gameObject.layer;
-            var rect = (RectTransform)area.transform;
-            rect.SetParent(_board, false);
+            var surface = index % 2 == 0 ? _surfaceLeft : _surfaceRight;
+            var template = (RectTransform)surface.transform.Find("ClueContainer");
+            var rect = UnityEngine.Object.Instantiate(template, surface.transform, false);
+            rect.name = $"ClueContainer_{pageName}";
+            var threads = UnityEngine.Object.Instantiate((RectTransform)surface.transform.Find("ThreadContainer"), surface.transform, false);
+            threads.name = $"ThreadContainer_{pageName}";
+            threads.gameObject.SetActive(false);
+            _threadAreas.Add(rect, threads);
+            rect.gameObject.AddComponent<CanvasGroup>();
+            var mask = rect.gameObject.AddComponent<RectMask2D>();
+            mask.padding = new Vector4(-12f, -12f, -12f, -12f);
             rect.gameObject.SetActive(false);
             return rect;
         }
+        public RectTransform ThreadArea(RectTransform clueArea) => _threadAreas[clueArea];
 
         public void ShowFirst() => Render();
 
@@ -174,7 +184,8 @@ namespace _Project.Develop.UI.Evidence
             for (var index = 0; index < _pages.Count; index++)
             {
                 var view = _pages[index].View;
-                PlaceFlatPage(index);
+                var rect = PlaceFlatPage(index);
+                rect.SetParent(index % 2 == 0 ? _surfaceLeft.transform : _surfaceRight.transform, true);
                 view.gameObject.SetActive(index / 2 == _position);
             }
             PlaceClueAreas(_position * 2, _position * 2 + 1, -1);
@@ -341,7 +352,7 @@ namespace _Project.Develop.UI.Evidence
             var destinationRest = destination * 2 + turningSide;
             var moving = front ? origin * 2 + turningSide : destination * 2 + 1 - turningSide;
             var leaf = _turningFace.rectTransform;
-            PlaceClueAreas(originRest, destinationRest, moving);
+
             for (var index = 0; index < _pages.Count; index++)
             {
                 var rect = PlaceFlatPage(index);
@@ -360,6 +371,7 @@ namespace _Project.Develop.UI.Evidence
                 rect.anchoredPosition = offset;
                 _printedText.Attach(rect);
             }
+            PlaceClueAreas(originRest, destinationRest, moving);
             _shadow.transform.SetAsLastSibling();
             leaf.SetAsLastSibling();
         }
@@ -370,16 +382,34 @@ namespace _Project.Develop.UI.Evidence
             {
                 var pending = index == _pages.Count;
                 var rect = pending ? _pendingClues : _clueAreas[index];
+                var surface = index % 2 == 0 ? _surfaceLeft : _surfaceRight;
+                var template = (RectTransform)surface.transform.Find("ClueContainer");
+                var corners = new Vector3[4];
+                template.GetWorldCorners(corners);
+                var minimum = (Vector2)_board.InverseTransformPoint(corners[0]);
+                var maximum = (Vector2)_board.InverseTransformPoint(corners[2]);
                 rect.SetParent(_board, false);
-                var left = index % 2 == 0;
-                rect.anchorMin = new Vector2(left ? .045f : .545f, .055f);
-                rect.anchorMax = new Vector2(left ? .455f : .955f, pending ? .94f : .48f);
-                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                rect.anchorMin = rect.anchorMax = _board.pivot;
+                rect.pivot = new Vector2(.5f, .5f);
+                rect.sizeDelta = maximum - minimum;
+                rect.anchoredPosition = (minimum + maximum) * .5f;
                 rect.localScale = Vector3.one;
                 rect.gameObject.SetActive((!pending || HasPendingClues) &&
                     (index == first || index == second || index == moving));
+                var threads = _threadAreas[rect];
+                threads.SetParent(moving == index ? _turningFace.transform : surface.transform, false);
+                threads.anchorMin = Vector2.zero;
+                threads.anchorMax = Vector2.one;
+                threads.offsetMin = threads.offsetMax = Vector2.zero;
+                threads.gameObject.SetActive(rect.gameObject.activeSelf);
+                if (moving == index)
+                    _printedText.Attach(threads);
                 if (moving < 0)
+                {
+                    rect.SetParent(surface.transform, true);
+                    rect.SetAsLastSibling();
                     continue;
+                }
 
                 var leaf = _turningFace.rectTransform;
                 if (index != moving)
