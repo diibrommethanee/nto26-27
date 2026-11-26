@@ -9,6 +9,7 @@ namespace _Project.Develop.Gameplay.Evidence
     {
         private readonly EvidenceDatabase _database;
         private readonly List<Clue> _collected = new();
+        private readonly Dictionary<Clue, Sprite> _collectedSprites = new();
         private readonly List<Hypothesis> _unlockedHypotheses = new();
         private readonly Dictionary<Hypothesis, IReadOnlyList<Clue>> _solvedHypotheses = new();
 
@@ -25,7 +26,8 @@ namespace _Project.Develop.Gameplay.Evidence
             UnlockedHypotheses = _unlockedHypotheses.AsReadOnly();
         }
 
-        public bool Collect(Clue clue, Vector3? sourceWorldPosition = null, Vector2? boardPosition = null)
+        public bool Collect(Clue clue, Vector3? sourceWorldPosition = null, Vector2? boardPosition = null,
+            Sprite sourceSprite = null)
         {
             if (clue == null)
                 throw new ArgumentNullException(nameof(clue));
@@ -34,6 +36,15 @@ namespace _Project.Develop.Gameplay.Evidence
                 return false;
 
             _collected.Add(clue);
+            if (sourceSprite != null)
+                _collectedSprites.Add(clue, sourceSprite);
+            var reward = clue.reward;
+            if (reward.dialogueNpc != null && reward.dialogue != null)
+                reward.dialogueNpc.state.dialogue = reward.dialogue;
+
+            if (reward.moodNpc != null && reward.moodIncrease > 0)
+                reward.moodNpc.state.mood += reward.moodIncrease;
+
             ClueCollected?.Invoke(clue, sourceWorldPosition, boardPosition);
             return true;
         }
@@ -53,6 +64,8 @@ namespace _Project.Develop.Gameplay.Evidence
         }
 
         public bool HasClue(Clue clue) => _collected.Contains(clue);
+
+        public Sprite GetClueSprite(Clue clue) => _collectedSprites.TryGetValue(clue, out var sprite) ? sprite : clue.icon;
 
         public bool HasSolvedHypothesis(Hypothesis hypothesis) => _solvedHypotheses.ContainsKey(hypothesis);
 

@@ -35,20 +35,32 @@ namespace _Project.Develop.UI.Evidence
         public Clue Data { get; private set; }
         public RectTransform Rect => (RectTransform)transform;
 
-        public virtual void Initialize(Clue data, RectTransform board, Vector2 position, Action<ClueView> onSelected)
+        public virtual void Initialize(Clue data, RectTransform board, Vector2 position, Action<ClueView> onSelected,
+            Sprite artwork = null)
         {
             Data = data;
             _board = board;
             _onSelected = onSelected;
-            if (data is WordClue wordClue)
+            var word = data as WordClue;
+            var pickup = data.icon != null;
+            icon.sprite = artwork != null ? artwork : word != null && word.noteSprite != null ? word.noteSprite : data.icon;
+            icon.preserveAspect = pickup;
+            title.gameObject.SetActive(!pickup);
+            title.text = word != null ? word.text : data.title;
+            if (!pickup)
             {
-                icon.sprite = wordClue.noteSprite != null ? wordClue.noteSprite : data.icon;
-                title.text = wordClue.text;
-            }
-            else
-            {
-                icon.sprite = data.icon;
-                title.text = data.title;
+                Rect.sizeDelta = word != null ? new Vector2(172f, 174f) : new Vector2(132f, 150f);
+                icon.rectTransform.anchorMin = Vector2.zero;
+                icon.rectTransform.anchorMax = Vector2.one;
+                icon.rectTransform.offsetMin = icon.rectTransform.offsetMax = Vector2.zero;
+                title.rectTransform.anchorMin = Vector2.zero;
+                title.rectTransform.anchorMax = Vector2.one;
+                title.rectTransform.offsetMin = new Vector2(19f, 28f);
+                title.rectTransform.offsetMax = new Vector2(-18f, -20f);
+                title.enableAutoSizing = true;
+                title.fontSizeMin = 11f;
+                title.fontSizeMax = word != null ? 24f : 22f;
+                title.alignment = TextAlignmentOptions.Center;
             }
             _baseScale = Rect.localScale;
             _selectionScale = selectedVisual.transform.localScale;
@@ -60,6 +72,14 @@ namespace _Project.Develop.UI.Evidence
             _scaleTween = Tween.Scale(Rect, _baseScale, spawnDuration, Ease.OutBack);
             _spawnMove = Tween.UIAnchoredPositionY(Rect, position.y, spawnDuration, Ease.OutCubic);
             Tween.Alpha(GetComponent<CanvasGroup>(), 0f, 1f, spawnDuration * 0.8f);
+        }
+
+        public void MoveToPage(RectTransform area, Vector2 position)
+        {
+            _spawnMove.Stop();
+            _board = area;
+            Rect.SetParent(area, false);
+            Rect.anchoredPosition = ClampToBoard(position);
         }
 
         public void SetSelected(bool selected)
@@ -94,8 +114,10 @@ namespace _Project.Develop.UI.Evidence
         {
             var idleScale = _selected ? selectScale : 1f;
             var multiplier = _dragging ? dragScale : Mathf.Max(idleScale, _hovered ? hoverScale : 1f);
+            var targetScale = _baseScale * multiplier;
             _scaleTween.Stop();
-            _scaleTween = Tween.Scale(Rect, _baseScale * multiplier, 0.14f, Ease.OutBack);
+            if (Rect.localScale != targetScale)
+                _scaleTween = Tween.Scale(Rect, targetScale, 0.14f, Ease.OutBack);
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -130,10 +152,9 @@ namespace _Project.Develop.UI.Evidence
         private Vector2 ClampToBoard(Vector2 position)
         {
             var bounds = _board.rect;
-            var scale = Rect.lossyScale;
-            var boardScale = _board.lossyScale;
-            var halfWidth = Rect.rect.width * Mathf.Abs(scale.x / boardScale.x) * 0.5f;
-            var halfHeight = Rect.rect.height * Mathf.Abs(scale.y / boardScale.y) * 0.5f;
+            var maxScale = Mathf.Max(1f, Mathf.Max(dragScale, Mathf.Max(selectScale, hoverScale)));
+            var halfWidth = Rect.rect.width * Mathf.Abs(_baseScale.x) * maxScale * 0.5f;
+            var halfHeight = Rect.rect.height * Mathf.Abs(_baseScale.y) * maxScale * 0.5f;
 
             var minX = bounds.xMin + halfWidth;
             var maxX = bounds.xMax - halfWidth;

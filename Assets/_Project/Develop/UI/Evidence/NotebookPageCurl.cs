@@ -69,12 +69,24 @@ namespace _Project.Develop.UI.Evidence
         public Vector3 BendPoint(Vector3 point)
         {
             var rect = graphic.rectTransform.rect;
-            var u = Mathf.InverseLerp(rect.xMin, rect.xMax, point.x);
-            var height = Mathf.InverseLerp(rect.yMin, rect.yMax, point.y) * 2f - 1f;
-            var lift = GetLift(Mathf.Abs(u - _hinge), _bend) * (1f + height * _gripHeight * .6f);
-            point.y += lift * LiftHeight + point.y * lift * VerticalStretch;
+            var strip = Mathf.InverseLerp(rect.xMin, rect.xMax, point.x) * Strips;
+            var column = Mathf.Min(Mathf.FloorToInt(strip), Strips - 1);
+            var x = strip - column;
+            var y = Mathf.InverseLerp(rect.yMin, rect.yMax, point.y);
+            var left = GetLift(Mathf.Abs((float)column / Strips - _hinge), _bend);
+            var right = GetLift(Mathf.Abs((float)(column + 1) / Strips - _hinge), _bend);
+            var bottomLeft = EdgeOffset(rect.yMin, left, -1f);
+            var bottomRight = EdgeOffset(rect.yMin, right, -1f);
+            var topLeft = EdgeOffset(rect.yMax, left, 1f);
+            var topRight = EdgeOffset(rect.yMax, right, 1f);
+            point.y += x <= y
+                ? bottomLeft * (1f - y) + topLeft * (y - x) + topRight * x
+                : bottomLeft * (1f - x) + topRight * y + bottomRight * (x - y);
             return point;
         }
+
+        private float EdgeOffset(float y, float lift, float side) =>
+            lift * (1f + side * _gripHeight * .6f) * (LiftHeight + y * VerticalStretch);
 
         public static float GetLift(float distance, float bend) => Mathf.Sin(Mathf.Clamp01(distance) * Mathf.PI * .8f) * bend;
     }

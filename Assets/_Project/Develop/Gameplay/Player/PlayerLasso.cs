@@ -137,7 +137,7 @@ namespace _Project.Develop.Gameplay.Player
             if (!_held)
                 return;
 
-            if (_drawing && !_input.CutsceneActive && !_input.IsZoomMode && _ability.ActiveSkill == null)
+            if (_drawing && !_input.CutsceneActive && !_input.IsZoomMode)
                 CollectEnclosedClue();
 
             Cancel();
@@ -163,7 +163,7 @@ namespace _Project.Develop.Gameplay.Player
             foreach (var hit in Physics2D.OverlapAreaAll(_min - padding, _max + padding))
             {
                 var clue = hit != null ? hit.GetComponentInParent<WorldClue>() : null;
-                if (clue == null || clue.IsCollected || clue.RequiredSkill != ClueSkillRequirement.None)
+                if (clue == null || clue.IsCollected || clue.IsPickup || !clue.CanCollect(_ability.ActiveSkill))
                     continue;
 
                 var position = (Vector2)hit.bounds.center;
@@ -202,7 +202,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private bool CanDrawAt(Vector2 screenPosition)
         {
-            return !_input.CutsceneActive && !_input.IsZoomMode && _ability.ActiveSkill == null &&
+            return !_input.CutsceneActive && !_input.IsZoomMode &&
                    _camera.pixelRect.Contains(screenPosition);
         }
 

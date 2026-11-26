@@ -42,6 +42,18 @@ namespace _Project.Develop.UI.Evidence
             enabled = false;
         }
 
+        public void RefreshPage(RectTransform board)
+        {
+            var together = _first.parent == _second.parent;
+            _container = together ? (RectTransform)_first.parent : board;
+            _rect.SetParent(_container, false);
+            _rect.SetAsFirstSibling();
+            if (together)
+                Connect(_first, _second);
+            else
+                Hide();
+        }
+
         private void LateUpdate()
         {
             UpdateLine();
