@@ -1,5 +1,6 @@
 using System;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
 using UnityEngine;
 using VContainer;
@@ -13,6 +14,7 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
         [SerializeField] private Data.Scents.Scent scent;
         [SerializeField] private Transform start;
         [SerializeField] private Transform end;
+        [SerializeField, Min(0.1f)] private float detectionRadius = 7f;
 
         private const int Segments = 16;
 
@@ -30,6 +32,8 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
         private MaterialPropertyBlock _properties;
         private bool _isVisible;
         private IBufferedSubscriber<SmellVisibilityChanged> _smell;
+        private NextDayBuffService _buffService;
+        private PlayerAbility _player;
         private IDisposable _subscription;
 
         private void Awake()
@@ -76,7 +80,11 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
 
         private void LateUpdate()
         {
-            if (!_isVisible)
+            bool withinRange = _player != null && IsWithinRange();
+            if (_renderer != null)
+                _renderer.enabled = _isVisible && withinRange;
+
+            if (!_isVisible || !withinRange)
                 return;
 
             var startPosition = transform.InverseTransformPoint(start.position);
@@ -107,7 +115,28 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
             // Scene-placed trails resolve their own scope once. The buffered event covers late enables.
             var scope = GetComponentInParent<LifetimeScope>() ?? LifetimeScope.Find<LifetimeScope>(gameObject.scene);
             _smell = scope.Container.Resolve<IBufferedSubscriber<SmellVisibilityChanged>>();
+            _buffService = scope.Container.Resolve<NextDayBuffService>();
+            _player = FindAnyObjectByType<PlayerAbility>();
             Subscribe();
+        }
+
+        private bool IsWithinRange()
+        {
+            Vector2 from = start.position;
+            Vector2 to = end.position;
+            Vector2 closestPoint = from;
+            Vector2 segment = to - from;
+            if (segment.sqrMagnitude > 0f)
+            {
+                float projection = Mathf.Clamp01(Vector2.Dot((Vector2)_player.transform.position - from, segment)
+                                                 / segment.sqrMagnitude);
+                closestPoint = from + segment * projection;
+            }
+
+            float effectiveRadius = detectionRadius
+                                    * (_buffService.ThymeActiveThisDay ? NextDayBuffService.AbilityRadiusMultiplier : 1f);
+            return ((Vector2)_player.transform.position - closestPoint).sqrMagnitude
+                   <= effectiveRadius * effectiveRadius;
         }
 
         private void OnEnable()
@@ -130,7 +159,7 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
             _isVisible = isVisible;
 
             if (_renderer != null)
-                _renderer.enabled = isVisible;
+                _renderer.enabled = isVisible && _player != null && IsWithinRange();
         }
 
         private void OnDestroy()

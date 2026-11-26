@@ -49,7 +49,7 @@ namespace _Project.Develop.Gameplay.NPC
                 return;
 
             var dialogue = npcData.state.dialogue;
-            if (dialogue != null && !_dayService.TrySpendMinutes(DayService.DialogueCostMinutes))
+            if (dialogue != null && !_dayService.TrySpendMinutes(_dayService.DialogueCostMinutes))
                 return;
 
             _interactPublisher.Publish(new NpcInteractedEvent(npcData, dialogueAnchor));

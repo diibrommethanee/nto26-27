@@ -4,6 +4,7 @@ using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Tea;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
@@ -31,7 +32,7 @@ namespace _Project.Develop.Gameplay.Player
         private UnityCamera _camera;
         private Vector2 _moveStartPosition;
         private bool _moveStartedDuringChoice;
-        
+        private NextDayBuffService _buffService;
         public Vector2 Velocity => _agent.velocity;
 
         private void Awake()
@@ -45,17 +46,26 @@ namespace _Project.Develop.Gameplay.Player
         }
 
         [Inject]
-        private void Construct(InputController input, DialogueRunner dialogue, PlayerStats stats)
+        private void Construct(InputController input, DialogueRunner dialogue, PlayerStats stats, NextDayBuffService buffService)
         {
             _input = input;
             _dialogue = dialogue;
             _stats = stats;
+            _buffService = buffService;
+        }
+
+        private void ApplySpeedBuff()
+        {
+            if (_agent == null || _stats == null) return;
+            _agent.speed = _stats.speed;
+            if (_buffService != null && _buffService.LemonBalmActiveThisDay)
+                _agent.speed *= NextDayBuffService.MovementSpeedMultiplier;
         }
 
         private void Start()
         {
             _ability = GetComponent<PlayerAbility>();
-            _agent.speed = _stats.speed;
+            ApplySpeedBuff();
             _agent.acceleration = _stats.acceleration;
             _agent.stoppingDistance = _stats.stoppingDistance;
             _bodyCollider = GetComponent<Collider2D>();
