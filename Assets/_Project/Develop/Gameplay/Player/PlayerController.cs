@@ -110,6 +110,9 @@ namespace _Project.Develop.Gameplay.Player
                 if (hit.collider == null)
                     continue;
 
+                if (hit.collider.GetComponentInParent<IInteractable>() != null)
+                    return;
+
                 var clue = hit.collider.GetComponentInParent<IWorldClue>();
                 if (clue != null && !clue.IsCollected && clue.CanCollect(_ability.ActiveSkill))
                     return;
@@ -142,7 +145,11 @@ namespace _Project.Develop.Gameplay.Player
         internal void ApproachNpc(NpcInteract npc)
         {
             if (_dialogue.IsRunning)
+            {
+                if (_dialogue.Interlocutor == npc.Data)
+                    _dialogue.RequestContinue();
                 return;
+            }
 
             var zone = npc.GetComponentInChildren<NpcDialogueExit>();
             _pendingNpc = npc;

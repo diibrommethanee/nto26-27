@@ -80,6 +80,7 @@ namespace _Project.Develop.UI.Dialogue
             InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
             _runner = runner;
+            _runner.ContinueRequested += OnContinueClicked;
             _input = input;
             _zoomMode = zoomMode;
             _interactionSubscription = interactionSubscriber.Subscribe(message => _interaction = message);
@@ -435,6 +436,7 @@ namespace _Project.Develop.UI.Dialogue
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
             _zoomSubscription?.Dispose();
+            _runner.ContinueRequested -= OnContinueClicked;
             _zoomFade.Stop();
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
