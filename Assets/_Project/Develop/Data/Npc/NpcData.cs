@@ -24,5 +24,6 @@ namespace _Project.Develop.Data.Npc
     {
         public int mood;
         public DialogueDefinition dialogue;
+        public bool teaServed;
     }
 }

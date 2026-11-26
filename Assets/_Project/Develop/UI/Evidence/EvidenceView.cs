@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using _Project.Develop.Data.Evidence;
@@ -402,6 +402,8 @@ namespace _Project.Develop.UI.Evidence
             _pages.Show(hypothesis);
         }
 
+        public bool IsNotebookOpen => _isOpen;
+
         public void Open() => SetOpen(true);
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -428,6 +430,7 @@ namespace _Project.Develop.UI.Evidence
 
             _isOpen = open;
             _input.SetNotebookOpen(open);
+            _evidence.SetNotebookOpen(open);
             _transition.Stop();
             SetInteractive(false);
             var duration = open ? openDuration : closeDuration;
