@@ -251,14 +251,17 @@ namespace _Project.Develop.Gameplay.Dialogue
                             break;
 
                         case DialogueStepKind.End:
-                            if (_playingReturnDialogue)
+                            if (_npc != null && step.setDialogue != null)
+                            {
+                                _npc.state.dialogue = step.setDialogue;
+                                _suspended.Remove(_npc);
+                            }
+                            else if (_playingReturnDialogue)
                             {
                                 var checkpoint = _suspended[_npc];
                                 checkpoint.ReturnPending = false;
                                 _suspended[_npc] = checkpoint;
                             }
-                            else if (_npc != null && step.setDialogue != null)
-                                _npc.state.dialogue = step.setDialogue;
                             PublishTalked();
                             Stop();
                             return;

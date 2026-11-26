@@ -62,6 +62,7 @@ namespace _Project.Develop.UI.Dialogue
         private Button _choiceTemplate;
 
         private DialogueRunner _runner;
+        [SerializeField] private _Project.Develop.Gameplay.Camera.CameraController dialogueCamera;
         private NpcInteractedEvent _interaction;
         private IDisposable _interactionSubscription;
         private IDisposable _dialogueSubscription;
@@ -101,6 +102,12 @@ namespace _Project.Develop.UI.Dialogue
                 _worldWriter.OnCharacterShown.AddListener(OnWorldCharacterShown);
                 _worldWriter.OnSkipWriter.AddListener(OnWorldWriterSkipped);
                 _worldSurface = worldBlob.GetComponent<SurfaceGraphic>();
+                var bubbleMaterial = _worldSurface.defaultMaterial;
+                // Reserve stencil bit 7 for the visible speech-bubble silhouette.
+                bubbleMaterial.SetInt("_Stencil", 128);
+                bubbleMaterial.SetInt("_StencilWriteMask", 128);
+                bubbleMaterial.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Replace);
+                bubbleMaterial.EnableKeyword("UNITY_UI_ALPHACLIP");
                 _defaultWorldStyle = _worldSurface.style;
                 if (!worldCanvas.TryGetComponent(out _worldGroup))
                     _worldGroup = worldCanvas.gameObject.AddComponent<CanvasGroup>();
@@ -123,6 +130,8 @@ namespace _Project.Develop.UI.Dialogue
         {
             ClearChoices();
             
+            if (dialogueCamera && _runner.Interlocutor && _interaction.Npc == _runner.Interlocutor)
+                dialogueCamera.Dialogue.Begin(playerDialogueAnchor, _interaction.DialogueAnchor);
             var dialogue = message.dialogue;
             _lineClue = dialogue.clue;
             var text = dialogue.text ?? string.Empty;
@@ -320,6 +329,7 @@ namespace _Project.Develop.UI.Dialogue
 
         private void OnDialogueEnded(DialogueEnded message)
         {
+            if (dialogueCamera) dialogueCamera.Dialogue.End();
             _interaction = default;
             ClearChoices();
             SetVisible(false);
