@@ -17,5 +17,10 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   sticker: 1
-  hypothesis: {fileID: 0}
+  hypothesis: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
+  reward:
+    dialogueNpc: {fileID: 0}
+    dialogue: {fileID: 0}
+    moodNpc: {fileID: 0}
+    moodIncrease: 0
   fillWord: "\u043A\u043B\u044E\u0447"
