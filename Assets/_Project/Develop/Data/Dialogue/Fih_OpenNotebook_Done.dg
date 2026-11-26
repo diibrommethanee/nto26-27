@@ -46,9 +46,9 @@ MonoBehaviour:
         m_LastKnownBounds:
           serializedVersion: 2
           x: 100.666664
-          y: 57.999996
-          width: 1026.0001
-          height: 424.66663
+          y: 80
+          width: 902
+          height: 402.66663
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 9615528557825577674
@@ -251,7 +251,7 @@ MonoBehaviour:
     - rid: 3967460729282625703
       type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: 0
+        m_Value: 1
     - rid: 3967460729282625704
       type: {class: 'Constant`1[[System.Int32, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
@@ -269,7 +269,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 67b0e05a0b4f09c748e72e5ea60e2663
         m_Version: 2
-        m_Position: {x: 699.9, y: 98.35503}
+        m_Position: {x: 699.9, y: 99.02171}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:

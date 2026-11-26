@@ -51,7 +51,7 @@ MonoBehaviour:
           serializedVersion: 2
           x: 124.666664
           y: 191.33333
-          width: 1748
+          width: 1624.6666
           height: 350.6667
         m_GraphElementMetaData:
         - m_Guid:
@@ -334,7 +334,7 @@ MonoBehaviour:
     - rid: 3967460729282625643
       type: {class: 'Constant`1[[_Project.Develop.Data.Dialogue.DialogueDefinition, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: {fileID: 7194093555672020370, guid: 5902337e1551f0b41a6e97fd49786b1a, type: 3}
+        m_Value: {fileID: 0}
     - rid: 3967460729282625644
       type: {class: EndNode, ns: _Project.Develop.Editor.Dialogue, asm: Assembly-CSharp-Editor}
       data: 

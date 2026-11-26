@@ -11881,10 +11881,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28202ef8fef1042439c4965eeb508bbf, type: 3}
-  hearingIcon: {fileID: 21300000, guid: d2d0779596afdb74db805572dcd6c8f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Hearing.HearingView
   panel: {fileID: 1876181681}
+  hearingIcon: {fileID: 21300000, guid: d2d0779596afdb74db805572dcd6c8f7, type: 3}
   sources:
   - {fileID: 1430703344}
   player: {fileID: 5301033638596137933}
@@ -20822,29 +20822,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acd760c8ba56fa347ae0faa4dba0a367, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Evidence.EvidenceView
-  board: {fileID: 8792194156041366760}
-  notebookButton: {fileID: 6454474946867833675}
-  cluePrefab: {fileID: 3651951977518508176, guid: f2f16b0730558fc4ebfeab1afd0bc6cc, type: 3}
-  wordCluePrefab: {fileID: 3651951977518508176, guid: 9dfb3a903c884ed093e9d4f2182d3082, type: 3}
-  threadPrefab: {fileID: 403715150418302513, guid: 935d84e45ec5ed441a20ff8d00f8f7f3, type: 3}
-  redSticker: {fileID: 8093278259594180482, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
-  blueSticker: {fileID: -1812551610301912546, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
-  greenSticker: {fileID: 1012282107878949809, guid: f93c5539d6300c841b0f1e29e2a86bd1, type: 3}
-  matLeft: {fileID: 1310395944}
-  matRight: {fileID: 1188008796}
-  surfaceLeft: {fileID: 2106522384}
-  surfaceRight: {fileID: 1191261929}
-  hypotheses:
-  - {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
-  - {fileID: 11400000, guid: d30b048e5fc64f247bebcc0b17050c7e, type: 2}
-  currentHypothesis: {fileID: 0}
-  openDuration: 0.32
-  closeDuration: 0.18
-  slideDistance: 30
-  closedScale: 0.94
-  clueFlyDuration: 0.55
-  clueFlyArc: 90
-  clueFlyIconSize: 48
 --- !u!114 &5916200230972439941
 MonoBehaviour:
   m_ObjectHideFlags: 0
