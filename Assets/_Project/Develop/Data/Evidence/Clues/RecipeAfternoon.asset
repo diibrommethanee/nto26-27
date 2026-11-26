@@ -10,12 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: afc2bb3f2c5d41ff9e707995b1f78198, type: 3}
-  m_Name: WordClue1
+  m_Name: RecipeAfternoon
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
   title: 
   description: 
   icon: {fileID: 0}
-  sticker: 2
+  type: 0
+  sticker: 0
+  hypothesis: {fileID: 0}
+  reward:
+    dialogueNpc: {fileID: 0}
+    dialogue: {fileID: 0}
+    moodNpc: {fileID: 0}
+    moodIncrease: 0
   fillWord: 
-  noteSprite: {fileID: -4255796987655688100, guid: 2d6d0fd9de811f24d8d895ea7c9c1562, type: 3}
-  text: "\u043F\u0435\u043A\u0430\u0440\u044C \u043F\u0430\u0445\u043D\u0435\u0442 \u043A\u043E\u0440\u0438\u0446\u0435\u0439"
+  noteSprite: {fileID: 0}
+  text: 
