@@ -1,4 +1,5 @@
 using System;
+using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
 using VContainer.Unity;
 
@@ -16,21 +17,27 @@ namespace _Project.Develop.Gameplay.Timeline
     {
         public const int StartingMinutes = 480;
         public const int MinutesPerPhase = 120;
-        public const int DialogueCostMinutes = 30;
+        public const int BaseDialogueCostMinutes = 30;
         public const int AbilityCostMinutes = 15;
+
+        public int DialogueCostMinutes => _buffService.DialoguePointCostOverride ?? BaseDialogueCostMinutes;
 
         private readonly ISubscriber<ForceDayPhase> _forcePhase;
         private readonly IBufferedPublisher<DayPhaseChanged> _phaseChanged;
+        private readonly NextDayBuffService _buffService;
         private IDisposable _forcePhaseSubscription;
 
-        public DayService(ISubscriber<ForceDayPhase> forcePhase, IBufferedPublisher<DayPhaseChanged> phaseChanged)
+        public DayService(ISubscriber<ForceDayPhase> forcePhase, IBufferedPublisher<DayPhaseChanged> phaseChanged,
+            NextDayBuffService buffService)
         {
             _forcePhase = forcePhase;
             _phaseChanged = phaseChanged;
+            _buffService = buffService;
         }
 
         public void Initialize()
         {
+            _buffService.ApplyPendingForNewDay();
             _forcePhaseSubscription = _forcePhase.Subscribe(OnForcePhase);
             _phaseChanged.Publish(new DayPhaseChanged(Phase));
         }
@@ -100,6 +107,7 @@ namespace _Project.Develop.Gameplay.Timeline
 
             DayNumber++;
             RemainingMinutes = StartingMinutes;
+            _buffService.ApplyPendingForNewDay();
             SetPhase(DayPhase.Morning);
             return true;
         }
