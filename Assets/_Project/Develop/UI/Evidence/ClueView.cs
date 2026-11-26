@@ -36,18 +36,29 @@ namespace _Project.Develop.UI.Evidence
         public RectTransform Rect => (RectTransform)transform;
 
         public virtual void Initialize(Clue data, RectTransform board, Vector2 position, Action<ClueView> onSelected,
-            Sprite artwork = null)
+            Sprite artwork, bool hasIcon)
         {
             Data = data;
             _board = board;
             _onSelected = onSelected;
             var word = data as WordClue;
-            var pickup = data.icon != null;
             icon.sprite = artwork != null ? artwork : word != null && word.noteSprite != null ? word.noteSprite : data.icon;
-            icon.preserveAspect = pickup;
-            title.gameObject.SetActive(!pickup);
+            icon.enabled = true;
+            icon.preserveAspect = hasIcon;
+            if (hasIcon)
+            {
+                var background = GetComponent<UnityEngine.UI.Image>();
+                var color = background.color;
+                color.a = 0f;
+                background.color = color;
+
+                var selection = selectedVisual.GetComponent<UnityEngine.UI.Image>();
+                selection.sprite = icon.sprite;
+                selection.preserveAspect = true;
+            }
+            title.gameObject.SetActive(!hasIcon);
             title.text = word != null ? word.text : data.title;
-            if (!pickup)
+            if (!hasIcon)
             {
                 Rect.sizeDelta = word != null ? new Vector2(172f, 174f) : new Vector2(132f, 150f);
                 icon.rectTransform.anchorMin = Vector2.zero;
@@ -62,7 +73,7 @@ namespace _Project.Develop.UI.Evidence
                 title.fontSizeMax = word != null ? 24f : 22f;
                 title.alignment = TextAlignmentOptions.Center;
             }
-            _baseScale = Rect.localScale;
+            _baseScale = Rect.localScale * 0.8f;
             _selectionScale = selectedVisual.transform.localScale;
             selectedVisual.SetActive(false);
 
@@ -70,7 +81,8 @@ namespace _Project.Develop.UI.Evidence
             Rect.anchoredPosition = ClampToBoard(position + Vector2.down * 24f);
             Rect.localScale = _baseScale * 0.8f;
             _scaleTween = Tween.Scale(Rect, _baseScale, spawnDuration, Ease.OutBack);
-            _spawnMove = Tween.UIAnchoredPositionY(Rect, position.y, spawnDuration, Ease.OutCubic);
+            if (!Mathf.Approximately(Rect.anchoredPosition.y, position.y))
+                _spawnMove = Tween.UIAnchoredPositionY(Rect, position.y, spawnDuration, Ease.OutCubic);
             Tween.Alpha(GetComponent<CanvasGroup>(), 0f, 1f, spawnDuration * 0.8f);
         }
 
@@ -127,6 +139,7 @@ namespace _Project.Develop.UI.Evidence
                     _board, eventData.position, eventData.pressEventCamera, out var point))
                 return;
 
+            _spawnMove.Stop();
             _pointer = eventData.pointerId;
             _dragOffset = (Vector2)_board.InverseTransformPoint(Rect.position) - point;
         }
@@ -145,7 +158,12 @@ namespace _Project.Develop.UI.Evidence
                 UpdateScale();
             }
 
-            var position = ClampToBoard(point + _dragOffset);
+            var desired = point + _dragOffset;
+            var position = ClampToBoard(desired);
+            var excess = desired - position;
+            position += new Vector2(
+                10f * excess.x / (Mathf.Abs(excess.x) + 55f),
+                10f * excess.y / (Mathf.Abs(excess.y) + 55f));
             Rect.position = _board.TransformPoint(position);
         }
 
@@ -174,6 +192,9 @@ namespace _Project.Develop.UI.Evidence
             if (_dragging)
             {
                 _dragging = false;
+                var target = ClampToBoard(_board.InverseTransformPoint(Rect.position));
+                if (Rect.anchoredPosition != target)
+                    _spawnMove = Tween.UIAnchoredPosition(Rect, target, 0.22f, Ease.OutCubic);
                 UpdateScale();
                 return;
             }
@@ -183,6 +204,9 @@ namespace _Project.Develop.UI.Evidence
 
         private void OnDisable()
         {
+            _spawnMove.Stop();
+            if (_pointer.HasValue)
+                Rect.anchoredPosition = ClampToBoard(Rect.anchoredPosition);
             _pointer = null;
             _dragging = false;
             _hovered = false;
