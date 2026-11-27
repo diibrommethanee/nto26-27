@@ -27,7 +27,7 @@ namespace _Project.Develop.Infrastructure.EntryPoints
         {
             var result = _services.ToDictionary(service => service.GetType().FullName);
             foreach (var component in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (component is SavableBehaviour entity)
                 {

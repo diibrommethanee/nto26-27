@@ -1196,7 +1196,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: -2
-      type: {class: '', ns: '', asm: ''}
+      type: {class: , ns: , asm: }
     - rid: 5539971974342115635
       type: {class: Light2DProviderSources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
@@ -1206,8 +1206,7 @@ MonoBehaviour:
         m_Provider2DCache:
           rid: 5539972072437186566
     - rid: 5539972072437186566
-      type: {class: 'Provider2DCache`1[[UnityEngine.Rendering.Universal.Light2DProvider,
-          Unity.RenderPipelines.Universal.2D.Runtime]]', ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
+      type: {class: 'Provider2DCache`1[[UnityEngine.Rendering.Universal.Light2DProvider, Unity.RenderPipelines.Universal.2D.Runtime]]', ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
         m_Cache: []
 --- !u!4 &133674141
@@ -6125,7 +6124,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: -2
-      type: {class: '', ns: '', asm: ''}
+      type: {class: , ns: , asm: }
     - rid: 5539972244747059362
       type: {class: Light2DProviderSources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
@@ -6135,8 +6134,7 @@ MonoBehaviour:
         m_Provider2DCache:
           rid: 5539972244747059363
     - rid: 5539972244747059363
-      type: {class: 'Provider2DCache`1[[UnityEngine.Rendering.Universal.Light2DProvider,
-          Unity.RenderPipelines.Universal.2D.Runtime]]', ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
+      type: {class: 'Provider2DCache`1[[UnityEngine.Rendering.Universal.Light2DProvider, Unity.RenderPipelines.Universal.2D.Runtime]]', ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
         m_Cache: []
 --- !u!212 &575940395
@@ -9196,6 +9194,7 @@ MonoBehaviour:
   - {fileID: 435386117}
   - {fileID: 2389051271}
   - {fileID: 1596279880}
+  - {fileID: 1898567304}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
   questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
   evidenceDatabase: {fileID: 11400000, guid: 3cf9909b87a1f2a4a91ad5ccb37c15e2, type: 2}
@@ -9653,6 +9652,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1029073350}
   - component: {fileID: 1029073351}
+  - component: {fileID: 1029073352}
+  - component: {fileID: 1029073353}
   m_Layer: 8
   m_Name: Up_1
   m_TagString: Untagged
@@ -9735,6 +9736,67 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!61 &1029073352
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029073349}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.39038122, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 8.93, y: 7.6130447}
+    newSize: {x: 29.41, y: 8.5722885}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 8.149238, y: 7.6130447}
+  m_EdgeRadius: 0
+--- !u!114 &1029073353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029073349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2278c7da385c52469d5cbd79f1ec714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Environment.SpriteFadeTrigger
+  fadedAlpha: 0
+  fadeDuration: 0.4
+  ease: 1
 --- !u!1 &1044893652
 GameObject:
   m_ObjectHideFlags: 0
@@ -12123,16 +12185,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434
-    \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 "
+  m_text: "\u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 \u042F \u043B\u044E\u0431\u043B\u044E \u0432\u0430\u0439\u0431\u043A\u043E\u0434 "
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 108fc6f434c6b4c45bc37e54d29055d7, type: 2}
   m_sharedMaterial: {fileID: 4152131161101007673, guid: 108fc6f434c6b4c45bc37e54d29055d7, type: 2}
@@ -12506,8 +12559,7 @@ MonoBehaviour:
   frequency: 0.68
   tolerance: 0.035
   holdSeconds: 1.1
-  transcript: "\xAB\u0412\u0442\u043E\u0440\u043E\u0439 \u043A\u043B\u044E\u0447 \u043E\u0441\u0442\u0430\u043B\u0441\u044F
-    \u0443 \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A\u0430\xBB."
+  transcript: "\xAB\u0412\u0442\u043E\u0440\u043E\u0439 \u043A\u043B\u044E\u0447 \u043E\u0441\u0442\u0430\u043B\u0441\u044F \u0443 \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A\u0430\xBB."
   clue: {fileID: 11400000, guid: e178b91eeaf33734f893dcb0bdb06510, type: 2}
 --- !u!4 &1430703345
 Transform:
@@ -14527,8 +14579,6 @@ MonoBehaviour:
     visualRoot: {fileID: 681577857}
     iconImage: {fileID: 681577858}
   pourDuration: 1.35
-  ingredientMoveDuration: 0.45
-  ingredientDropDuration: 0.55
   teapotPourOffset: {x: -180, y: 140}
   teapotPourRotation: {x: 0, y: 0, z: 28}
   cupPourOffset: {x: 60, y: 0}
@@ -14722,10 +14772,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28202ef8fef1042439c4965eeb508bbf, type: 3}
-  hearingIcon: {fileID: 21300000, guid: d2d0779596afdb74db805572dcd6c8f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::_Project.Develop.UI.Hearing.HearingView
   panel: {fileID: 1876181681}
+  hearingIcon: {fileID: 21300000, guid: d2d0779596afdb74db805572dcd6c8f7, type: 3}
   sources:
   - {fileID: 1430703344}
   player: {fileID: 5301033638596137933}
@@ -18806,6 +18856,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1898567305}
   - component: {fileID: 1898567306}
+  - component: {fileID: 1898567308}
+  - component: {fileID: 1898567307}
+  - component: {fileID: 1898567309}
   m_Layer: 8
   m_Name: Window
   m_TagString: Untagged
@@ -18888,6 +18941,86 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!95 &1898567307
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898567304}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e32af40f91e64ff4794d15811a22e963, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!61 &1898567308
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898567304}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2.4699998, y: 1.2304921}
+    newSize: {x: 29.41, y: 8.5722885}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 2.4699998, y: 1.2304921}
+  m_EdgeRadius: 0
+--- !u!114 &1898567309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898567304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f8ce13773ac7f489d36ad12aa4ce98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Environment.AnimatorClickTrigger
 --- !u!1 &1904803434
 GameObject:
   m_ObjectHideFlags: 0
@@ -19248,8 +19381,6 @@ MonoBehaviour:
     visualRoot: {fileID: 1180680179}
     iconImage: {fileID: 1180680181}
   pourDuration: 1.35
-  ingredientMoveDuration: 0.45
-  ingredientDropDuration: 0.55
   teapotPourOffset: {x: -180, y: 140}
   teapotPourRotation: {x: 0, y: 0, z: 28}
   cupPourOffset: {x: 60, y: 0}
@@ -19945,6 +20076,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2068084246}
   - component: {fileID: 2068084247}
+  - component: {fileID: 2068084248}
+  - component: {fileID: 2068084249}
   m_Layer: 8
   m_Name: Up
   m_TagString: Untagged
@@ -20027,6 +20160,67 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!61 &2068084248
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2068084245}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0.38119268, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 8.7300005, y: 7.6730685}
+    newSize: {x: 29.41, y: 8.5722885}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 7.967614, y: 7.6730685}
+  m_EdgeRadius: 0
+--- !u!114 &2068084249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2068084245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2278c7da385c52469d5cbd79f1ec714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Environment.SpriteFadeTrigger
+  fadedAlpha: 0
+  fadeDuration: 0.4
+  ease: 1
 --- !u!1 &2090053493
 GameObject:
   m_ObjectHideFlags: 0
@@ -21881,8 +22075,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u042D\u0442\u043E\u0442 \u043F\u0438\u0440\u043E\u0433 \u0431\u044B\u043B
-    \u0443\u043A\u0440\u0430\u0434\u0435\u043D"
+  m_text: "\u042D\u0442\u043E\u0442 \u043F\u0438\u0440\u043E\u0433 \u0431\u044B\u043B \u0443\u043A\u0440\u0430\u0434\u0435\u043D"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 108fc6f434c6b4c45bc37e54d29055d7, type: 2}
   m_sharedMaterial: {fileID: 4152131161101007673, guid: 108fc6f434c6b4c45bc37e54d29055d7, type: 2}
