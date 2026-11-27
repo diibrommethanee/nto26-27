@@ -10,6 +10,10 @@ namespace _Project.Develop.Gameplay.Evidence
     public class EvidenceService : ISavable, IAfterRestore
     {
         private readonly EvidenceDatabase _database;
+
+        public bool IsNotebookOpen { get; private set; }
+
+        public void SetNotebookOpen(bool open) => IsNotebookOpen = open;
         private readonly List<Clue> _collected = new();
         private readonly Dictionary<Clue, Sprite> _collectedSprites = new();
         private readonly List<Hypothesis> _unlockedHypotheses = new();

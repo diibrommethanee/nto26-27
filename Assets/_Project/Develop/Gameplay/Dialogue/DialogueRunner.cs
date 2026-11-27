@@ -33,6 +33,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         public NpcData Interlocutor => _npc;
         public bool IsRunning { get; private set; }
         public bool IsChoosing => _choices != null;
+        public event Action ContinueRequested;
 
         public DialogueRunner(IEnumerable<IDialogueNodeHandler> handlers, IPublisher<DialogueEnded> endedPublisher,
             IPublisher<NpcTalkedEvent> talkedPublisher, IPublisher<DialogueChoicesShown> choicesPublisher)
@@ -145,6 +146,11 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             if (IsRunning)
                 ProcessNodes();
+        }
+
+        public void RequestContinue()
+        {
+            ContinueRequested?.Invoke();
         }
 
         public void Choose(int index)

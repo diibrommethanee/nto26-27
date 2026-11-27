@@ -3,6 +3,7 @@ using _Project.Develop.Gameplay.Abilities.Hearing;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Player.Abilities;
+using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
 using PrimeTween;
 using TMPEffects.Components;
@@ -31,6 +32,7 @@ namespace _Project.Develop.UI.Hearing
         private IDisposable _subscription;
         private EvidenceService _evidence;
         private InputController _input;
+        private NextDayBuffService _buffService;
         private TMPWriter _writer;
         private Canvas _canvas;
         private CanvasGroup _visibility;
@@ -45,10 +47,12 @@ namespace _Project.Develop.UI.Hearing
         private float _caughtElapsed = -1f;
 
         [Inject]
-        private void Construct(IBufferedSubscriber<HearingChanged> hearing, EvidenceService evidence, InputController input)
+        private void Construct(IBufferedSubscriber<HearingChanged> hearing, EvidenceService evidence,
+            InputController input, NextDayBuffService buffService)
         {
             _evidence = evidence;
             _input = input;
+            _buffService = buffService;
             _writer = status.GetComponent<TMPWriter>();
             _writer.OnFinishWriter.AddListener(OnTranscriptFinished);
             _canvas = GetComponent<Canvas>();
@@ -93,7 +97,7 @@ namespace _Project.Develop.UI.Hearing
             foreach (var source in sources)
             {
                 float distance = Vector2.Distance(playerPosition, source.transform.position);
-                if (!source.isActiveAndEnabled || distance > source.radius || distance >= nearest
+                if (!source.isActiveAndEnabled || distance > GetEffectiveRadius(source) || distance >= nearest
                     || _evidence.HasClue(source.clue)) continue;
                 _source = source;
                 nearest = distance;
@@ -178,7 +182,8 @@ namespace _Project.Develop.UI.Hearing
                 return;
             }
             Vector2 directionToPlayer = player.transform.position - _source.transform.position;
-            if (directionToPlayer.sqrMagnitude > _source.radius * _source.radius)
+            float effectiveRadius = GetEffectiveRadius(_source);
+            if (directionToPlayer.sqrMagnitude > effectiveRadius * effectiveRadius)
             {
                 player.StopHearing();
                 return;
@@ -244,6 +249,9 @@ namespace _Project.Develop.UI.Hearing
             if (fade >= 1f)
                 player.StopHearing();
         }
+
+        private float GetEffectiveRadius(HearingSource source) =>
+            source.radius * (_buffService.ThymeActiveThisDay ? NextDayBuffService.AbilityRadiusMultiplier : 1f);
 
         private void HidePanel()
         {
