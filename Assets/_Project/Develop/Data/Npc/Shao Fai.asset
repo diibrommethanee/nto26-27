@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99d03e892c15452bb6b0abdc1730a7d2, type: 3}
   m_Name: Shao Fai
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Npc.NpcData
-  displayName: NPC 2
+  displayName: "\u0428\u0430\u043E \u0424\u0435\u0439"
   initialMood: 0
   dialogue: {fileID: 7194093555672020370, guid: 86f5de605fcd0be4784abdfb0f5de284, type: 3}
   surfaceStyle: {fileID: 11400000, guid: f6ca5e6728c79634dbd56b33a293e421, type: 2}
