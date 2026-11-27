@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   sticker: 0
-  hypothesis: {fileID: 0}
+  hypothesis: {fileID: 11400000, guid: e1ad888983b77bc40b21d51f4125c33c, type: 2}
   reward:
     dialogueNpc: {fileID: 0}
     dialogue: {fileID: 0}
