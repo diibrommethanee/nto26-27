@@ -20,7 +20,7 @@ MonoBehaviour:
     correctAnswerFill: 
   - type: 1
     text: 
-    correctClue: {fileID: 11400000, guid: b4487bb94e07e0e48a213ab6e4fbb2a7, type: 2}
+    correctClue: {fileID: 11400000, guid: 1372bdd7338aad64797098a63ec976ac, type: 2}
     correctAnswerFill: "\u0441\u043B\u043E\u043D\u043E\u043C"
   - type: 0
     text: "\u0430 \u043E\u043D \u0431\u044B\u043B"
@@ -28,7 +28,7 @@ MonoBehaviour:
     correctAnswerFill: 
   - type: 1
     text: 
-    correctClue: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+    correctClue: {fileID: 11400000, guid: 7a3c809796ed5234a86e3081afee7b9f, type: 2}
     correctAnswerFill: "\u043A\u0440\u0443\u0442\u044B\u043C"
   reward:
     rid: -2

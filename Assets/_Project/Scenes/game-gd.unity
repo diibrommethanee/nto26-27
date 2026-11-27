@@ -4758,7 +4758,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d6b7e19b63d431cb48f8c3a140c1a76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Evidence.WorldClue
-  clue: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
+  clue: {fileID: 11400000, guid: 7a3c809796ed5234a86e3081afee7b9f, type: 2}
   requiredSkill: 0
   holdDuration: 1.5
 --- !u!61 &330612583
