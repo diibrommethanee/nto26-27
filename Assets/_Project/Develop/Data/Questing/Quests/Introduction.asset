@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Introduction
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Questing.Quests.Quest
   questName: "\u0417\u043D\u0430\u043A\u043E\u043C\u0441\u0442\u0432\u043E"
-  description: Осмотрись в поезде и познакомься с обстановкой.
+  description: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C \u0432 \u043F\u043E\u0435\u0437\u0434\u0435 \u0438 \u043F\u043E\u0437\u043D\u0430\u043A\u043E\u043C\u044C\u0441\u044F \u0441 \u043E\u0431\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u043E\u0439."
   steps:
-  - id: 
+  - id: tutorial_0
     title: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C"
     target: {fileID: 0}
     eventType: 2

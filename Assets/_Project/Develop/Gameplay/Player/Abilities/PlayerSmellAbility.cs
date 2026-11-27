@@ -1,3 +1,4 @@
+using _Project.Develop.Gameplay.Input;
 using MessagePipe;
 
 namespace _Project.Develop.Gameplay.Player.Abilities
@@ -12,8 +13,10 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         }
     }
 
-    public class PlayerSmellAbility
+    public class PlayerSmellAbility : IPlayerAbility
     {
+        public SkillType Skill => SkillType.Smell;
+
         private readonly IBufferedPublisher<SmellVisibilityChanged> _visibility;
 
         public PlayerSmellAbility(IBufferedPublisher<SmellVisibilityChanged> visibility)

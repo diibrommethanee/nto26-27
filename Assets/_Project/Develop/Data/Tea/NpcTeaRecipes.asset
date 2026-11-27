@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccad138c0bc04bea8a75106677df2c70, type: 3}
+  m_Name: NpcTeaRecipes
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Tea.TeaRecipeBook
+  recipes:
+  - currentMood: 0
+    ingredients: 01000000
+    targetMood: 2
+  - currentMood: 0
+    ingredients: 0100000002000000
+    targetMood: 1
+  - currentMood: 2
+    ingredients: 02000000
+    targetMood: 1
+  - currentMood: 2
+    ingredients: 0200000003000000
+    targetMood: 0
+  - currentMood: 1
+    ingredients: 03000000
+    targetMood: 0
+  - currentMood: 1
+    ingredients: 0100000003000000
+    targetMood: 2

@@ -17,3 +17,4 @@ MonoBehaviour:
   icon: {fileID: 3599464253535848085, guid: eb228ae666eca9f40a45ec176e305734, type: 3}
   type: 1
   fillWord: 
+  fillIndex: 0

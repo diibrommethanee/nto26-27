@@ -24,3 +24,4 @@ MonoBehaviour:
     moodNpc: {fileID: 0}
     moodIncrease: 0
   fillWord: "\u043A\u043B\u044E\u0447"
+  fillIndex: 0

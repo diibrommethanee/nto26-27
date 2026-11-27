@@ -20,16 +20,18 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
 
         private IBufferedSubscriber<DayPhaseChanged> _phases;
         private DayService _dayService;
+        private NextDayTransition _nextDay;
         private IDisposable _subscription;
         private Tween _transition;
         private Vector3 _blend;
         private bool _initialized;
 
         [Inject]
-        private void Construct(IBufferedSubscriber<DayPhaseChanged> phases, DayService dayService)
+        private void Construct(IBufferedSubscriber<DayPhaseChanged> phases, DayService dayService, NextDayTransition nextDay)
         {
             _phases = phases;
             _dayService = dayService;
+            _nextDay = nextDay;
             if (isActiveAndEnabled) Subscribe();
         }
 
@@ -40,7 +42,11 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
         private void EndDay() => _dayService.TryEndDay();
 
         [Button("Start Next Day", EButtonEnableMode.Playmode)]
-        private void StartNextDay() => _dayService.TryStartNextDay();
+        private async void StartNextDay()
+        {
+            try { await _nextDay.StartAsync(); }
+            catch (Exception error) { Debug.LogException(error, this); }
+        }
         
 #if UNITY_EDITOR
         [Inject] private _Project.Develop.Data.ICheckpointService _checkpoints;
