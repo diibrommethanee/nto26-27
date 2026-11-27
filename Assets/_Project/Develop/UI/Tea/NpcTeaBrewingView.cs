@@ -1,10 +1,11 @@
+using _Project.Develop.Data.Tea;
 using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Npc;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Project.Develop.Gameplay.Tea
+namespace _Project.Develop.UI.Tea
 {
     public class NpcTeaBrewingView : TeaBrewingView
     {

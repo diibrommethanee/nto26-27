@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9339158558694a82a6c7c3b712a05d52, type: 3}
+  m_Name: DaySettings
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Timeline.DaySettings
+  startingMinutes: 480
+  minutesPerPhase: 120
+  dialogueCostMinutes: 30
+  abilityCostMinutes: 15

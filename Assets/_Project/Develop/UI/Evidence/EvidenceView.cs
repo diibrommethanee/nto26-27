@@ -63,6 +63,7 @@ namespace _Project.Develop.UI.Evidence
         private IDisposable _zoomSubscription;
         private Tween _notebookFade;
         private NotebookPages _pages;
+        private ClueFlightAnimation _flight;
         private ClueView _selected;
         private ClueThreadView _preview;
         private bool _isOpen;
@@ -85,6 +86,8 @@ namespace _Project.Develop.UI.Evidence
             _canvasGroup = GetComponent<CanvasGroup>();
             if (notebookButton)
             {
+                _flight = new ClueFlightAnimation(notebookButton, clueFlightImage, clueFlyDuration,
+                    clueFlyArc, clueFlyIconSize, destroyCancellationToken);
                 _notebookButtonGroup = notebookButton.GetComponent<CanvasGroup>();
                 if (!_notebookButtonGroup)
                     _notebookButtonGroup = notebookButton.gameObject.AddComponent<CanvasGroup>();
@@ -169,7 +172,7 @@ namespace _Project.Develop.UI.Evidence
             {
                 _evidence.HypothesisUnlocked -= OnHypothesisUnlocked;
                 _evidence.ClueCollected -= OnClueCollected;
-            _evidence.Restored -= RefreshRestored;
+                _evidence.Restored -= RefreshRestored;
             }
         }
 
@@ -254,128 +257,16 @@ namespace _Project.Develop.UI.Evidence
             TMP_Text dialogueLabel)
         {
             if (dialogueLabel && notebookButton)
-                await FlyDialogueClueAsync(dialogueLabel);
+                await _flight.FlyDialogueClueAsync(dialogueLabel);
             else if (sourceWorldPosition is Vector3 worldPosition && notebookButton != null)
             {
                 var sourceSprite = _evidence.GetClueSprite(clue);
                 var isOutlineSticker = clue.type == ClueType.Outline && sourceSprite == null && clue.icon == null;
-                await FlyClueToNotebookAsync(sourceSprite != null ? sourceSprite : GetArtwork(clue),
+                await _flight.FlyClueToNotebookAsync(sourceSprite != null ? sourceSprite : GetArtwork(clue),
                     worldPosition, isOutlineSticker);
             }
 
             AddClueCard(clue, boardPosition);
-        }
-
-        private UniTask FlyDialogueClueAsync(TMP_Text source)
-        {
-            var targetCanvas = notebookButton.GetComponentInParent<Canvas>().rootCanvas;
-            var canvasRect = (RectTransform)targetCanvas.transform;
-            var sourceCanvas = source.canvas.rootCanvas;
-            var sourceCamera = sourceCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : sourceCanvas.worldCamera;
-            var targetCamera = targetCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : targetCanvas.worldCamera;
-            var jobs = new List<UniTask>();
-            var info = source.textInfo;
-            for (var i = 0; i < info.linkCount; i++)
-            {
-                var link = info.linkInfo[i];
-                if (!link.GetLinkID().StartsWith(DialogueClueLinkPrefix, StringComparison.Ordinal))
-                    continue;
-
-                var bounds = new Bounds();
-                var hasGlyph = false;
-                for (var j = link.linkTextfirstCharacterIndex;
-                     j < link.linkTextfirstCharacterIndex + link.linkTextLength && j < info.characterCount; j++)
-                {
-                    var glyph = info.characterInfo[j];
-                    if (!glyph.isVisible) continue;
-                    if (!hasGlyph) bounds = new Bounds(glyph.bottomLeft, Vector3.zero);
-                    bounds.Encapsulate(glyph.bottomLeft);
-                    bounds.Encapsulate(glyph.topRight);
-                    hasGlyph = true;
-                }
-
-                if (!hasGlyph) continue;
-                var screen = RectTransformUtility.WorldToScreenPoint(sourceCamera,
-                    source.rectTransform.TransformPoint(bounds.center));
-                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, targetCamera,
-                        out var position))
-                    jobs.Add(FlyPhraseAsync(link.GetLinkText(), source, canvasRect, position));
-            }
-
-            return UniTask.WhenAll(jobs);
-        }
-
-        private async UniTask FlyPhraseAsync(string phrase, TMP_Text source, RectTransform canvas, Vector2 position)
-        {
-            var flight = new GameObject("Dialogue Clue Flight", typeof(RectTransform), typeof(TextMeshProUGUI));
-            var rect = (RectTransform)flight.transform;
-            rect.SetParent(canvas, false);
-            rect.localPosition = position;
-            var label = flight.GetComponent<TextMeshProUGUI>();
-            label.font = source.font;
-            label.fontSize = source.fontSize * source.rectTransform.lossyScale.y / canvas.lossyScale.y;
-            label.color = new Color32(255, 213, 79, 255);
-            label.alignment = TextAlignmentOptions.Center;
-            label.raycastTarget = false;
-            label.richText = false;
-            label.text = phrase;
-            rect.sizeDelta = label.GetPreferredValues(phrase) + new Vector2(8, 4);
-
-            var scaleTween = Tween.Scale(rect, 0.35f, clueFlyDuration, Ease.InCubic);
-            try
-            {
-                var target = canvas.InverseTransformPoint(notebookButton.position);
-                await Tween.LocalPosition(rect, target, clueFlyDuration, Ease.InOutCubic)
-                    .SetCancellationToken(destroyCancellationToken);
-            }
-            finally
-            {
-                scaleTween.Stop();
-                Destroy(flight);
-            }
-        }
-
-        private async UniTask FlyClueToNotebookAsync(Sprite icon, Vector3 worldPosition, bool isOutlineSticker)
-        {
-            var canvas = notebookButton.GetComponentInParent<Canvas>().rootCanvas;
-            var flightParent = (RectTransform)clueFlightImage.transform.parent;
-            var worldCamera = Camera.main;
-            if (worldCamera == null)
-                return;
-
-            var screenPosition = worldCamera.WorldToScreenPoint(worldPosition);
-            var eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            if (screenPosition.z <= 0f || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    flightParent, screenPosition, eventCamera, out var startPosition))
-                return;
-
-            await UniTask.WaitWhile(() => clueFlightImage.enabled, cancellationToken: destroyCancellationToken);
-            var flightRect = clueFlightImage.rectTransform;
-            flightRect.localPosition = startPosition;
-            flightRect.sizeDelta = new Vector2(clueFlyIconSize, clueFlyIconSize);
-            var startScale = isOutlineSticker ? 0.65f : 1f;
-            var endScale = isOutlineSticker ? 0.75f : 0.45f;
-            flightRect.localScale = Vector3.one * startScale;
-
-            clueFlightImage.sprite = icon;
-            clueFlightImage.enabled = true;
-
-            try
-            {
-                var targetPosition = (Vector2)flightParent.InverseTransformPoint(notebookButton.position);
-                await Tween.Custom(flightRect, 0f, 1f, clueFlyDuration, (rect, progress) =>
-                {
-                    var position = Vector2.LerpUnclamped(startPosition, targetPosition, progress);
-                    position.y += Mathf.Sin(progress * Mathf.PI) * clueFlyArc;
-                    rect.localPosition = position;
-                    rect.localScale = Vector3.one * Mathf.Lerp(startScale, endScale, progress);
-                }, Ease.InOutCubic).SetCancellationToken(destroyCancellationToken);
-            }
-            finally
-            {
-                if (clueFlightImage != null)
-                    clueFlightImage.enabled = false;
-            }
         }
 
         private void AddClueCard(Clue clue, Vector2? position)
@@ -450,7 +341,6 @@ namespace _Project.Develop.UI.Evidence
 
             _isOpen = open;
             _input.SetNotebookOpen(open);
-            _evidence.SetNotebookOpen(open);
             _transition.Stop();
             SetInteractive(false);
             var duration = open ? openDuration : closeDuration;

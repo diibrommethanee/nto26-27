@@ -24,5 +24,6 @@ MonoBehaviour:
     moodNpc: {fileID: 0}
     moodIncrease: 0
   fillWord: 
+  fillIndex: 1
   noteSprite: {fileID: 0}
   text: 

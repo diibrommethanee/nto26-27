@@ -12,19 +12,45 @@ using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Quests
 {
-    public class QuestService : ISavable, IInitializable, IDisposable
+    public class QuestService : ISavable, IAfterRestore, IInitializable, IDisposable
     {
         private readonly List<QuestProgress> _activeQuests = new();
         private readonly List<QuestProgress> _completedQuests = new();
 
         private readonly List<IDisposable> _subscriptions = new();
 
+        private readonly QuestRewards _rewards;
         private readonly EvidenceService _evidence;
         private readonly IPublisher<QuestStepCompletedEvent> _stepCompletedPublisher;
         private readonly IPublisher<QuestCompletedEvent> _questCompletedPublisher;
 
         public IReadOnlyList<QuestProgress> ActiveQuests => _activeQuests;
         public IReadOnlyList<QuestProgress> CompletedQuests => _completedQuests;
+
+        public QuestProgress TrackedQuest { get; private set; }
+        public event Action<QuestProgress> TrackedQuestChanged;
+
+        private void Track(QuestProgress progress)
+        {
+            TrackedQuest = progress;
+            TrackedQuestChanged?.Invoke(progress);
+        }
+
+        private string _restoredTrackedKey;
+
+        [Save] private string TrackedQuestKey
+        {
+            get => TrackedQuest == null ? null : CheckpointCatalog.Instance.Key(TrackedQuest.Data);
+            set => _restoredTrackedKey = value;
+        }
+
+        public void AfterRestore()
+        {
+            var tracked = _restoredTrackedKey == null ? null : _activeQuests.Concat(_completedQuests)
+                .FirstOrDefault(quest => CheckpointCatalog.Instance.Key(quest.Data) == _restoredTrackedKey);
+            _restoredTrackedKey = null;
+            Track(tracked ?? _activeQuests.LastOrDefault() ?? _completedQuests.LastOrDefault());
+        }
 
         [Save] private Dictionary<string, int[]> SavedQuests
         {
@@ -33,18 +59,19 @@ namespace _Project.Develop.Gameplay.Quests
                 quest => quest.Steps.Select(step => step.CurrentAmount).Prepend(quest.CurrentStepIndex).ToArray());
             set
             {
-                _activeQuests.Clear();
-                _completedQuests.Clear();
+                var active = new List<QuestProgress>();
+                var completed = new List<QuestProgress>();
                 foreach (var pair in value)
                 {
                     var progress = new QuestProgress(CheckpointCatalog.Instance.Resolve<Quest>(pair.Key));
-                    if (pair.Value.Length != progress.Steps.Count + 1 || pair.Value[0] < 0 ||
-                        pair.Value[0] > progress.Steps.Count) throw new System.IO.InvalidDataException(pair.Key);
-                    for (var i = 0; i < progress.Steps.Count; i++)
-                        progress.Steps[i].AddProgress(pair.Value[i + 1]);
-                    for (var i = 0; i < pair.Value[0]; i++) progress.AdvanceStep();
-                    (progress.IsCompleted ? _completedQuests : _activeQuests).Add(progress);
+                    progress.Restore(pair.Value);
+                    (progress.IsCompleted ? completed : active).Add(progress);
                 }
+
+                _activeQuests.Clear();
+                _activeQuests.AddRange(active);
+                _completedQuests.Clear();
+                _completedQuests.AddRange(completed);
             }
         }
 
@@ -53,8 +80,9 @@ namespace _Project.Develop.Gameplay.Quests
             ISubscriber<StartQuestEvent> startQuestSubscriber,
             IPublisher<QuestStepCompletedEvent> stepCompletedPublisher,
             IPublisher<QuestCompletedEvent> questCompletedPublisher,
-            EvidenceService evidence)
+            EvidenceService evidence, QuestRewards rewards)
         {
+            _rewards = rewards;
             _evidence = evidence;
             _stepCompletedPublisher = stepCompletedPublisher;
             _questCompletedPublisher = questCompletedPublisher;
@@ -87,12 +115,14 @@ namespace _Project.Develop.Gameplay.Quests
             }
 
             _activeQuests.Add(progress);
+            Track(progress);
             return true;
         }
 
         public void RemoveQuest(Quest quest)
         {
             _activeQuests.RemoveAll(x => x.Data == quest);
+            if (TrackedQuest?.Data == quest) Track(_activeQuests.LastOrDefault() ?? _completedQuests.LastOrDefault());
             Debug.Log("Quest removed");
         }
 
@@ -152,6 +182,8 @@ namespace _Project.Develop.Gameplay.Quests
 
                 if (quest.IsCompleted)
                     CompleteQuest(quest);
+                else
+                    Track(quest);
             }
         }
 
@@ -160,13 +192,9 @@ namespace _Project.Develop.Gameplay.Quests
             _activeQuests.Remove(quest);
             _completedQuests.Add(quest);
 
-            var reward = quest.Data.reward;
-            if (reward.dialogueNpc != null && reward.dialogue != null)
-                reward.dialogueNpc.state.dialogue = reward.dialogue;
-
-            if (reward.moodNpc != null && reward.moodIncrease > 0)
-                reward.moodNpc.state.mood += reward.moodIncrease;
+            _rewards.Apply(quest.Data.reward);
             
+            Track(quest);
             _questCompletedPublisher.Publish(
                 new QuestCompletedEvent(quest.Data));
         }

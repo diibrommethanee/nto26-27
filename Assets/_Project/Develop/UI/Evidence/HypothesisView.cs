@@ -19,6 +19,7 @@ namespace _Project.Develop.UI.Evidence
         private readonly List<List<Clue>> _options = new();
         private EvidenceService _evidence;
         private Hypothesis _hypothesis;
+        private readonly List<int> _expectedFillIndices = new();
         private readonly List<TMP_Dropdown> _slots = new();
         private readonly List<GameObject> _sentenceItems = new();
 
@@ -52,6 +53,7 @@ namespace _Project.Develop.UI.Evidence
 
             _sentenceItems.Clear();
             _slots.Clear();
+            _expectedFillIndices.Clear();
             _options.Clear();
             _hypothesis = hypothesis;
             gameObject.SetActive(hypothesis != null);
@@ -78,6 +80,7 @@ namespace _Project.Develop.UI.Evidence
                 slot.onValueChanged.AddListener(OnSelectionChanged);
                 _sentenceItems.Add(slot.gameObject);
                 _slots.Add(slot);
+                _expectedFillIndices.Add(node.expectedFillIndex);
                 _options.Add(new List<Clue>());
             }
 
@@ -128,7 +131,8 @@ namespace _Project.Develop.UI.Evidence
                 var labels = new List<string> { "______" };
                 foreach (var clue in _evidence.Collected)
                 {
-                    if (clue.hypothesis != _hypothesis || string.IsNullOrWhiteSpace(clue.fillWord) ||
+                    if (clue.hypothesis != _hypothesis || clue.fillIndex != _expectedFillIndices[index] ||
+                        string.IsNullOrWhiteSpace(clue.fillWord) ||
                         (clue != selected && usedClues.Contains(clue)))
                         continue;
 

@@ -14,8 +14,7 @@ namespace _Project.Develop.Data.Evidence
         public HypothesisNodeType type;
 
         [TextArea] public string text;
-        public Clue correctClue;
-        public string correctAnswerFill;
+        [Min(0)] public int expectedFillIndex;
     }
 
     [CreateAssetMenu(menuName = "Configs/Hypothesis")]

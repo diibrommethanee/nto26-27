@@ -1,3 +1,4 @@
+using _Project.Develop.Gameplay.Npc;
 using System;
 using _Project.Develop.Data.Dialogue;
 using _Project.Develop.Gameplay.Quests;
@@ -11,6 +12,7 @@ namespace _Project.Develop.Gameplay.Dialogue
     {
         private readonly IPublisher<DialogueShown> _publisher;
         private readonly IPublisher<StartQuestEvent> _questPublisher;
+        private readonly NpcStates _states;
         private readonly EvidenceService _evidenceService;
         private readonly IDisposable _endedSubscription;
         internal DialogueNodeData PreviousDialogue { get; set; }
@@ -21,10 +23,11 @@ namespace _Project.Develop.Gameplay.Dialogue
             IPublisher<DialogueShown> publisher,
             IPublisher<StartQuestEvent> questPublisher,
             ISubscriber<DialogueEnded> endedSubscriber,
-            EvidenceService evidenceService)
+            EvidenceService evidenceService, NpcStates states)
         {
             _publisher = publisher;
             _questPublisher = questPublisher;
+            _states = states;
             _evidenceService = evidenceService;
             _endedSubscription = endedSubscriber.Subscribe(_ => PreviousDialogue = null);
         }
@@ -58,7 +61,7 @@ namespace _Project.Develop.Gameplay.Dialogue
             if (dialogue.moodChange != 0)
             {
                 var character = PreviousDialogue.character;
-                character.state.mood += dialogue.moodChange;
+                _states[character].Mood += dialogue.moodChange;
             }
 
             if (dialogue.quest != null)
@@ -80,12 +83,14 @@ namespace _Project.Develop.Gameplay.Dialogue
 
     public class ChoiceNodeHandler : IDialogueNodeHandler
     {
+        private readonly NpcStates _states;
         private readonly EvidenceService _evidenceService;
 
         public Type NodeType => typeof(ChoiceNodeData);
 
-        public ChoiceNodeHandler(EvidenceService evidenceService)
+        public ChoiceNodeHandler(EvidenceService evidenceService, NpcStates states)
         {
+            _states = states;
             _evidenceService = evidenceService;
         }
 
@@ -100,7 +105,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                 {
                     ChoiceConditionType.Always => true,
                     ChoiceConditionType.RequiredMood =>
-                        option.character.state.mood >= option.moodThreshold,
+                        _states[option.character].Mood >= option.moodThreshold,
                     ChoiceConditionType.HasClue =>
                         _evidenceService.HasClue(option.requiredClue),
                     ChoiceConditionType.HasHypothesis =>

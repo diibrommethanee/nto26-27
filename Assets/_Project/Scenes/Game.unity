@@ -9514,6 +9514,8 @@ MonoBehaviour:
   - {fileID: 2389051271}
   - {fileID: 1596279880}
   - {fileID: 1898567304}
+  daySettings: {fileID: 11400000, guid: d998444b8acd48c1bd87279b2153b3be, type: 2}
+  npcTeaRecipes: {fileID: 11400000, guid: 726d351295b44bfd97e751a14f68226c, type: 2}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
   questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
   evidenceDatabase: {fileID: 11400000, guid: 3cf9909b87a1f2a4a91ad5ccb37c15e2, type: 2}
@@ -13518,7 +13520,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 925be061f9cab294ba619e3fb4a199b4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Timeline.DayEndingCutscene
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Timeline.DayEndingCutscene
   teaStage: {fileID: 376633047}
   notebookGroup: {fileID: 170271593}
   teaCeremonyGroup: {fileID: 864664540}
@@ -15398,7 +15400,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5951d662885aa2346a60c527e2ca8d1c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Tea.TeaBrewingView
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Tea.TeaBrewingView
   canvasGroup: {fileID: 864664542}
   pourButton: {fileID: 1307141382}
   teapot: {fileID: 1307141379}
@@ -20309,7 +20311,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ce69dfb3d814f26bc060467f0eff582, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Gameplay::_Project.Develop.Gameplay.Tea.NpcTeaBrewingView
+  m_EditorClassIdentifier: UI::_Project.Develop.UI.Tea.NpcTeaBrewingView
   canvasGroup: {fileID: 218388896}
   pourButton: {fileID: 1956265280}
   teapot: {fileID: 1956265279}
