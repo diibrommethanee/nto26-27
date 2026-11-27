@@ -18,11 +18,11 @@ MonoBehaviour:
   - id: 
     title: "\u041E\u0441\u043C\u043E\u0442\u0440\u0438\u0441\u044C"
     target: {fileID: 0}
-    eventType: 0
+    eventType: 2
     requiredAmount: 0
   reward:
-    dialogueNpc: {fileID: 0}
-    dialogue: {fileID: 0}
+    dialogueNpc: {fileID: 11400000, guid: f31b22298e4380644907182ff629fa68, type: 2}
+    dialogue: {fileID: 7194093555672020370, guid: e8556666b196ea34aa5e0a34c7bc2ee8, type: 3}
     moodNpc: {fileID: 0}
     moodIncrease: 0
   surfaceStyle: {fileID: 11400000, guid: 72dd97d2464e47f438db479bb484f0a7, type: 2}
