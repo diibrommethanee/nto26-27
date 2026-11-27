@@ -3,6 +3,7 @@ using _Project.Develop.Data.Evidence;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Npc;
 using System;
+using _Project.Develop.Data;
 using System.Collections.Generic;
 using System.Linq;
 using MessagePipe;
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Quests
 {
-    public class QuestService : IInitializable, IDisposable
+    public class QuestService : ISavable, IInitializable, IDisposable
     {
         private readonly List<QuestProgress> _activeQuests = new();
         private readonly List<QuestProgress> _completedQuests = new();
@@ -24,6 +25,28 @@ namespace _Project.Develop.Gameplay.Quests
 
         public IReadOnlyList<QuestProgress> ActiveQuests => _activeQuests;
         public IReadOnlyList<QuestProgress> CompletedQuests => _completedQuests;
+
+        [Save] private Dictionary<string, int[]> SavedQuests
+        {
+            get => _activeQuests.Concat(_completedQuests).ToDictionary(
+                quest => CheckpointCatalog.Instance.Key(quest.Data),
+                quest => quest.Steps.Select(step => step.CurrentAmount).Prepend(quest.CurrentStepIndex).ToArray());
+            set
+            {
+                _activeQuests.Clear();
+                _completedQuests.Clear();
+                foreach (var pair in value)
+                {
+                    var progress = new QuestProgress(CheckpointCatalog.Instance.Resolve<Quest>(pair.Key));
+                    if (pair.Value.Length != progress.Steps.Count + 1 || pair.Value[0] < 0 ||
+                        pair.Value[0] > progress.Steps.Count) throw new System.IO.InvalidDataException(pair.Key);
+                    for (var i = 0; i < progress.Steps.Count; i++)
+                        progress.Steps[i].AddProgress(pair.Value[i + 1]);
+                    for (var i = 0; i < pair.Value[0]; i++) progress.AdvanceStep();
+                    (progress.IsCompleted ? _completedQuests : _activeQuests).Add(progress);
+                }
+            }
+        }
 
         public QuestService(ISubscriber<NpcInteractedEvent> npcSubscriber,
             ISubscriber<NpcTalkedEvent> talkedSubscriber,

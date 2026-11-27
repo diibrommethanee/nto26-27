@@ -38,6 +38,7 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterEntryPoint<DayService>().AsSelf();
 
             builder.RegisterMessageBroker<ZoomModeChanged>(options);
+            builder.RegisterMessageBroker<SavingVisibilityChanged>(options);
             builder.RegisterMessageBroker<SmellVisibilityChanged>(options);
             builder.RegisterMessageBroker<HearingChanged>(options);
             builder.RegisterMessageBroker<SelectedSkillChanged>(options);
@@ -59,7 +60,7 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterInstance(questDatabase);
             builder.Register<IQuestRegistry, QuestRegistry>(Lifetime.Singleton);
             
-            builder.RegisterEntryPoint<QuestService>();
+            builder.RegisterEntryPoint<QuestService>().AsSelf();
             
             builder.RegisterMessageBroker<TrainStopped>(options);
             builder.RegisterMessageBroker<TrainDeparted>(options);
@@ -69,8 +70,10 @@ namespace _Project.Develop.Infrastructure.DI
             
             builder.RegisterInstance(playerStats);
             builder.RegisterInstance(evidenceDatabase);
-            builder.Register<EvidenceService>(Lifetime.Scoped);
+            builder.Register<EvidenceService>(Lifetime.Scoped).AsSelf().As<_Project.Develop.Data.ISavable>();
             
+            builder.Register<CheckpointService>(Lifetime.Scoped).AsSelf().As<_Project.Develop.Data.ICheckpointService>();
+            builder.RegisterComponentInHierarchy<_Project.Develop.UI.CheckpointIndicator>();
             builder.RegisterEntryPoint<GameEntryPoint>();
         }
     }

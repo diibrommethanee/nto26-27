@@ -8,6 +8,10 @@ namespace _Project.Develop.UI.Surface
     [AddComponentMenu("UI/Surface Graphic")]
     public class SurfaceGraphic : MaskableGraphic
     {
+        public enum FillSource { Fill, Edge, Accent, PatternTint }
+
+        public FillSource FillFrom { get; set; }
+        public bool ShowTextureAndPattern { get; set; } = true;
         public SurfaceStyle style;
         public RectTransform[] parts = {};
         private readonly Vector4[] _axisX = new Vector4[16];
@@ -51,16 +55,22 @@ namespace _Project.Develop.UI.Surface
             mat.SetVectorArray("_AxisY", _axisY);
             mat.SetVector("_Shape", new Vector4(style.rounding, style.fusion, style.border, style.ripple));
             mat.SetFloat("_Shimmer", style.shimmer);
-            mat.SetColor("_Fill", style.fill);
+            mat.SetColor("_Fill", FillFrom switch
+            {
+                FillSource.Edge => style.edge,
+                FillSource.Accent => style.accent,
+                FillSource.PatternTint => style.patternTint,
+                _ => style.fill
+            });
             mat.SetColor("_Edge", style.edge);
             mat.SetColor("_Accent", style.accent);
             mat.SetTexture("_SurfaceTexture", style.customTexture);
             mat.SetColor("_TextureTint", style.textureTint);
-            mat.SetVector("_TextureSettings", new Vector4((float)(style.texture == SurfaceTexture.Custom && !style.customTexture ? SurfaceTexture.None : style.texture), style.textureOpacity,
+            mat.SetVector("_TextureSettings", new Vector4((float)(style.texture == SurfaceTexture.Custom && !style.customTexture ? SurfaceTexture.None : style.texture), ShowTextureAndPattern ? style.textureOpacity : 0f,
                 Mathf.Max(1, style.textureTileSize), (float)style.textureMapping));
             mat.SetTexture("_PatternTexture", style.customPattern);
             mat.SetColor("_PatternTint", style.patternTint);
-            mat.SetVector("_PatternSettings", new Vector4((float)(style.pattern == SurfacePattern.Custom && !style.customPattern ? SurfacePattern.None : style.pattern), style.patternOpacity,
+            mat.SetVector("_PatternSettings", new Vector4((float)(style.pattern == SurfacePattern.Custom && !style.customPattern ? SurfacePattern.None : style.pattern), ShowTextureAndPattern ? style.patternOpacity : 0f,
                 Mathf.Max(1, style.patternSpacing), style.patternSize));
             mat.SetFloat("_StaggerPattern", style.staggerPattern ? 1 : 0);
         }

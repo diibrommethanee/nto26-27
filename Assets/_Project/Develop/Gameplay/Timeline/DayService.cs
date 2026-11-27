@@ -12,7 +12,7 @@ namespace _Project.Develop.Gameplay.Timeline
         Ending
     }
 
-    public class DayService : IInitializable, IDisposable
+    public class DayService : _Project.Develop.Data.ISavable, _Project.Develop.Data.IAfterRestore, IInitializable, IDisposable
     {
         public const int StartingMinutes = 480;
         public const int MinutesPerPhase = 120;
@@ -49,9 +49,12 @@ namespace _Project.Develop.Gameplay.Timeline
                 SetPhase(message.Phase);
         }
 
-        public int DayNumber { get; private set; } = 1;
-        public DayPhase Phase { get; private set; } = DayPhase.Morning;
-        public int RemainingMinutes { get; private set; } = StartingMinutes;
+        [_Project.Develop.Data.Save] public int DayNumber { get; private set; } = 1;
+        [_Project.Develop.Data.Save] public DayPhase Phase { get; private set; } = DayPhase.Morning;
+        [_Project.Develop.Data.Save] public int RemainingMinutes { get; private set; } = StartingMinutes;
+
+        public event Action NextDayStarted;
+        public void AfterRestore() => _phaseChanged.Publish(new DayPhaseChanged(Phase));
 
         public bool TrySpendMinutes(int minutes)
         {
@@ -101,6 +104,7 @@ namespace _Project.Develop.Gameplay.Timeline
             DayNumber++;
             RemainingMinutes = StartingMinutes;
             SetPhase(DayPhase.Morning);
+            NextDayStarted?.Invoke();
             return true;
         }
     }

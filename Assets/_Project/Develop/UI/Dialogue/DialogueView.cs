@@ -45,6 +45,7 @@ namespace _Project.Develop.UI.Dialogue
         private CanvasGroup _worldGroup;
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IBufferedSubscriber<SavingVisibilityChanged> _saving;
         private IDisposable _zoomSubscription;
         private Tween _zoomFade;
         private float _zoomVisibility;
@@ -75,11 +76,13 @@ namespace _Project.Develop.UI.Dialogue
         public void Construct(DialogueRunner runner, ISubscriber<DialogueShown> dialogueSubscriber,
             ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber,
             ISubscriber<NpcInteractedEvent> interactionSubscriber,
-            InputController input, ISubscriber<ZoomModeChanged> zoomMode)
+            InputController input, ISubscriber<ZoomModeChanged> zoomMode,
+            IBufferedSubscriber<SavingVisibilityChanged> saving)
         {
             _runner = runner;
             _input = input;
             _zoomMode = zoomMode;
+            _saving = saving;
             _interactionSubscription = interactionSubscriber.Subscribe(message => _interaction = message);
             _dialogueSubscription = dialogueSubscriber.Subscribe(OnDialogueShown);
             _endedSubscription = endedSubscriber.Subscribe(OnDialogueEnded);
@@ -123,7 +126,7 @@ namespace _Project.Develop.UI.Dialogue
             }
 
             ApplyZoomVisibility(_zoomVisibility);
-            _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
+            _zoomSubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
         }
 
         private void OnDialogueShown(DialogueShown message)
@@ -231,12 +234,12 @@ namespace _Project.Develop.UI.Dialogue
             return null;
         }
 
-        private void OnZoomModeChanged(ZoomModeChanged message)
+        private void SetHudHidden(bool hidden, bool saveTransition)
         {
-            if (_zoomActive == message.IsActive)
+            if (_zoomActive == hidden)
                 return;
 
-            _zoomActive = message.IsActive;
+            _zoomActive = hidden;
             _zoomFade.Stop();
             ApplyZoomVisibility(_zoomVisibility);
 

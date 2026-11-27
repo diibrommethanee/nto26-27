@@ -15,7 +15,7 @@ using UnityCamera = UnityEngine.Camera;
 namespace _Project.Develop.Gameplay.Player
 {
     [RequireComponent(typeof(NavMeshAgent), typeof(Rigidbody2D))]
-    public class PlayerController : MonoBehaviour, IPlayerController
+    public class PlayerController : MonoBehaviour, _Project.Develop.Data.ISavable, IPlayerController
     {
         [SerializeField] private ParticleSystem moveTargetParticles;
         
@@ -23,6 +23,7 @@ namespace _Project.Develop.Gameplay.Player
         private NavMeshPath _path;
         private Collider2D _bodyCollider;
         private NpcInteract _pendingNpc;
+        private bool _takingDialogueStep;
         
         private PlayerStats _stats;
         private InputController _input;
@@ -32,6 +33,17 @@ namespace _Project.Develop.Gameplay.Player
         private Vector2 _moveStartPosition;
         private bool _moveStartedDuringChoice;
         
+        [_Project.Develop.Data.Save]
+        private float[] SavedPosition
+        {
+            get => new[] { transform.position.x, transform.position.y, transform.position.z };
+            set
+            {
+                if (!_agent.Warp(new Vector3(value[0], value[1], value[2])))
+                    throw new System.InvalidOperationException("Cannot restore player position.");
+            }
+        }
+
         public Vector2 Velocity => _agent.velocity;
 
         private void Awake()
@@ -115,12 +127,15 @@ namespace _Project.Develop.Gameplay.Player
             TrySetMoveTarget(target);
         }
 
-        private bool TrySetMoveTarget(Vector3 destination)
+        private bool TrySetMoveTarget(Vector3 destination, bool showMarker = true)
         {
             if (!NavMesh.SamplePosition(destination, out var hit, 0.6f, _agent.areaMask) ||
                 !_agent.CalculatePath(hit.position, _path) ||
                 _path.status != NavMeshPathStatus.PathComplete || !_agent.SetPath(_path))
                 return false;
+
+            if (!showMarker)
+                return true;
 
             moveTargetParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             moveTargetParticles.transform.position = hit.position;
@@ -136,8 +151,22 @@ namespace _Project.Develop.Gameplay.Player
 
             var zone = npc.GetComponentInChildren<NpcDialogueExit>();
             _pendingNpc = npc;
+            _takingDialogueStep = false;
             if (zone.Contains(_bodyCollider))
             {
+                var towardsNpc = npc.transform.position.x - transform.position.x;
+                if (Mathf.Abs(towardsNpc) > 0.01f && towardsNpc * transform.localScale.x > 0f)
+                {
+                    var step = Mathf.Max(0.35f, _agent.stoppingDistance * 2f);
+                    var destination = transform.position + Vector3.right * Mathf.Sign(towardsNpc) * step;
+                    _takingDialogueStep = TrySetMoveTarget(destination, showMarker: false);
+                    if (_takingDialogueStep)
+                        return;
+
+                    // At a navigation boundary, face the NPC in place.
+                    FaceDirection(towardsNpc);
+                }
+
                 TryStartNpcDialogue(npc);
                 return;
             }
@@ -152,7 +181,7 @@ namespace _Project.Develop.Gameplay.Player
 
         internal void TryStartNpcDialogue(NpcInteract npc)
         {
-            if (_pendingNpc != npc)
+            if (_pendingNpc != npc || _takingDialogueStep)
                 return;
 
             _pendingNpc = null;
@@ -174,11 +203,30 @@ namespace _Project.Develop.Gameplay.Player
             }
 
             if (!Mathf.Approximately(Velocity.x, 0f))
+                FaceDirection(Velocity.x);
+
+            if (_takingDialogueStep && _pendingNpc && !_agent.pathPending &&
+                (!_agent.hasPath || _agent.remainingDistance <= _agent.stoppingDistance))
             {
-                var scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(Velocity.x);
-                transform.localScale = scale;
+                var npc = _pendingNpc;
+                _takingDialogueStep = false;
+                if (npc.GetComponentInChildren<NpcDialogueExit>().Contains(_bodyCollider))
+                {
+                    var towardsNpc = npc.transform.position.x - transform.position.x;
+                    if (Mathf.Abs(towardsNpc) > 0.01f)
+                        FaceDirection(towardsNpc);
+                    TryStartNpcDialogue(npc);
+                }
+                else
+                    _pendingNpc = null;
             }
+        }
+
+        private void FaceDirection(float horizontalDirection)
+        {
+            var scale = transform.localScale;
+            scale.x = Mathf.Abs(scale.x) * -Mathf.Sign(horizontalDirection);
+            transform.localScale = scale;
         }
 
         private void OnDisable()
