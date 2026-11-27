@@ -25,22 +25,22 @@ namespace _Project.Develop.UI
 
         [Inject]
         private void Construct(IBufferedSubscriber<SelectedSkillChanged> skills,
-            ISubscriber<ZoomModeChanged> zoom, InputController input)
+            ISubscriber<ZoomModeChanged> zoom, InputController input, IBufferedSubscriber<SavingVisibilityChanged> saving)
         {
             _hearing = new Icon(hearingIcon);
             _smell = new Icon(smellIcon);
             SetVisibility(input.IsZoomMode ? 0f : 1f);
-            _zoomSubscription = zoom.Subscribe(OnZoomModeChanged);
+            _zoomSubscription = new HudVisibilitySubscription(zoom, saving, input.IsZoomMode, SetHidden);
             _subscription = skills.Subscribe(OnSelectedSkillChanged);
         }
 
         private float _visibility;
 
-        private void OnZoomModeChanged(ZoomModeChanged zoom)
+        private void SetHidden(bool hidden, bool saveTransition)
         {
             _zoomFade.Stop();
-            _zoomFade = Tween.Custom(this, _visibility, zoom.IsActive ? 0f : 1f,
-                zoom.IsActive ? .18f : .3f, (view, alpha) => view.SetVisibility(alpha),
+            _zoomFade = Tween.Custom(this, _visibility, hidden ? 0f : 1f,
+                saveTransition ? .075f : hidden ? .18f : .3f, (view, alpha) => view.SetVisibility(alpha),
                 Ease.InOutSine, useUnscaledTime: true);
         }
 

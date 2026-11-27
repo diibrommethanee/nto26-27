@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using _Project.Develop.Data.Evidence;
@@ -25,6 +25,7 @@ namespace _Project.Develop.UI.Evidence
         [Header("References")]
         [SerializeField] private RectTransform board;
         [SerializeField] private RectTransform notebookButton;
+        [SerializeField] private Image clueFlightImage;
 
         [Header("Prefabs")]
         [SerializeField] private ClueView cluePrefab;
@@ -58,6 +59,7 @@ namespace _Project.Develop.UI.Evidence
         private CanvasGroup _notebookButtonGroup;
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IBufferedSubscriber<SavingVisibilityChanged> _saving;
         private IDisposable _zoomSubscription;
         private Tween _notebookFade;
         private NotebookPages _pages;
@@ -69,11 +71,13 @@ namespace _Project.Develop.UI.Evidence
         private float _openY;
 
         [Inject]
-        private void Construct(EvidenceService evidence, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
+        private void Construct(EvidenceService evidence, InputController input, ISubscriber<ZoomModeChanged> zoomMode,
+            IBufferedSubscriber<SavingVisibilityChanged> saving)
         {
             _evidence = evidence;
             _input = input;
             _zoomMode = zoomMode;
+            _saving = saving;
         }
 
         private void Start()
@@ -85,7 +89,7 @@ namespace _Project.Develop.UI.Evidence
                 if (!_notebookButtonGroup)
                     _notebookButtonGroup = notebookButton.gameObject.AddComponent<CanvasGroup>();
                 SetNotebookButtonVisible(!_input.IsZoomMode);
-                _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
+                _zoomSubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
             }
             _openScale = board.localScale;
             _openY = board.anchoredPosition.y;
@@ -110,8 +114,16 @@ namespace _Project.Develop.UI.Evidence
             _pages.ShowFirst();
             _evidence.HypothesisUnlocked += OnHypothesisUnlocked;
             _evidence.ClueCollected += OnClueCollected;
+            _evidence.Restored += RefreshRestored;
             foreach (var clue in _evidence.Collected)
                 AddClueCard(clue, null);
+        }
+
+        private void RefreshRestored()
+        {
+            foreach (var hypothesis in _evidence.UnlockedHypotheses) OnHypothesisUnlocked(hypothesis);
+            foreach (var clue in _evidence.Collected)
+                if (!_cards.ContainsKey(clue)) AddClueCard(clue, null);
         }
 
         private void OnHypothesisUnlocked(Hypothesis hypothesis)
@@ -126,16 +138,16 @@ namespace _Project.Develop.UI.Evidence
                     card.MoveToPage(destination, GetAutomaticSpawnPosition(destination));
             }
             foreach (var thread in _threads)
-                thread.RefreshPage(board);
+                thread.RefreshPage(board, _pages.ThreadArea);
             _pages.Stop();
         }
 
-        private void OnZoomModeChanged(ZoomModeChanged message)
+        private void SetHudHidden(bool hidden, bool saveTransition)
         {
             _notebookFade.Stop();
             _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = false;
-            var visible = !message.IsActive;
-            _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, visible ? 0.28f : 0.18f,
+            var visible = !hidden;
+            _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, saveTransition ? .075f : visible ? .28f : .18f,
                 Ease.OutCubic, useUnscaledTime: true);
             if (visible)
                 _notebookFade.OnComplete(this, view => view.SetNotebookButtonVisible(true));
@@ -157,6 +169,7 @@ namespace _Project.Develop.UI.Evidence
             {
                 _evidence.HypothesisUnlocked -= OnHypothesisUnlocked;
                 _evidence.ClueCollected -= OnClueCollected;
+            _evidence.Restored -= RefreshRestored;
             }
         }
 
@@ -166,7 +179,7 @@ namespace _Project.Develop.UI.Evidence
             {
                 _selected = card;
                 card.SetSelected(true);
-                _preview = Instantiate(threadPrefab, card.Rect.parent);
+                _preview = Instantiate(threadPrefab, _pages.ThreadArea((RectTransform)card.Rect.parent));
                 _preview.transform.SetAsFirstSibling();
 
                 _preview.FollowMouse(card.Rect);
@@ -243,7 +256,12 @@ namespace _Project.Develop.UI.Evidence
             if (dialogueLabel && notebookButton)
                 await FlyDialogueClueAsync(dialogueLabel);
             else if (sourceWorldPosition is Vector3 worldPosition && notebookButton != null)
-                await FlyClueToNotebookAsync(_evidence.GetClueSprite(clue) ?? GetArtwork(clue), worldPosition);
+            {
+                var sourceSprite = _evidence.GetClueSprite(clue);
+                var isOutlineSticker = clue.type == ClueType.Outline && sourceSprite == null && clue.icon == null;
+                await FlyClueToNotebookAsync(sourceSprite != null ? sourceSprite : GetArtwork(clue),
+                    worldPosition, isOutlineSticker);
+            }
 
             AddClueCard(clue, boardPosition);
         }
@@ -317,10 +335,10 @@ namespace _Project.Develop.UI.Evidence
             }
         }
 
-        private async UniTask FlyClueToNotebookAsync(Sprite icon, Vector3 worldPosition)
+        private async UniTask FlyClueToNotebookAsync(Sprite icon, Vector3 worldPosition, bool isOutlineSticker)
         {
             var canvas = notebookButton.GetComponentInParent<Canvas>().rootCanvas;
-            var canvasRect = (RectTransform)canvas.transform;
+            var flightParent = (RectTransform)clueFlightImage.transform.parent;
             var worldCamera = Camera.main;
             if (worldCamera == null)
                 return;
@@ -328,35 +346,35 @@ namespace _Project.Develop.UI.Evidence
             var screenPosition = worldCamera.WorldToScreenPoint(worldPosition);
             var eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
             if (screenPosition.z <= 0f || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    canvasRect, screenPosition, eventCamera, out var startPosition))
+                    flightParent, screenPosition, eventCamera, out var startPosition))
                 return;
 
-            var flightObject = new GameObject("Collected Clue Flight", typeof(Image));
-            var flightRect = (RectTransform)flightObject.transform;
-            flightRect.SetParent(canvasRect, false);
-            flightRect.anchorMin = flightRect.anchorMax = new Vector2(0.5f, 0.5f);
+            await UniTask.WaitWhile(() => clueFlightImage.enabled, cancellationToken: destroyCancellationToken);
+            var flightRect = clueFlightImage.rectTransform;
             flightRect.localPosition = startPosition;
             flightRect.sizeDelta = new Vector2(clueFlyIconSize, clueFlyIconSize);
+            var startScale = isOutlineSticker ? 0.65f : 1f;
+            var endScale = isOutlineSticker ? 0.75f : 0.45f;
+            flightRect.localScale = Vector3.one * startScale;
 
-            var flightImage = flightObject.GetComponent<Image>();
-            flightImage.sprite = icon;
-            flightImage.preserveAspect = true;
-            flightImage.raycastTarget = false;
+            clueFlightImage.sprite = icon;
+            clueFlightImage.enabled = true;
 
             try
             {
-                var targetPosition = (Vector2)canvasRect.InverseTransformPoint(notebookButton.position);
+                var targetPosition = (Vector2)flightParent.InverseTransformPoint(notebookButton.position);
                 await Tween.Custom(flightRect, 0f, 1f, clueFlyDuration, (rect, progress) =>
                 {
                     var position = Vector2.LerpUnclamped(startPosition, targetPosition, progress);
                     position.y += Mathf.Sin(progress * Mathf.PI) * clueFlyArc;
                     rect.localPosition = position;
-                    rect.localScale = Vector3.one * Mathf.Lerp(1f, 0.45f, progress);
+                    rect.localScale = Vector3.one * Mathf.Lerp(startScale, endScale, progress);
                 }, Ease.InOutCubic).SetCancellationToken(destroyCancellationToken);
             }
             finally
             {
-                Destroy(flightObject);
+                if (clueFlightImage != null)
+                    clueFlightImage.enabled = false;
             }
         }
 
@@ -364,12 +382,17 @@ namespace _Project.Develop.UI.Evidence
         {
             ClearSelection();
             var area = _pages.ClueArea(clue.hypothesis);
-            var prefab = clue.icon != null ? cluePrefab : wordCluePrefab;
+            var icon = clue.icon;
+            if (icon == null && clue.type == ClueType.Collectible)
+                icon = _evidence.GetClueSprite(clue);
+
+            var hasIcon = icon != null;
+            var prefab = hasIcon ? cluePrefab : wordCluePrefab;
             var spawnPosition = position ?? GetAutomaticSpawnPosition(area);
             var card = Instantiate(prefab, area);
             _cards.Add(clue, card);
             _pages.ShowCluePage(clue.hypothesis);
-            card.Initialize(clue, area, spawnPosition, SelectClue, GetArtwork(clue));
+            card.Initialize(clue, area, spawnPosition, SelectClue, hasIcon ? icon : GetArtwork(clue), hasIcon);
         }
 
         private Sprite GetArtwork(Clue clue)
@@ -387,20 +410,19 @@ namespace _Project.Develop.UI.Evidence
 
         private Vector2 GetAutomaticSpawnPosition(RectTransform area)
         {
-            var index = 0;
-            foreach (var card in _cards.Values)
-                if (card.Rect.parent == area)
-                    index++;
-            return new Vector2((index % 2 == 0 ? -1f : 1f) * area.rect.width * .24f,
-                area.rect.yMax - 100f - index / 2 * 92f);
+            var bounds = area.rect;
+            return new Vector2(
+                Mathf.Lerp(bounds.xMin, bounds.xMax, UnityEngine.Random.Range(.16f, .84f)),
+                Mathf.Lerp(bounds.yMin, bounds.yMax, UnityEngine.Random.Range(.16f, .68f)));
         }
-
         public void SetCurrentHypothesis(Hypothesis hypothesis)
         {
             if (hypothesis != null)
                 _evidence.UnlockHypothesis(hypothesis);
             _pages.Show(hypothesis);
         }
+
+        public bool IsNotebookOpen => _isOpen;
 
         public void Open() => SetOpen(true);
 
@@ -428,6 +450,7 @@ namespace _Project.Develop.UI.Evidence
 
             _isOpen = open;
             _input.SetNotebookOpen(open);
+            _evidence.SetNotebookOpen(open);
             _transition.Stop();
             SetInteractive(false);
             var duration = open ? openDuration : closeDuration;

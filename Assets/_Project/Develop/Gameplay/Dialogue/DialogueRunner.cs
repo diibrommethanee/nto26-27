@@ -14,12 +14,16 @@ namespace _Project.Develop.Gameplay.Dialogue
 
         private readonly Dictionary<Hash128, NodeData> _nodes = new();
         private readonly Dictionary<Type, IDialogueNodeHandler> _handlers = new();
+        private readonly Dictionary<NpcData, (DialogueDefinition Dialogue, Hash128 NodeId,
+            DialogueNodeData PreviousDialogue, bool TalkedPublished, bool ReturnPending)> _suspended = new();
         private readonly IPublisher<DialogueEnded> _endedPublisher;
         private readonly IPublisher<NpcTalkedEvent> _talkedPublisher;
         private readonly IPublisher<DialogueChoicesShown> _choicesPublisher;
         private IReadOnlyList<ChoiceOptionData> _choices;
         private NpcData _npc;
+        private DialogueDefinition _dialogue;
         private bool _talkedPublished;
+        private bool _playingReturnDialogue;
 
         private Hash128 _nextNodeId;
         private NodeData _waitingNode;
@@ -29,6 +33,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         public NpcData Interlocutor => _npc;
         public bool IsRunning { get; private set; }
         public bool IsChoosing => _choices != null;
+        public event Action ContinueRequested;
 
         public DialogueRunner(IEnumerable<IDialogueNodeHandler> handlers, IPublisher<DialogueEnded> endedPublisher,
             IPublisher<NpcTalkedEvent> talkedPublisher, IPublisher<DialogueChoicesShown> choicesPublisher)
@@ -68,6 +73,15 @@ namespace _Project.Develop.Gameplay.Dialogue
                 return;
             }
 
+            var hasCheckpoint = npc != null && _suspended.TryGetValue(npc, out _);
+            var checkpoint = hasCheckpoint ? _suspended[npc] : default;
+            var sameDialogue = hasCheckpoint && checkpoint.Dialogue == dialogue;
+            var returnDialogue = dialogue.returnDialogue;
+            var playReturn = sameDialogue && checkpoint.ReturnPending &&
+                returnDialogue != null && returnDialogue != dialogue;
+            if (playReturn)
+                dialogue = returnDialogue;
+
             foreach (var node in dialogue.nodes)
             {
                 if (node == null || !_nodes.TryAdd(node.id, node))
@@ -86,8 +100,21 @@ namespace _Project.Develop.Gameplay.Dialogue
             }
 
             _nextNodeId = dialogue.entryNodeId;
+            _dialogue = dialogue;
             _npc = npc;
-            _talkedPublished = false;
+            _playingReturnDialogue = playReturn;
+            _talkedPublished = playReturn;
+            if (hasCheckpoint && !playReturn)
+                _suspended.Remove(npc);
+
+            if (!playReturn && sameDialogue && dialogue.resumeAfterExit &&
+                _nodes.TryGetValue(checkpoint.NodeId, out var resumeNode) && resumeNode is not EndNodeData)
+            {
+                _nextNodeId = checkpoint.NodeId;
+                _talkedPublished = checkpoint.TalkedPublished;
+                if (_handlers[typeof(DialogueNodeData)] is DialogueNodeHandler dialogueHandler)
+                    dialogueHandler.PreviousDialogue = checkpoint.PreviousDialogue;
+            }
             _waitingForContinue = false;
             IsRunning = true;
 
@@ -121,6 +148,11 @@ namespace _Project.Develop.Gameplay.Dialogue
                 ProcessNodes();
         }
 
+        public void RequestContinue()
+        {
+            ContinueRequested?.Invoke();
+        }
+
         public void Choose(int index)
         {
             if (!IsChoosing || _processing)
@@ -134,6 +166,28 @@ namespace _Project.Develop.Gameplay.Dialogue
             ProcessNodes();
         }
 
+        public void Interrupt()
+        {
+            if (!IsRunning || _processing)
+                return;
+
+            if (_waitingForContinue && _nodes.TryGetValue(_nextNodeId, out var next) && next is EndNodeData)
+            {
+                Continue();
+                return;
+            }
+
+            if (!_playingReturnDialogue && _npc != null && (_waitingNode != null || IsChoosing) &&
+                (_dialogue.resumeAfterExit || _dialogue.returnDialogue != null))
+            {
+                var previousDialogue = (_handlers[typeof(DialogueNodeData)] as DialogueNodeHandler)?.PreviousDialogue;
+                _suspended[_npc] = (_dialogue, _waitingNode?.id ?? _nextNodeId, previousDialogue, _talkedPublished,
+                    _dialogue.returnDialogue != null);
+            }
+
+            Stop();
+        }
+
         public void Stop()
         {
             if (!IsRunning)
@@ -145,6 +199,8 @@ namespace _Project.Develop.Gameplay.Dialogue
             _choices = null;
             _nextNodeId = default;
             _npc = null;
+            _dialogue = null;
+            _playingReturnDialogue = false;
             _nodes.Clear();
 
             _endedPublisher.Publish(new DialogueEnded());
@@ -202,7 +258,16 @@ namespace _Project.Develop.Gameplay.Dialogue
 
                         case DialogueStepKind.End:
                             if (_npc != null && step.setDialogue != null)
+                            {
                                 _npc.state.dialogue = step.setDialogue;
+                                _suspended.Remove(_npc);
+                            }
+                            else if (_playingReturnDialogue)
+                            {
+                                var checkpoint = _suspended[_npc];
+                                checkpoint.ReturnPending = false;
+                                _suspended[_npc] = checkpoint;
+                            }
                             PublishTalked();
                             Stop();
                             return;

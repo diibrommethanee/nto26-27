@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace _Project.Develop.Editor.Dialogue
 {
-    [ScriptedImporter(14, DialogueGraph.AssetExtension)]
+    [ScriptedImporter(16, DialogueGraph.AssetExtension)]
     public class DialogueGraphImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -87,6 +87,10 @@ namespace _Project.Develop.Editor.Dialogue
 
                 runtime.graphId = graph.ID;
                 runtime.entryNodeId = entryNodeId;
+                var resumeOption = starts[0].GetNodeOptionByName(StartNode.ResumeOption);
+                runtime.resumeAfterExit = resumeOption == null || !resumeOption.TryGetValue<bool>(out var resume) || resume;
+                if (starts[0].GetInputPortByName(StartNode.ReturnDialoguePort) != null)
+                    runtime.returnDialogue = ReadValue<DialogueDefinition>(starts[0], StartNode.ReturnDialoguePort);
                 runtime.nodes = nodes;
 
                 ctx.AddObjectToAsset("Runtime", runtime);

@@ -21,6 +21,7 @@ namespace _Project.Develop.Gameplay.Player
         
         private IInteractable _currentTarget;
         private IInteractable _pressedInteractionTarget;
+        private NpcInteract _pressedNpc;
         private WorldClue _currentPickup;
         private WorldClue _pressedPickup;
         private PlayerLasso _lasso;
@@ -64,11 +65,24 @@ namespace _Project.Develop.Gameplay.Player
             if (!interaction.enabled || _input.CutsceneActive || _input.IsZoomMode)
             {
                 _pressedInteractionTarget = null;
+                _pressedNpc = null;
                 _pressedPickup = null;
                 return;
             }
 
             bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            var moveTo = _input.Actions.Player.MoveTo;
+            if (moveTo.WasPressedThisFrame())
+                _pressedNpc = pointerOverUi ? null : _currentTarget as NpcInteract;
+
+            if (moveTo.WasReleasedThisFrame())
+            {
+                var pressedNpc = _pressedNpc;
+                _pressedNpc = null;
+                if (!pointerOverUi && pressedNpc != null && ReferenceEquals(pressedNpc, _currentTarget))
+                    _player.ApproachNpc(pressedNpc);
+            }
+
             if (interaction.WasPressedThisFrame())
             {
                 _pressedInteractionTarget = pointerOverUi ? null : _currentTarget;

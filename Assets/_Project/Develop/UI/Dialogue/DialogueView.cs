@@ -6,6 +6,7 @@ using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Input;
 using PrimeTween;
 using _Project.Develop.Gameplay.Dialogue;
+using _Project.Develop.Gameplay.Timeline;
 using _Project.Develop.UI.Evidence;
 using _Project.Develop.UI.Surface;
 using System;
@@ -35,6 +36,7 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private TMP_Text worldContent;
         [SerializeField] private Button worldContinue;
         [SerializeField] private RectTransform worldBlob;
+        [SerializeField] private Button worldOfferTeaButton;
         [SerializeField] private NpcData playerSpeaker;
         [SerializeField] private Transform playerDialogueAnchor;
 
@@ -45,6 +47,7 @@ namespace _Project.Develop.UI.Dialogue
         private CanvasGroup _worldGroup;
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IBufferedSubscriber<SavingVisibilityChanged> _saving;
         private IDisposable _zoomSubscription;
         private Tween _zoomFade;
         private float _zoomVisibility;
@@ -57,11 +60,13 @@ namespace _Project.Develop.UI.Dialogue
 
         private CanvasGroup _group;
         private Button _continueButton;
+        private DayEndingCutscene _dayEndingCutscene;
 
         private TMPWriter _contentWriter;
         private Button _choiceTemplate;
 
         private DialogueRunner _runner;
+        [SerializeField] private _Project.Develop.Gameplay.Camera.CameraController dialogueCamera;
         private NpcInteractedEvent _interaction;
         private IDisposable _interactionSubscription;
         private IDisposable _dialogueSubscription;
@@ -74,11 +79,14 @@ namespace _Project.Develop.UI.Dialogue
         public void Construct(DialogueRunner runner, ISubscriber<DialogueShown> dialogueSubscriber,
             ISubscriber<DialogueEnded> endedSubscriber, ISubscriber<DialogueChoicesShown> choicesSubscriber,
             ISubscriber<NpcInteractedEvent> interactionSubscriber,
-            InputController input, ISubscriber<ZoomModeChanged> zoomMode)
+            InputController input, ISubscriber<ZoomModeChanged> zoomMode,
+            IBufferedSubscriber<SavingVisibilityChanged> saving)
         {
             _runner = runner;
+            _runner.ContinueRequested += OnContinueClicked;
             _input = input;
             _zoomMode = zoomMode;
+            _saving = saving;
             _interactionSubscription = interactionSubscriber.Subscribe(message => _interaction = message);
             _dialogueSubscription = dialogueSubscriber.Subscribe(OnDialogueShown);
             _endedSubscription = endedSubscriber.Subscribe(OnDialogueEnded);
@@ -89,6 +97,7 @@ namespace _Project.Develop.UI.Dialogue
         {
             _group = GetComponent<CanvasGroup>();
             _choiceTemplate = choicesContainer.GetComponentInChildren<Button>(true);
+            _dayEndingCutscene = FindAnyObjectByType<DayEndingCutscene>();
             _zoomActive = _input.IsZoomMode;
             _zoomVisibility = _zoomActive ? 0f : 1f;
             SetVisible(false);
@@ -101,10 +110,18 @@ namespace _Project.Develop.UI.Dialogue
                 _worldWriter.OnCharacterShown.AddListener(OnWorldCharacterShown);
                 _worldWriter.OnSkipWriter.AddListener(OnWorldWriterSkipped);
                 _worldSurface = worldBlob.GetComponent<SurfaceGraphic>();
+                var bubbleMaterial = _worldSurface.defaultMaterial;
+                // Reserve stencil bit 7 for the visible speech-bubble silhouette.
+                bubbleMaterial.SetInt("_Stencil", 128);
+                bubbleMaterial.SetInt("_StencilWriteMask", 128);
+                bubbleMaterial.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Replace);
+                bubbleMaterial.EnableKeyword("UNITY_UI_ALPHACLIP");
                 _defaultWorldStyle = _worldSurface.style;
                 if (!worldCanvas.TryGetComponent(out _worldGroup))
                     _worldGroup = worldCanvas.gameObject.AddComponent<CanvasGroup>();
                 worldContinue.onClick.AddListener(OnContinueClicked);
+                if (worldOfferTeaButton != null)
+                    worldOfferTeaButton.onClick.AddListener(OnOfferTeaClicked);
                 HideWorldLine();
             }
             else
@@ -116,13 +133,15 @@ namespace _Project.Develop.UI.Dialogue
             }
 
             ApplyZoomVisibility(_zoomVisibility);
-            _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
+            _zoomSubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
         }
 
         private void OnDialogueShown(DialogueShown message)
         {
             ClearChoices();
             
+            if (dialogueCamera && _runner.Interlocutor && _interaction.Npc == _runner.Interlocutor)
+                dialogueCamera.Dialogue.Begin(playerDialogueAnchor, _interaction.DialogueAnchor);
             var dialogue = message.dialogue;
             _lineClue = dialogue.clue;
             var text = dialogue.text ?? string.Empty;
@@ -157,22 +176,37 @@ namespace _Project.Develop.UI.Dialogue
             var isPlayerSpeaking = speaker != null && speaker == playerSpeaker;
             var anchor = isPlayerSpeaking ? playerDialogueAnchor
                 : FindAnchor(speaker != null ? speaker : _runner.Interlocutor);
+            if (anchor == null)
+            {
+                HideWorldLine();
+                return;
+            }
 
             var canvasTransform = worldCanvas.transform;
-            canvasTransform.SetParent(null, false);
+            canvasTransform.SetParent(null, true);
             canvasTransform.SetPositionAndRotation(anchor.position, Quaternion.identity);
             canvasTransform.localScale = _canvasWorldScale;
             if (!isPlayerSpeaking)
                 canvasTransform.SetParent(anchor, true);
 
-            var opensRight = anchor.position.x >= anchor.parent.position.x;
-            worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0.5f);
+            var anchorParent = anchor.parent;
+            var opensRight = anchorParent == null || anchor.position.x >= anchorParent.position.x;
+            worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0f);
+            worldBlob.anchoredPosition = Vector2.zero;
             worldCanvas.gameObject.SetActive(true);
+            if (worldOfferTeaButton != null)
+            {
+                worldOfferTeaButton.gameObject.SetActive(_interaction.Npc != null && !isPlayerSpeaking
+                    && (_dayEndingCutscene == null || _dayEndingCutscene.CanServeTea(_interaction.Npc)));
+                PositionWorldOfferTeaButton();
+            }
             worldCharacter.text = speakerName;
             worldCharacter.gameObject.SetActive(!string.IsNullOrEmpty(speakerName));
             worldBlob.sizeDelta = new Vector2(
                 Mathf.Clamp(worldContent.GetPreferredValues(text).x + 64f, 270f, 520f),
                 MinWorldBlobHeight);
+
+            PositionWorldOfferTeaButton();
 
             _blobEntrance.Stop();
             worldBlob.localScale = Vector3.one * 0.94f;
@@ -207,7 +241,10 @@ namespace _Project.Develop.UI.Dialogue
             var textHeight = textInfo.lineInfo[0].ascender - textInfo.lineInfo[lineIndex].descender;
             var height = Mathf.Max(MinWorldBlobHeight, textHeight + 80f);
             if (!Mathf.Approximately(worldBlob.rect.height, height))
+                    {
                 worldBlob.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+                        PositionWorldOfferTeaButton();
+                    }
         }
 
         private Transform FindAnchor(NpcData speaker)
@@ -222,12 +259,12 @@ namespace _Project.Develop.UI.Dialogue
             return null;
         }
 
-        private void OnZoomModeChanged(ZoomModeChanged message)
+        private void SetHudHidden(bool hidden, bool saveTransition)
         {
-            if (_zoomActive == message.IsActive)
+            if (_zoomActive == hidden)
                 return;
 
-            _zoomActive = message.IsActive;
+            _zoomActive = hidden;
             _zoomFade.Stop();
             ApplyZoomVisibility(_zoomVisibility);
 
@@ -259,7 +296,40 @@ namespace _Project.Develop.UI.Dialogue
             if (!worldCanvas) return;
             _blobEntrance.Stop();
             if (_worldWriter.IsWriting) _worldWriter.StopWriter();
+            if (worldOfferTeaButton != null)
+                worldOfferTeaButton.gameObject.SetActive(false);
             worldCanvas.gameObject.SetActive(false);
+        }
+
+
+        private void PositionWorldOfferTeaButton()
+        {
+            if (worldOfferTeaButton == null || !worldBlob)
+                return;
+
+            var buttonRect = worldOfferTeaButton.GetComponent<RectTransform>();
+            var blobHeight = worldBlob.rect.height;
+            var opensRight = worldBlob.pivot.x <= 0.01f;
+            var xOffset = opensRight ? worldBlob.rect.width * 0.5f - 10f : -(worldBlob.rect.width * 0.5f - 10f);
+            buttonRect.anchoredPosition = new Vector2(xOffset, worldBlob.anchoredPosition.y + blobHeight + 10f);
+        }
+
+        private void OnOfferTeaClicked()
+        {
+            var npc = _interaction.Npc;
+            if (npc == null)
+                return;
+
+            if (_dayEndingCutscene == null)
+            {
+                Debug.LogError("Cannot offer tea: DayEndingCutscene was not found.");
+                return;
+            }
+
+            if (!_dayEndingCutscene.CanServeTea(npc))
+                return;
+
+            _dayEndingCutscene.BeginNpcTea(npc);
         }
 
         private static string TagCluePhrases(string text)
@@ -303,6 +373,15 @@ namespace _Project.Develop.UI.Dialogue
                 button.gameObject.SetActive(true);
             }
 
+            if (_interaction.Npc != null && (_dayEndingCutscene == null || _dayEndingCutscene.CanServeTea(_interaction.Npc)))
+            {
+                var offerTeaButton = Instantiate(_choiceTemplate, choicesContainer);
+                offerTeaButton.GetComponentInChildren<TMP_Text>(true).text = "Предложить чай";
+                offerTeaButton.onClick.AddListener(OnOfferTeaClicked);
+                _choiceButtons.Add(offerTeaButton);
+                offerTeaButton.gameObject.SetActive(true);
+            }
+
             SetVisible(true);
         }
 
@@ -320,6 +399,7 @@ namespace _Project.Develop.UI.Dialogue
 
         private void OnDialogueEnded(DialogueEnded message)
         {
+            if (dialogueCamera) dialogueCamera.Dialogue.End();
             _interaction = default;
             ClearChoices();
             SetVisible(false);
@@ -369,10 +449,13 @@ namespace _Project.Develop.UI.Dialogue
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
             _zoomSubscription?.Dispose();
+            _runner.ContinueRequested -= OnContinueClicked;
             _zoomFade.Stop();
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
             if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);
+            if (worldOfferTeaButton != null)
+                worldOfferTeaButton.onClick.RemoveListener(OnOfferTeaClicked);
             if (_worldWriter)
             {
                 _worldWriter.OnCharacterShown.RemoveListener(OnWorldCharacterShown);

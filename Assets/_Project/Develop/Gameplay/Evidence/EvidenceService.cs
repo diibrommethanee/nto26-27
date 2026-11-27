@@ -1,13 +1,19 @@
 using System;
+using System.Linq;
+using _Project.Develop.Data;
 using System.Collections.Generic;
 using _Project.Develop.Data.Evidence;
 using UnityEngine;
 
 namespace _Project.Develop.Gameplay.Evidence
 {
-    public class EvidenceService
+    public class EvidenceService : ISavable, IAfterRestore
     {
         private readonly EvidenceDatabase _database;
+
+        public bool IsNotebookOpen { get; private set; }
+
+        public void SetNotebookOpen(bool open) => IsNotebookOpen = open;
         private readonly List<Clue> _collected = new();
         private readonly Dictionary<Clue, Sprite> _collectedSprites = new();
         private readonly List<Hypothesis> _unlockedHypotheses = new();
@@ -15,9 +21,36 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public IReadOnlyList<Clue> Collected { get; }
         public IReadOnlyList<Hypothesis> UnlockedHypotheses { get; }
+        public event Action Restored;
+        public void AfterRestore() => Restored?.Invoke();
         public event Action<Hypothesis> HypothesisUnlocked;
         public event Action<Hypothesis> HypothesisPassed;
         public event Action<Clue, Vector3?, Vector2?> ClueCollected;
+
+        [Save] private string[] Clues
+        {
+            get => _collected.Select(CheckpointCatalog.Instance.Key).ToArray();
+            set { _collected.Clear(); _collected.AddRange(value.Select(CheckpointCatalog.Instance.Resolve<Clue>)); }
+        }
+
+        [Save] private string[] Hypotheses
+        {
+            get => _unlockedHypotheses.Select(CheckpointCatalog.Instance.Key).ToArray();
+            set { _unlockedHypotheses.Clear(); _unlockedHypotheses.AddRange(value.Select(CheckpointCatalog.Instance.Resolve<Hypothesis>)); }
+        }
+
+        [Save] private Dictionary<string, string[]> Answers
+        {
+            get => _solvedHypotheses.ToDictionary(pair => CheckpointCatalog.Instance.Key(pair.Key),
+                pair => pair.Value.Select(CheckpointCatalog.Instance.Key).ToArray());
+            set
+            {
+                _solvedHypotheses.Clear();
+                foreach (var pair in value)
+                    _solvedHypotheses.Add(CheckpointCatalog.Instance.Resolve<Hypothesis>(pair.Key),
+                        pair.Value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray());
+            }
+        }
 
         public EvidenceService(EvidenceDatabase database)
         {

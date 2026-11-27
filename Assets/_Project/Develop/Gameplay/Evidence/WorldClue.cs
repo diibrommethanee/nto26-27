@@ -63,7 +63,7 @@ namespace _Project.Develop.Gameplay.Evidence
 
             SetHoldProgress(1f);
             IsCollected = true;
-            evidenceService.Collect(clue, transform.position, sourceSprite: IsPickup || requiredSkill == ClueSkillRequirement.Hearing ? _sprite.sprite : null);
+            evidenceService.Collect(clue, transform.position, sourceSprite: IsPickup ? _sprite.sprite : null);
             _сol.enabled = false;
             if (IsPickup)
                 gameObject.SetActive(false);
