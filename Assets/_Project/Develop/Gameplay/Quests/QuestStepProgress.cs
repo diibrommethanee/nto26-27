@@ -15,7 +15,7 @@ namespace _Project.Develop.Gameplay.Quests
             Data = data;
         }
 
-        public void AddProgress(int amount)
+        internal void AddProgress(int amount)
         {
             CurrentAmount = Math.Min(CurrentAmount + amount, Data.requiredAmount);
         }

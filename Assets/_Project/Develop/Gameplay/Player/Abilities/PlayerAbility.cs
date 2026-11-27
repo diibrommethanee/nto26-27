@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Timeline;
@@ -17,25 +19,27 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private DayService _dayService;
         private UnityCamera _camera;
 
-        private PlayerSmellAbility _smell;
-        private PlayerHearingAbility _hearing;
+        private IPlayerAbility[] _abilities;
+        private int _selectedIndex;
+        private IPlayerAbility _active;
         private IBufferedPublisher<SelectedSkillChanged> _selectedSkillPublisher;
         private bool _subscribed;
 
         public SkillType SelectedSkill { get; private set; } = SkillType.Hearing;
-        public SkillType? ActiveSkill { get; private set; }
+        public SkillType? ActiveSkill => _active?.Skill;
 
         [Inject]
         private void Construct(InputController input,
-            IBufferedPublisher<SmellVisibilityChanged> visibility,
-            IBufferedPublisher<HearingChanged> hearing,
+            IReadOnlyList<IPlayerAbility> abilities,
             IBufferedPublisher<SelectedSkillChanged> selectedSkillPublisher,
             DayService dayService)
         {
             _input = input;
             _dayService = dayService;
-            _hearing = new PlayerHearingAbility(hearing);
-            _smell = new PlayerSmellAbility(visibility);
+            _abilities = abilities.ToArray();
+            _selectedIndex = System.Array.FindIndex(_abilities, ability => ability.Skill == SelectedSkill);
+            if (_selectedIndex < 0)
+                throw new System.InvalidOperationException("The initial hearing ability must be registered.");
             _selectedSkillPublisher = selectedSkillPublisher;
             if (isActiveAndEnabled) Subscribe();
         }
@@ -71,7 +75,8 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private void OnSwitchSkill(InputAction.CallbackContext _)
         {
             SetActiveSkill(null);
-            SelectedSkill = SelectedSkill == SkillType.Smell ? SkillType.Hearing : SkillType.Smell;
+            _selectedIndex = (_selectedIndex + 1) % _abilities.Length;
+            SelectedSkill = _abilities[_selectedIndex].Skill;
             PublishSelectedSkill();
         }
 
@@ -90,9 +95,9 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             if (!isActiveAndEnabled || IsPointerOverCollectableClue()) return;
 
             var activating = ActiveSkill != SelectedSkill;
-            if (activating && !_dayService.TrySpendMinutes(DayService.AbilityCostMinutes)) return;
+            if (activating && !_dayService.TrySpendMinutes(_dayService.AbilityCostMinutes)) return;
 
-            SetActiveSkill(activating ? SelectedSkill : null);
+            SetActiveSkill(activating ? _abilities[_selectedIndex] : null);
         }
 
         public void StopHearing()
@@ -100,22 +105,14 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             if (ActiveSkill == SkillType.Hearing) SetActiveSkill(null);
         }
 
-        private void SetActiveSkill(SkillType? skill)
+        private void SetActiveSkill(IPlayerAbility ability)
         {
-            if (ActiveSkill == skill) return;
+            if (_active == ability) return;
 
-            var wasSmelling = ActiveSkill == SkillType.Smell;
-            var wasHearing = ActiveSkill == SkillType.Hearing;
-            ActiveSkill = skill;
-            var isSmelling = skill == SkillType.Smell;
-            if (wasSmelling != isSmelling)
-                _smell.SetActive(isSmelling);
-            bool isHearing = skill == SkillType.Hearing;
-            if (wasHearing != isHearing)
-            {
-                _input.SetHearingActive(isHearing);
-                _hearing.SetActive(isHearing);
-            }
+            var previous = _active;
+            _active = ability;
+            previous?.SetActive(false);
+            ability?.SetActive(true);
             PublishSelectedSkill();
         }
 

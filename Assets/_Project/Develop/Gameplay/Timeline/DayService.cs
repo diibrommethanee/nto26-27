@@ -1,3 +1,4 @@
+using _Project.Develop.Data.Timeline;
 using System;
 using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
@@ -15,12 +16,9 @@ namespace _Project.Develop.Gameplay.Timeline
 
     public class DayService : _Project.Develop.Data.ISavable, _Project.Develop.Data.IAfterRestore, IInitializable, IDisposable
     {
-        public const int StartingMinutes = 480;
-        public const int MinutesPerPhase = 120;
-        public const int BaseDialogueCostMinutes = 30;
-        public const int AbilityCostMinutes = 15;
-
-        public int DialogueCostMinutes => _buffService.DialoguePointCostOverride ?? BaseDialogueCostMinutes;
+        private readonly DaySettings _settings;
+        public int DialogueCostMinutes => _buffService.DialoguePointCostOverride ?? _settings.dialogueCostMinutes;
+        public int AbilityCostMinutes => _settings.abilityCostMinutes;
 
         private readonly ISubscriber<ForceDayPhase> _forcePhase;
         private readonly IBufferedPublisher<DayPhaseChanged> _phaseChanged;
@@ -28,11 +26,13 @@ namespace _Project.Develop.Gameplay.Timeline
         private IDisposable _forcePhaseSubscription;
 
         public DayService(ISubscriber<ForceDayPhase> forcePhase, IBufferedPublisher<DayPhaseChanged> phaseChanged,
-            NextDayBuffService buffService)
+            NextDayBuffService buffService, DaySettings settings)
         {
             _forcePhase = forcePhase;
             _phaseChanged = phaseChanged;
             _buffService = buffService;
+            _settings = settings;
+            RemainingMinutes = settings.startingMinutes;
         }
 
         public void Initialize()
@@ -58,9 +58,8 @@ namespace _Project.Develop.Gameplay.Timeline
 
         [_Project.Develop.Data.Save] public int DayNumber { get; private set; } = 1;
         [_Project.Develop.Data.Save] public DayPhase Phase { get; private set; } = DayPhase.Morning;
-        [_Project.Develop.Data.Save] public int RemainingMinutes { get; private set; } = StartingMinutes;
+        [_Project.Develop.Data.Save] public int RemainingMinutes { get; private set; }
 
-        public event Action NextDayStarted;
         public void AfterRestore() => _phaseChanged.Publish(new DayPhaseChanged(Phase));
 
         public bool TrySpendMinutes(int minutes)
@@ -69,10 +68,10 @@ namespace _Project.Develop.Gameplay.Timeline
                 return false;
 
             RemainingMinutes -= minutes;
-            var spentMinutes = StartingMinutes - RemainingMinutes;
-            if (spentMinutes >= MinutesPerPhase * 2 && Phase < DayPhase.Evening)
+            var spentMinutes = _settings.startingMinutes - RemainingMinutes;
+            if (spentMinutes >= _settings.minutesPerPhase * 2 && Phase < DayPhase.Evening)
                 SetPhase(DayPhase.Evening);
-            else if (spentMinutes >= MinutesPerPhase && Phase < DayPhase.Daytime)
+            else if (spentMinutes >= _settings.minutesPerPhase && Phase < DayPhase.Daytime)
                 SetPhase(DayPhase.Daytime);
 
             return true;
@@ -103,16 +102,15 @@ namespace _Project.Develop.Gameplay.Timeline
             return true;
         }
 
-        public bool TryStartNextDay()
+        internal bool TryStartNextDay()
         {
             if (Phase != DayPhase.Ending)
                 return false;
 
             DayNumber++;
-            RemainingMinutes = StartingMinutes;
+            RemainingMinutes = _settings.startingMinutes;
             _buffService.ApplyPendingForNewDay();
             SetPhase(DayPhase.Morning);
-            NextDayStarted?.Invoke();
             return true;
         }
     }

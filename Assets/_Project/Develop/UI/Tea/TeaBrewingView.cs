@@ -1,10 +1,11 @@
+using _Project.Develop.Data.Tea;
 using System;
 using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Project.Develop.Gameplay.Tea
+namespace _Project.Develop.UI.Tea
 {
     public enum TeaBrewingState
     {
@@ -13,14 +14,6 @@ namespace _Project.Develop.Gameplay.Tea
         Pouring,
         WaitingIngredient,
         Completed
-    }
-
-    public enum TeaIngredientType
-    {
-        None,
-        Mint,
-        LemonBalm,
-        Thyme
     }
 
     [Serializable]

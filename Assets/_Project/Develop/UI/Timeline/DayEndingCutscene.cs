@@ -1,11 +1,11 @@
+using _Project.Develop.Gameplay.Timeline;
+using _Project.Develop.UI.Tea;
+using _Project.Develop.Data.Tea;
 using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Npc;
 using _Project.Develop.Gameplay.Dialogue;
-using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
-using _Project.Develop.Gameplay.Npc;
-using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
 using TMPEffects.Components;
@@ -15,10 +15,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using VContainer;
 
-namespace _Project.Develop.Gameplay.Timeline
+namespace _Project.Develop.UI.Timeline
 {
-    public readonly struct DayEndingCutsceneFinished { }
-
     [RequireComponent(typeof(PlayableDirector))]
     public class DayEndingCutscene : MonoBehaviour
     {
@@ -38,8 +36,9 @@ namespace _Project.Develop.Gameplay.Timeline
 
         private InputController _input;
         private DialogueRunner _dialogueRunner;
+        private NextDayTransition _nextDay;
+        private NpcTeaService _npcTea;
         private NextDayBuffService _buffService;
-        private EvidenceService _evidenceService;
         private IPublisher<DayEndingCutsceneFinished> _finished;
         private IDisposable _subscription;
         private PlayableDirector _director;
@@ -73,13 +72,14 @@ namespace _Project.Develop.Gameplay.Timeline
         [Inject]
         private void Construct(IBufferedSubscriber<DayPhaseChanged> phases, InputController input, DialogueRunner dialogueRunner,
             IPublisher<DayEndingCutsceneFinished> finished, NextDayBuffService buffService,
-            EvidenceService evidenceService)
+            NpcTeaService npcTea, NextDayTransition nextDay)
         {
+            _nextDay = nextDay;
+            _npcTea = npcTea;
             _input = input;
             _dialogueRunner = dialogueRunner;
             _finished = finished;
             _buffService = buffService;
-            _evidenceService = evidenceService;
             _director = GetComponent<PlayableDirector>();
             _director.playOnAwake = false;
             _director.stopped += OnStopped;
@@ -147,7 +147,7 @@ namespace _Project.Develop.Gameplay.Timeline
 
         public bool CanServeTea(NpcData npc)
         {
-            return npc != null && npc.state != null && !npc.state.teaServed;
+            return _npcTea.CanServe(npc);
         }
 
         public void BeginNpcTea(NpcData npc)
@@ -191,8 +191,7 @@ namespace _Project.Develop.Gameplay.Timeline
             _teaCompleted = true;
             _input.SetCutsceneActive(false);
 
-            if (_buffService != null)
-                _buffService.SetPendingIngredients(ingredients);
+            _buffService.SetPendingIngredients(ingredients);
 
             if (_ending) _finished.Publish(new DayEndingCutsceneFinished());
 
@@ -214,21 +213,7 @@ namespace _Project.Develop.Gameplay.Timeline
             if (!_teaForNpc)
                 return;
 
-            if (npc != null)
-            {
-                if (npc.state == null)
-                    npc.state = new Data.Npc.NpcState { mood = npc.initialMood, dialogue = npc.dialogue };
-
-                npc.state.teaServed = true;
-
-                if (_buffService != null)
-                {
-                    int delta = _buffService.MoodDeltaFor(npc, ingredients);
-                    npc.state.mood += delta;
-                    if (delta != 0)
-                        Debug.Log($"[Tea] Applied mood {delta:+#;-#;0} to {npc.displayName} (new mood: {npc.state.mood})");
-                }
-            }
+            _npcTea.TryServe(npc, ingredients);
 
             _teaForNpc = false;
             if (hud != null)
@@ -317,9 +302,18 @@ namespace _Project.Develop.Gameplay.Timeline
                 uiText.text = text;
         }
 
-        private void StartNewDay()
+        private async void StartNewDay()
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            var scene = gameObject.scene;
+            try
+            {
+                if (await _nextDay.StartAsync() && this && scene == SceneManager.GetActiveScene())
+                    SceneManager.LoadScene(scene.name);
+            }
+            catch (Exception error)
+            {
+                Debug.LogException(error, this);
+            }
         }
 
         private void OnDestroy()

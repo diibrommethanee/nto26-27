@@ -2,6 +2,8 @@ using _Project.Develop.Data.Evidence;
 using _Project.Develop.Data.Player;
 using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Train;
+using _Project.Develop.Data.Tea;
+using _Project.Develop.Data.Timeline;
 using _Project.Develop.Gameplay.Dialogue;
 using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
@@ -22,13 +24,20 @@ namespace _Project.Develop.Infrastructure.DI
     public class GameScope : LifetimeScope
     {
         [SerializeField, Space(5)] private TrainSettings trainSettings;
+        [SerializeField] private TeaRecipeBook npcTeaRecipes;
+        [SerializeField] private DaySettings daySettings;
         [SerializeField] private QuestDatabase questDatabase;
         [SerializeField] private EvidenceDatabase evidenceDatabase;
         [SerializeField] private PlayerStats playerStats;
         
         protected override void Configure(IContainerBuilder builder)
         {
-            builder.Register<NextDayBuffService>(Lifetime.Singleton);
+            builder.Register<NpcStates>(Lifetime.Scoped);
+            builder.Register<QuestRewards>(Lifetime.Scoped);
+            builder.RegisterInstance(daySettings);
+            builder.RegisterInstance(npcTeaRecipes);
+            builder.Register<NpcTeaService>(Lifetime.Scoped);
+            builder.Register<NextDayBuffService>(Lifetime.Scoped).AsSelf().As<_Project.Develop.Data.ISavable>();
             
             builder.RegisterEntryPoint<InputController>().AsSelf();
             
@@ -38,12 +47,15 @@ namespace _Project.Develop.Infrastructure.DI
             builder.RegisterMessageBroker<DayEndingCutsceneFinished>(options);
             builder.RegisterMessageBroker<DayPhaseChanged>(options);
             builder.RegisterEntryPoint<DayService>().AsSelf();
+            builder.Register<NextDayTransition>(Lifetime.Scoped);
 
             builder.RegisterMessageBroker<ZoomModeChanged>(options);
             builder.RegisterMessageBroker<SavingVisibilityChanged>(options);
             builder.RegisterMessageBroker<SmellVisibilityChanged>(options);
             builder.RegisterMessageBroker<HearingChanged>(options);
             builder.RegisterMessageBroker<SelectedSkillChanged>(options);
+            builder.Register<PlayerHearingAbility>(Lifetime.Scoped).As<IPlayerAbility>();
+            builder.Register<PlayerSmellAbility>(Lifetime.Scoped).As<IPlayerAbility>();
             builder.RegisterMessageBroker<DialogueShown>(options);
             builder.RegisterMessageBroker<DialogueEnded>(options);
             builder.RegisterMessageBroker<DialogueChoicesShown>(options);

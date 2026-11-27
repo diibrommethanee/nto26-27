@@ -6,7 +6,7 @@ using _Project.Develop.Gameplay.Npc;
 using _Project.Develop.Gameplay.Input;
 using PrimeTween;
 using _Project.Develop.Gameplay.Dialogue;
-using _Project.Develop.Gameplay.Timeline;
+using _Project.Develop.UI.Timeline;
 using _Project.Develop.UI.Evidence;
 using _Project.Develop.UI.Surface;
 using System;

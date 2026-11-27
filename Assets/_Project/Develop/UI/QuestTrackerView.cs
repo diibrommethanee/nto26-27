@@ -1,4 +1,3 @@
-using _Project.Develop.Data.Questing;
 using _Project.Develop.Data.Questing.Quests;
 using _Project.Develop.Data.Surfaces;
 using _Project.Develop.Gameplay.Quests;
@@ -39,28 +38,13 @@ namespace _Project.Develop.UI
         private IDisposable _zoomSubscription;
         private Tween _zoomFade;
 
-        private ISubscriber<QuestStepCompletedEvent> _subscriber;
-        private ISubscriber<StartQuestEvent> _startedSubscriber;
-        private ISubscriber<QuestCompletedEvent> _completedSubscriber;
-        private IQuestRegistry _registry;
-        private IDisposable _subscription;
-        private IDisposable _startedSubscription;
-        private IDisposable _completedSubscription;
-        
+        private QuestService _quests;
         private Quest _currentQuest;
-        private string _currentStepId;
-        private bool _isCompleted;
 
         [Inject]
-        public void Construct(ISubscriber<QuestStepCompletedEvent> subscriber,
-            ISubscriber<StartQuestEvent> startedSubscriber,
-            ISubscriber<QuestCompletedEvent> completedSubscriber,
-            IQuestRegistry registry, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
+        public void Construct(QuestService quests, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
         {
-            _subscriber = subscriber;
-            _startedSubscriber = startedSubscriber;
-            _completedSubscriber = completedSubscriber;
-            _registry = registry;
+            _quests = quests;
             _input = input;
             _zoomMode = zoomMode;
         }
@@ -87,9 +71,8 @@ namespace _Project.Develop.UI
             _group.alpha = 0;
             _group.blocksRaycasts = false;
             
-            _subscription = _subscriber.Subscribe(OnStepUpdated);
-            _startedSubscription = _startedSubscriber.Subscribe(OnQuestStarted);
-            _completedSubscription = _completedSubscriber.Subscribe(OnQuestCompleted);
+            _quests.TrackedQuestChanged += ShowQuest;
+            ShowQuest(_quests.TrackedQuest);
             _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
         }
 
@@ -111,76 +94,23 @@ namespace _Project.Develop.UI
             }
         }
 
-        private void OnQuestCompleted(QuestCompletedEvent evt)
+        private void ShowQuest(QuestProgress progress)
         {
-            if (_currentQuest != evt.Quest) return;
-            
-            if (_isCompleted) return;
-
-            _isCompleted = true;
-            _currentStepId = null;
-            currentStepText.text = CompletedText;
-        }
-        
-        private void OnQuestStarted(StartQuestEvent evt)
-        {
-            var quest = evt.Quest;
-            if (quest == null)
+            _currentQuest = progress?.Data;
+            if (_currentQuest == null)
             {
-                Debug.LogWarning("[QuestTracker] StartQuestEvent contains a null quest.");
+                _zoomFade.Stop();
+                _group.alpha = 0f;
+                _group.interactable = _group.blocksRaycasts = false;
                 return;
             }
 
-            _currentQuest = quest;
-            ApplySurfaceStyle(quest.surfaceStyle);
-            _currentStepId = null;
-            _isCompleted = false;
-
-            if (!_input.IsZoomMode && !_zoomFade.isAlive) ShowTracker();
-            
-            titleText.text = quest.questName;
-            descriptionText.text = quest.description;
+            ApplySurfaceStyle(_currentQuest.surfaceStyle);
+            titleText.text = _currentQuest.questName;
+            descriptionText.text = _currentQuest.description;
+            currentStepText.text = progress.CurrentStep?.Data.title ?? CompletedText;
             UpdateDescriptionVisibility();
-
-            var firstStep = quest.steps.FirstOrDefault(step => step.eventType != QuestEventType.Empty);
-            _currentStepId = firstStep?.id;
-            _isCompleted = firstStep == null;
-            currentStepText.text = firstStep?.title ?? CompletedText;
-        }
-        
-        private void OnStepUpdated(QuestStepCompletedEvent evt)
-        {
-            if (_isCompleted && evt.Quest == _currentQuest)
-                return;
-
-            var quest = evt.Quest;
-            if (quest == null || !_registry.Contains(quest))
-            {
-                Debug.LogWarning("[QuestTracker] Quest was not found in the registry.");
-                return;
-            }
-
-            if (!_registry.TryGetStep(quest, evt.StepId, out var step))
-            {
-                Debug.LogWarning($"[QuestTracker] Step '{evt.StepId}' was not found in quest '{quest.name}'.");
-                return;
-            }
-
-            _currentQuest = quest;
-            ApplySurfaceStyle(quest.surfaceStyle);
-            var nextStep = quest.steps
-                .SkipWhile(candidate => candidate != step)
-                .Skip(1)
-                .FirstOrDefault(candidate => candidate.eventType != QuestEventType.Empty);
-            _currentStepId = nextStep?.id;
-            _isCompleted = false;
-
             if (!_input.IsZoomMode && !_zoomFade.isAlive) ShowTracker();
-            
-            titleText.text = quest.questName;
-            descriptionText.text = quest.description;
-            UpdateDescriptionVisibility();
-            currentStepText.text = nextStep?.title ?? CompletedText;
         }
 
         private void OnZoomModeChanged(ZoomModeChanged message)
@@ -251,12 +181,7 @@ namespace _Project.Develop.UI
             _descriptionTween.Stop();
             _zoomSubscription?.Dispose();
             _zoomFade.Stop();
-            _subscription?.Dispose();
-            _startedSubscription?.Dispose();
-            _completedSubscription?.Dispose();
-            _subscription = null;
-            _startedSubscription = null;
-            _completedSubscription = null;
+            if (_quests != null) _quests.TrackedQuestChanged -= ShowQuest;
         }
     }
 }
