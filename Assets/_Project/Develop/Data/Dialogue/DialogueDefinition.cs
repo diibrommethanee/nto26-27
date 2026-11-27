@@ -11,6 +11,8 @@ namespace _Project.Develop.Data.Dialogue
     {
         public Hash128 graphId;
         public Hash128 entryNodeId;
+        public bool resumeAfterExit = true;
+        public DialogueDefinition returnDialogue;
 
         [SerializeReference] public List<NodeData> nodes = new();
     }

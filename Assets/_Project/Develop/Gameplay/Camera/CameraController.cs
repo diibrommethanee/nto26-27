@@ -22,6 +22,9 @@ namespace _Project.Develop.Gameplay.Camera
         private CinemachineFollow _follow;
         private CinemachineConfiner2D _confiner;
         
+        [SerializeField] private DialogueCameraView dialogue = new();
+        public DialogueCameraView Dialogue => dialogue;
+
         private InputController _input;
         private UnityCamera _camera;
 
@@ -112,13 +115,16 @@ namespace _Project.Develop.Gameplay.Camera
         {
             DiscardPanBeyondConfiner();
             _currentPanOffset = Mathf.SmoothDamp(_currentPanOffset, _targetPanOffset, ref _panVelocity, settings.panSmoothTime);
-            _follow.FollowOffset = _initialFollowOffset + Vector3.right * _currentPanOffset;
+            var offset = _initialFollowOffset + Vector3.right * _currentPanOffset;
 
             _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, settings.zoomSmoothTime);
             ScrollPulse = Mathf.MoveTowards(ScrollPulse, 0f, Time.unscaledDeltaTime * 3.5f);
-            if (_cinemachineCamera.Lens.OrthographicSize != _currentZoom)
+            var zoom = _currentZoom;
+            dialogue.Blend(_cinemachineCamera.Follow.position, _camera.aspect, ref offset, ref zoom);
+            _follow.FollowOffset = offset;
+            if (_cinemachineCamera.Lens.OrthographicSize != zoom)
             {
-                _cinemachineCamera.Lens.OrthographicSize = _currentZoom;
+                _cinemachineCamera.Lens.OrthographicSize = zoom;
                 _confiner.InvalidateLensCache();
             }
         }

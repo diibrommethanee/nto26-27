@@ -1,5 +1,4 @@
-﻿using _Project.Develop.Gameplay.Tea;
-using _Project.Develop.Infrastructure.EntryPoints;
+﻿using _Project.Develop.Infrastructure.EntryPoints;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
@@ -12,7 +11,6 @@ namespace _Project.Develop.Infrastructure.DI
         {
             builder.RegisterMessagePipe();
             
-            builder.Register<NextDayBuffService>(Lifetime.Singleton);
             builder.RegisterEntryPoint<BootstrapEntryPoint>();
         }
     }

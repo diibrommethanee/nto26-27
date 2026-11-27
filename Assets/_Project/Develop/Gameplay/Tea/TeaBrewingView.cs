@@ -47,8 +47,6 @@ namespace _Project.Develop.Gameplay.Tea
 
         [Header("Timings")]
         [SerializeField] private float pourDuration = 1.35f;
-        [SerializeField] private float ingredientMoveDuration = 0.45f;
-        [SerializeField] private float ingredientDropDuration = 0.35f;
 
         [Header("Positions")]
         [SerializeField] private Vector2 teapotPourOffset = new(-180f, 140f);

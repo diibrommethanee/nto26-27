@@ -59,6 +59,7 @@ namespace _Project.Develop.UI.Evidence
         private CanvasGroup _notebookButtonGroup;
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
+        private IBufferedSubscriber<SavingVisibilityChanged> _saving;
         private IDisposable _zoomSubscription;
         private Tween _notebookFade;
         private NotebookPages _pages;
@@ -70,11 +71,13 @@ namespace _Project.Develop.UI.Evidence
         private float _openY;
 
         [Inject]
-        private void Construct(EvidenceService evidence, InputController input, ISubscriber<ZoomModeChanged> zoomMode)
+        private void Construct(EvidenceService evidence, InputController input, ISubscriber<ZoomModeChanged> zoomMode,
+            IBufferedSubscriber<SavingVisibilityChanged> saving)
         {
             _evidence = evidence;
             _input = input;
             _zoomMode = zoomMode;
+            _saving = saving;
         }
 
         private void Start()
@@ -86,7 +89,7 @@ namespace _Project.Develop.UI.Evidence
                 if (!_notebookButtonGroup)
                     _notebookButtonGroup = notebookButton.gameObject.AddComponent<CanvasGroup>();
                 SetNotebookButtonVisible(!_input.IsZoomMode);
-                _zoomSubscription = _zoomMode.Subscribe(OnZoomModeChanged);
+                _zoomSubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
             }
             _openScale = board.localScale;
             _openY = board.anchoredPosition.y;
@@ -111,8 +114,16 @@ namespace _Project.Develop.UI.Evidence
             _pages.ShowFirst();
             _evidence.HypothesisUnlocked += OnHypothesisUnlocked;
             _evidence.ClueCollected += OnClueCollected;
+            _evidence.Restored += RefreshRestored;
             foreach (var clue in _evidence.Collected)
                 AddClueCard(clue, null);
+        }
+
+        private void RefreshRestored()
+        {
+            foreach (var hypothesis in _evidence.UnlockedHypotheses) OnHypothesisUnlocked(hypothesis);
+            foreach (var clue in _evidence.Collected)
+                if (!_cards.ContainsKey(clue)) AddClueCard(clue, null);
         }
 
         private void OnHypothesisUnlocked(Hypothesis hypothesis)
@@ -131,12 +142,12 @@ namespace _Project.Develop.UI.Evidence
             _pages.Stop();
         }
 
-        private void OnZoomModeChanged(ZoomModeChanged message)
+        private void SetHudHidden(bool hidden, bool saveTransition)
         {
             _notebookFade.Stop();
             _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = false;
-            var visible = !message.IsActive;
-            _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, visible ? 0.28f : 0.18f,
+            var visible = !hidden;
+            _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, saveTransition ? .075f : visible ? .28f : .18f,
                 Ease.OutCubic, useUnscaledTime: true);
             if (visible)
                 _notebookFade.OnComplete(this, view => view.SetNotebookButtonVisible(true));
@@ -158,6 +169,7 @@ namespace _Project.Develop.UI.Evidence
             {
                 _evidence.HypothesisUnlocked -= OnHypothesisUnlocked;
                 _evidence.ClueCollected -= OnClueCollected;
+            _evidence.Restored -= RefreshRestored;
             }
         }
 

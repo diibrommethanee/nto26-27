@@ -79,7 +79,7 @@ namespace _Project.Develop.Gameplay.Player
             {
                 var pressedNpc = _pressedNpc;
                 _pressedNpc = null;
-                if (!pointerOverUi && pressedNpc != null && pressedNpc == _currentTarget)
+                if (!pointerOverUi && pressedNpc != null && ReferenceEquals(pressedNpc, _currentTarget))
                     _player.ApproachNpc(pressedNpc);
             }
 

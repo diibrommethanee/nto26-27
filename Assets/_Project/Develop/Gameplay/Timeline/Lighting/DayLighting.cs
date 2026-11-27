@@ -42,6 +42,16 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
         [Button("Start Next Day", EButtonEnableMode.Playmode)]
         private void StartNextDay() => _dayService.TryStartNextDay();
         
+#if UNITY_EDITOR
+        [Inject] private _Project.Develop.Data.ICheckpointService _checkpoints;
+
+        private async void ForceSave()
+        {
+            try { await _checkpoints.SaveAsync(); }
+            catch (Exception error) { Debug.LogException(error, this); }
+        }
+#endif
+
         private void Update()
         {
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
@@ -54,6 +64,10 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
                 EndDay();
             if (keyboard.digit3Key.wasPressedThisFrame)
                 StartNextDay();
+#if UNITY_EDITOR
+            if (keyboard.digit9Key.wasPressedThisFrame)
+                ForceSave();
+#endif
         }
 
         private void OnEnable()

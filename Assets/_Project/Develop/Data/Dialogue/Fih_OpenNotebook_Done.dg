@@ -45,10 +45,10 @@ MonoBehaviour:
         m_LocalSubgraphs: []
         m_LastKnownBounds:
           serializedVersion: 2
-          x: 100.666664
-          y: 57.999996
-          width: 1026.0001
-          height: 424.66663
+          x: -117
+          y: 89
+          width: 1119
+          height: 392
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 9615528557825577674
@@ -119,15 +119,19 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: ca52d13047387185b74fc1c759983163
         m_Version: 2
-        m_Position: {x: 100.84577, y: 79.73851}
+        m_Position: {x: -117.36672, y: 88.99601}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList: []
-          m_ValueList: []
+          m_KeyList:
+          - __option_ResumeAfterExit
+          - ReturnDialogue
+          m_ValueList:
+          - rid: 5539972401254629491
+          - rid: 5539972401254629494
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -336,5 +340,13 @@ MonoBehaviour:
       data: 
     - rid: 3967460729282625806
       type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Hypothesis, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: {fileID: 0}
+    - rid: 5539972401254629491
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: 1
+    - rid: 5539972401254629494
+      type: {class: 'Constant`1[[_Project.Develop.Data.Dialogue.DialogueDefinition, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: {fileID: 0}
