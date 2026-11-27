@@ -9,20 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: afc2bb3f2c5d41ff9e707995b1f78198, type: 3}
-  m_Name: RecipeDisappear
-  m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
+  m_Script: {fileID: 11500000, guid: eafa34a0de8532b4aad173f06963d2d5, type: 3}
+  m_Name: FalseHypoQ1
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.Hypothesis
   title: 
-  description: 
-  icon: {fileID: 0}
-  type: 0
-  sticker: 0
-  hypothesis: {fileID: 0}
+  nodes: []
   reward:
     dialogueNpc: {fileID: 0}
     dialogue: {fileID: 0}
     moodNpc: {fileID: 0}
     moodIncrease: 0
-  fillWord: 
-  noteSprite: {fileID: 0}
-  text: 

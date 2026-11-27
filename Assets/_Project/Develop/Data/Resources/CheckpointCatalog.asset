@@ -13,12 +13,6 @@ MonoBehaviour:
   m_Name: CheckpointCatalog
   m_EditorClassIdentifier: 
   entries:
-  - key: 064e3386310ca4d4aa17d43cd01a59b9
-    asset: {fileID: 11400000, guid: 064e3386310ca4d4aa17d43cd01a59b9, type: 2}
-  - key: 089a3663bcdc3664aa952cba84d6befc
-    asset: {fileID: 11400000, guid: 089a3663bcdc3664aa952cba84d6befc, type: 2}
-  - key: 12c4a3bb640d73a49a60763197137bd9
-    asset: {fileID: 11400000, guid: 12c4a3bb640d73a49a60763197137bd9, type: 2}
   - key: 1372bdd7338aad64797098a63ec976ac
     asset: {fileID: 11400000, guid: 1372bdd7338aad64797098a63ec976ac, type: 2}
   - key: 29a188bbe7e4fd74bb7e16bffdf0c2e3
@@ -27,14 +21,20 @@ MonoBehaviour:
     asset: {fileID: 11400000, guid: 2cbaec7910566254d9e0400284ab2b8b, type: 2}
   - key: 3d302f163b6d0f34aadbea9da9182518
     asset: {fileID: 11400000, guid: 3d302f163b6d0f34aadbea9da9182518, type: 2}
+  - key: 59289383bd97b8f4598feaaa1d7042ca
+    asset: {fileID: 11400000, guid: 59289383bd97b8f4598feaaa1d7042ca, type: 2}
+  - key: 65a82cd6256010c48a4172750a1f542c
+    asset: {fileID: 11400000, guid: 65a82cd6256010c48a4172750a1f542c, type: 2}
   - key: 70e1527f62d860b4c9131d96b8c4dc26
     asset: {fileID: 11400000, guid: 70e1527f62d860b4c9131d96b8c4dc26, type: 2}
   - key: 7a3c809796ed5234a86e3081afee7b9f
     asset: {fileID: 11400000, guid: 7a3c809796ed5234a86e3081afee7b9f, type: 2}
-  - key: 9719de365a0c62e4fabbba03073fc3fa
-    asset: {fileID: 11400000, guid: 9719de365a0c62e4fabbba03073fc3fa, type: 2}
-  - key: d30b048e5fc64f247bebcc0b17050c7e
-    asset: {fileID: 11400000, guid: d30b048e5fc64f247bebcc0b17050c7e, type: 2}
+  - key: c620e0af34a7e784fab931b3c7222254
+    asset: {fileID: 11400000, guid: c620e0af34a7e784fab931b3c7222254, type: 2}
+  - key: dc7ac027d45614e47ac2bd5194b9117f
+    asset: {fileID: 11400000, guid: dc7ac027d45614e47ac2bd5194b9117f, type: 2}
   - key: e178b91eeaf33734f893dcb0bdb06510
     asset: {fileID: 11400000, guid: e178b91eeaf33734f893dcb0bdb06510, type: 2}
+  - key: e1ad888983b77bc40b21d51f4125c33c
+    asset: {fileID: 11400000, guid: e1ad888983b77bc40b21d51f4125c33c, type: 2}
   savingIcon: {fileID: 8973795879085946497, guid: 2b74eca2cd5d2d34c8387af5e6a40584, type: 3}
