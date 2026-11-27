@@ -13,6 +13,33 @@ namespace _Project.Tests
     public class EvidenceCheckpointTests
     {
         [Test]
+        public void OnlyCorrectClueSolvesTheFillSlot()
+        {
+            var hypothesis = UnityEngine.ScriptableObject.CreateInstance<Hypothesis>();
+            var morning = UnityEngine.ScriptableObject.CreateInstance<Clue>();
+            var evening = UnityEngine.ScriptableObject.CreateInstance<Clue>();
+            try
+            {
+                var evidence = new EvidenceService(null, new QuestRewards(new NpcStates()));
+                morning.hypothesis = evening.hypothesis = hypothesis;
+                morning.fillWord = "morning";
+                evening.fillWord = "evening";
+                evidence.Collect(morning);
+                evidence.Collect(evening);
+                hypothesis.nodes.Add(new HypothesisNode { type = HypothesisNodeType.Fill, correctClue = evening });
+                Assert.That(evidence.CheckHypothesis(hypothesis, new[] { morning }), Is.False);
+                Assert.That(evidence.HasSolvedHypothesis(hypothesis), Is.False);
+                Assert.That(evidence.CheckHypothesis(hypothesis, new[] { evening }), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(morning);
+                UnityEngine.Object.DestroyImmediate(evening);
+                UnityEngine.Object.DestroyImmediate(hypothesis);
+            }
+        }
+
+        [Test]
         public void UnknownKeyAfterAValidKeyPreservesPreviouslyCollectedClues()
         {
             var database = AssetDatabase.LoadAssetAtPath<EvidenceDatabase>(

@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: Draught
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
   title: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0443\u043D\u0435\u0441\u043B\u043E \u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A\u043E\u043C"
-  description: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0443\u043D\u0435\u0441\u043B\u043E \u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A\u043E\u043C"
   icon: {fileID: 0}
   type: 0
   sticker: 0
@@ -24,5 +23,4 @@ MonoBehaviour:
     moodNpc: {fileID: 0}
     moodIncrease: 0
   fillWord: "\u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A"
-  noteSprite: {fileID: 0}
   text: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0443\u043D\u0435\u0441\u043B\u043E \u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A\u043E\u043C"
