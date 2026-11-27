@@ -20,21 +20,18 @@ namespace _Project.Develop.Gameplay.NPC
 
         private DialogueRunner _dialogueRunner;
         private DayService _dayService;
+        private NpcStates _states;
         private IPublisher<NpcInteractedEvent> _interactPublisher;
 
         [Inject]
         public void Construct(IPublisher<NpcInteractedEvent> interactPublisher, DialogueRunner dialogueRunner,
-            DayService dayService)
+            DayService dayService, NpcStates states)
         {
             _interactPublisher = interactPublisher;
             _dialogueRunner = dialogueRunner;
             _dayService = dayService;
             
-            npcData.state = new NpcState
-            {
-                mood = npcData.initialMood,
-                dialogue = npcData.dialogue
-            };
+            _states = states;
         }
         
         internal void EndDialogueOnExit()
@@ -48,7 +45,7 @@ namespace _Project.Develop.Gameplay.NPC
             if (_dialogueRunner.IsRunning)
                 return;
 
-            var dialogue = npcData.state.dialogue;
+            var dialogue = _states[npcData].Dialogue;
             if (dialogue != null && !_dayService.TrySpendMinutes(_dayService.DialogueCostMinutes))
                 return;
 

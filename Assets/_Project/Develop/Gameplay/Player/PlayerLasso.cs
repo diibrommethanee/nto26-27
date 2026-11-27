@@ -62,39 +62,44 @@ namespace _Project.Develop.Gameplay.Player
             var position = Mouse.current.position.ReadValue();
             if (button.wasPressedThisFrame) Begin(position);
             if (_held && (button.isPressed || button.wasReleasedThisFrame))
-            {
-                var point = ToWorld(position);
-                if (!CanDrawAt(position))
-                    Cancel();
-                else if (!IsWithinDrawRadius(point))
-                    FadeAndCancel();
-                else
-                {
-                    _drawing |= Vector2.Distance(_startPosition, position) >= _settings.startMovePixels;
-                    var minPointDistance = button.wasReleasedThisFrame ? 0f : _settings.pointSpacing;
-                    var previous = _points[_points.Count - 1];
-                    var segmentLength = Vector2.Distance(previous, point);
-                    if (segmentLength > minPointDistance)
-                    {
-                        var remainingLength = _settings.maxRopeLength - _ropeLength;
-                        if (segmentLength > remainingLength)
-                        {
-                            if (remainingLength > 0f)
-                                AddPoint(Vector2.Lerp(previous, point, remainingLength / segmentLength));
+                ExtendStroke(position, button.wasReleasedThisFrame);
 
-                            FadeAndCancel();
-                        }
-                        else
-                        {
-                            _ropeLength += segmentLength;
-                            AddPoint(point);
-                            if (_drawing)
-                                DrawLine();
-                        }
-                    }
-                }
-            }
             if (button.wasReleasedThisFrame) End();
+        }
+
+        private void ExtendStroke(Vector2 position, bool released)
+        {
+            if (!CanDrawAt(position))
+            {
+                Cancel();
+                return;
+            }
+
+            var point = ToWorld(position);
+            if (!IsWithinDrawRadius(point))
+            {
+                FadeAndCancel();
+                return;
+            }
+
+            _drawing |= Vector2.Distance(_startPosition, position) >= _settings.startMovePixels;
+            var previous = _points[_points.Count - 1];
+            var segmentLength = Vector2.Distance(previous, point);
+            if (segmentLength <= (released ? 0f : _settings.pointSpacing)) return;
+
+            var remainingLength = _settings.maxRopeLength - _ropeLength;
+            if (segmentLength > remainingLength)
+            {
+                if (remainingLength > 0f)
+                    AddPoint(Vector2.Lerp(previous, point, remainingLength / segmentLength));
+
+                FadeAndCancel();
+                return;
+            }
+
+            _ropeLength += segmentLength;
+            AddPoint(point);
+            if (_drawing) DrawLine();
         }
 
         private void Begin(Vector2 position)

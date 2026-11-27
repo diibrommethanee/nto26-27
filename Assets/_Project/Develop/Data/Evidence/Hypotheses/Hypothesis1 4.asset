@@ -16,20 +16,16 @@ MonoBehaviour:
   nodes:
   - type: 0
     text: "\u042D\u0442\u043E\u0442 \u043F\u0438\u0440\u043E\u0433 \u0431\u044B\u043B \u0443\u043A\u0440\u0430\u0434\u0435\u043D"
-    correctClue: {fileID: 0}
-    correctAnswerFill: 
+    expectedFillIndex: 0
   - type: 1
     text: 
-    correctClue: {fileID: 11400000, guid: b4487bb94e07e0e48a213ab6e4fbb2a7, type: 2}
-    correctAnswerFill: "\u0441\u043B\u043E\u043D\u043E\u043C"
+    expectedFillIndex: 0
   - type: 0
     text: "\u0430 \u043E\u043D \u0431\u044B\u043B"
-    correctClue: {fileID: 0}
-    correctAnswerFill: 
+    expectedFillIndex: 0
   - type: 1
     text: 
-    correctClue: {fileID: 11400000, guid: dca345010fd9c4d47998e72a3aab395f, type: 2}
-    correctAnswerFill: "\u043A\u0440\u0443\u0442\u044B\u043C"
+    expectedFillIndex: 1
   reward:
     rid: -2
   references:

@@ -1,3 +1,4 @@
+using _Project.Develop.Gameplay.Quests;
 using System;
 using System.Linq;
 using _Project.Develop.Data;
@@ -9,15 +10,13 @@ namespace _Project.Develop.Gameplay.Evidence
 {
     public class EvidenceService : ISavable, IAfterRestore
     {
+        private readonly QuestRewards _rewards;
         private readonly EvidenceDatabase _database;
 
-        public bool IsNotebookOpen { get; private set; }
-
-        public void SetNotebookOpen(bool open) => IsNotebookOpen = open;
         private readonly List<Clue> _collected = new();
         private readonly Dictionary<Clue, Sprite> _collectedSprites = new();
         private readonly List<Hypothesis> _unlockedHypotheses = new();
-        private readonly Dictionary<Hypothesis, IReadOnlyList<Clue>> _solvedHypotheses = new();
+        private Dictionary<Hypothesis, IReadOnlyList<Clue>> _solvedHypotheses = new();
 
         public IReadOnlyList<Clue> Collected { get; }
         public IReadOnlyList<Hypothesis> UnlockedHypotheses { get; }
@@ -30,13 +29,23 @@ namespace _Project.Develop.Gameplay.Evidence
         [Save] private string[] Clues
         {
             get => _collected.Select(CheckpointCatalog.Instance.Key).ToArray();
-            set { _collected.Clear(); _collected.AddRange(value.Select(CheckpointCatalog.Instance.Resolve<Clue>)); }
+            set
+            {
+                var restored = value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray();
+                _collected.Clear();
+                _collected.AddRange(restored);
+            }
         }
 
         [Save] private string[] Hypotheses
         {
             get => _unlockedHypotheses.Select(CheckpointCatalog.Instance.Key).ToArray();
-            set { _unlockedHypotheses.Clear(); _unlockedHypotheses.AddRange(value.Select(CheckpointCatalog.Instance.Resolve<Hypothesis>)); }
+            set
+            {
+                var restored = value.Select(CheckpointCatalog.Instance.Resolve<Hypothesis>).ToArray();
+                _unlockedHypotheses.Clear();
+                _unlockedHypotheses.AddRange(restored);
+            }
         }
 
         [Save] private Dictionary<string, string[]> Answers
@@ -45,15 +54,16 @@ namespace _Project.Develop.Gameplay.Evidence
                 pair => pair.Value.Select(CheckpointCatalog.Instance.Key).ToArray());
             set
             {
-                _solvedHypotheses.Clear();
-                foreach (var pair in value)
-                    _solvedHypotheses.Add(CheckpointCatalog.Instance.Resolve<Hypothesis>(pair.Key),
-                        pair.Value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray());
+                _solvedHypotheses = value.ToDictionary(
+                    pair => CheckpointCatalog.Instance.Resolve<Hypothesis>(pair.Key),
+                    pair => (IReadOnlyList<Clue>)Array.AsReadOnly(
+                        pair.Value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray()));
             }
         }
 
-        public EvidenceService(EvidenceDatabase database)
+        public EvidenceService(EvidenceDatabase database, QuestRewards rewards)
         {
+            _rewards = rewards;
             _database = database;
             Collected = _collected.AsReadOnly();
             UnlockedHypotheses = _unlockedHypotheses.AsReadOnly();
@@ -71,12 +81,7 @@ namespace _Project.Develop.Gameplay.Evidence
             _collected.Add(clue);
             if (sourceSprite != null)
                 _collectedSprites.Add(clue, sourceSprite);
-            var reward = clue.reward;
-            if (reward.dialogueNpc != null && reward.dialogue != null)
-                reward.dialogueNpc.state.dialogue = reward.dialogue;
-
-            if (reward.moodNpc != null && reward.moodIncrease > 0)
-                reward.moodNpc.state.mood += reward.moodIncrease;
+            _rewards.Apply(clue.reward);
 
             ClueCollected?.Invoke(clue, sourceWorldPosition, boardPosition);
             return true;
@@ -93,7 +98,7 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool TryCombine(Clue first, Clue second, out Clue result)
         {
-            return _database.TryGetResult(first, second, out result) && result != null;
+            return _database.TryGetResult(first, second, out result);
         }
 
         public bool HasClue(Clue clue) => _collected.Contains(clue);
@@ -113,7 +118,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 if (node.type != HypothesisNodeType.Fill)
                     continue;
 
-                if (index >= answers.Count || !IsCorrectAnswer(node, answers[index]))
+                if (index >= answers.Count || !IsCorrectAnswer(hypothesis, node, answers[index]))
                     return false;
 
                 index++;
@@ -133,15 +138,13 @@ namespace _Project.Develop.Gameplay.Evidence
             return true;
         }
 
-        private bool IsCorrectAnswer(HypothesisNode node, Clue answer)
+        private bool IsCorrectAnswer(Hypothesis hypothesis, HypothesisNode node, Clue answer)
         {
             if (answer == null || string.IsNullOrWhiteSpace(answer.fillWord) ||
                 !_collected.Contains(answer))
                 return false;
 
-            return node.correctClue != null
-                ? answer == node.correctClue
-                : string.Equals(answer.fillWord, node.correctAnswerFill, StringComparison.OrdinalIgnoreCase);
+            return answer.hypothesis == hypothesis && answer.fillIndex == node.expectedFillIndex;
         }
     }
 }

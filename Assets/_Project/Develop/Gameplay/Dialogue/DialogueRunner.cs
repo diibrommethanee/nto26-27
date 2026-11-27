@@ -16,6 +16,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         private readonly Dictionary<Type, IDialogueNodeHandler> _handlers = new();
         private readonly Dictionary<NpcData, (DialogueDefinition Dialogue, Hash128 NodeId,
             DialogueNodeData PreviousDialogue, bool TalkedPublished, bool ReturnPending)> _suspended = new();
+        private readonly NpcStates _states;
         private readonly IPublisher<DialogueEnded> _endedPublisher;
         private readonly IPublisher<NpcTalkedEvent> _talkedPublisher;
         private readonly IPublisher<DialogueChoicesShown> _choicesPublisher;
@@ -36,8 +37,9 @@ namespace _Project.Develop.Gameplay.Dialogue
         public event Action ContinueRequested;
 
         public DialogueRunner(IEnumerable<IDialogueNodeHandler> handlers, IPublisher<DialogueEnded> endedPublisher,
-            IPublisher<NpcTalkedEvent> talkedPublisher, IPublisher<DialogueChoicesShown> choicesPublisher)
+            IPublisher<NpcTalkedEvent> talkedPublisher, IPublisher<DialogueChoicesShown> choicesPublisher, NpcStates states)
         {
+            _states = states;
             _endedPublisher = endedPublisher;
             _talkedPublisher = talkedPublisher;
             _choicesPublisher = choicesPublisher;
@@ -259,7 +261,7 @@ namespace _Project.Develop.Gameplay.Dialogue
                         case DialogueStepKind.End:
                             if (_npc != null && step.setDialogue != null)
                             {
-                                _npc.state.dialogue = step.setDialogue;
+                                _states[_npc].Dialogue = step.setDialogue;
                                 _suspended.Remove(_npc);
                             }
                             else if (_playingReturnDialogue)
