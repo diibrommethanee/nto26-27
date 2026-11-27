@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afc2bb3f2c5d41ff9e707995b1f78198, type: 3}
   m_Name: RecipeAfternoon
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
-  title: 
-  description: 
+  title: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0431\u044B\u043B \u043D\u0430 \u0441\u0442\u043E\u043B\u0435 \u0432\u0435\u0447\u0435\u0440\u043E\u043C"
   icon: {fileID: 0}
   type: 0
   sticker: 0
@@ -25,5 +24,4 @@ MonoBehaviour:
     moodIncrease: 0
   fillWord: 
   fillIndex: 1
-  noteSprite: {fileID: 0}
-  text: 
+  text: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0431\u044B\u043B \u043D\u0430 \u0441\u0442\u043E\u043B\u0435 \u0432\u0435\u0447\u0435\u0440\u043E\u043C"

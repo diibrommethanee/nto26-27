@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using _Project.Develop.Data.Questing.Quests;
 using _Project.Develop.Data.Questing.Rewards;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace _Project.Develop.Data.Evidence
@@ -13,8 +14,11 @@ namespace _Project.Develop.Data.Evidence
     {
         public HypothesisNodeType type;
 
-        [TextArea] public string text;
-        [Min(0)] public int expectedFillIndex;
+        [AllowNesting, ShowIf(nameof(IsText)), TextArea] public string text;
+        [AllowNesting, ShowIf(nameof(IsFill))] public Clue correctClue;
+
+        private bool IsText => type == HypothesisNodeType.Text;
+        private bool IsFill => type == HypothesisNodeType.Fill;
     }
 
     [CreateAssetMenu(menuName = "Configs/Hypothesis")]

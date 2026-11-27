@@ -46,9 +46,9 @@ MonoBehaviour:
         m_LastKnownBounds:
           serializedVersion: 2
           x: 61.333336
-          y: 144
-          width: 921.3334
-          height: 370.66663
+          y: 155.33333
+          width: 1049.9999
+          height: 389.3333
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 15664753290531121307
@@ -243,7 +243,7 @@ MonoBehaviour:
     - rid: 3967460749053264021
       type: {class: 'Constant`1[[_Project.Develop.Data.Questing.Quests.Quest, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
-        m_Value: {fileID: 0}
+        m_Value: {fileID: 11400000, guid: 70e1527f62d860b4c9131d96b8c4dc26, type: 2}
     - rid: 3967460749053264022
       type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Clue, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
@@ -273,7 +273,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 820c39bf2509e9dad1b8d524fab7aed0
         m_Version: 2
-        m_Position: {x: 629.3334, y: 164.97984}
+        m_Position: {x: 645.3333, y: 157.64651}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:

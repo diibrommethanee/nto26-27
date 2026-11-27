@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afc2bb3f2c5d41ff9e707995b1f78198, type: 3}
+  m_Name: Draught
+  m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
+  title: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0443\u043D\u0435\u0441\u043B\u043E \u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A\u043E\u043C"
+  icon: {fileID: 0}
+  type: 0
+  sticker: 0
+  hypothesis: {fileID: 0}
+  reward:
+    dialogueNpc: {fileID: 0}
+    dialogue: {fileID: 0}
+    moodNpc: {fileID: 0}
+    moodIncrease: 0
+  fillWord: "\u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A"
+  text: "\u0420\u0435\u0446\u0435\u043F\u0442 \u0443\u043D\u0435\u0441\u043B\u043E \u0441\u043A\u0432\u043E\u0437\u043D\u044F\u043A\u043E\u043C"

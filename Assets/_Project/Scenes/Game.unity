@@ -9514,9 +9514,9 @@ MonoBehaviour:
   - {fileID: 2389051271}
   - {fileID: 1596279880}
   - {fileID: 1898567304}
-  daySettings: {fileID: 11400000, guid: d998444b8acd48c1bd87279b2153b3be, type: 2}
-  npcTeaRecipes: {fileID: 11400000, guid: 726d351295b44bfd97e751a14f68226c, type: 2}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
+  npcTeaRecipes: {fileID: 11400000, guid: 726d351295b44bfd97e751a14f68226c, type: 2}
+  daySettings: {fileID: 11400000, guid: d998444b8acd48c1bd87279b2153b3be, type: 2}
   questDatabase: {fileID: 11400000, guid: 62421e5d55bc1bb438574d9cfb435ff7, type: 2}
   evidenceDatabase: {fileID: 11400000, guid: 3cf9909b87a1f2a4a91ad5ccb37c15e2, type: 2}
   playerStats: {fileID: 11400000, guid: d2dc13e9a0482fa4597d2973a3a671d0, type: 2}

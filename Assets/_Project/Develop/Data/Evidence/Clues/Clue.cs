@@ -11,7 +11,6 @@ namespace _Project.Develop.Data.Evidence
     public class Clue : QuestTarget
     {
         public string title;
-        [TextArea] public string description;
         public Sprite icon;
         public ClueType type;
         public ClueSticker sticker;
