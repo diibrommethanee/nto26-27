@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: OpenWindow
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.Clue
   title: "\u041E\u043A\u043D\u043E \u0431\u044B\u043B\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u043E"
-  description: 
   icon: {fileID: 0}
   type: 0
   sticker: 0

@@ -42,7 +42,7 @@ namespace _Project.Develop.UI.Evidence
             _board = board;
             _onSelected = onSelected;
             var word = data as WordClue;
-            icon.sprite = artwork != null ? artwork : word != null && word.noteSprite != null ? word.noteSprite : data.icon;
+            icon.sprite = artwork != null ? artwork : data.icon;
             icon.enabled = true;
             icon.preserveAspect = hasIcon;
             if (hasIcon)

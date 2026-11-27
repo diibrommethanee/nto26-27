@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: LostRecipe
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Evidence.WordClue
   title: "\u041F\u0435\u043A\u0430\u0440\u044C \u043F\u043E\u0442\u0435\u0440\u044F\u043B \u0440\u0435\u0446\u0435\u043F\u0442"
-  description: "\u041F\u0435\u043A\u0430\u0440\u044C \u043F\u043E\u0442\u0435\u0440\u044F\u043B \u0440\u0435\u0446\u0435\u043F\u0442"
   icon: {fileID: 0}
   type: 0
   sticker: 0
@@ -24,5 +23,4 @@ MonoBehaviour:
     moodNpc: {fileID: 0}
     moodIncrease: 0
   fillWord: "\u0440\u0435\u0446\u0435\u043F\u0442"
-  noteSprite: {fileID: 0}
   text: "\u041F\u0435\u043A\u0430\u0440\u044C \u043F\u043E\u0442\u0435\u0440\u044F\u043B \u0440\u0435\u0446\u0435\u043F\u0442"
