@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 257d6b6348e62814d9d5e86a19b73dc6, type: 3}
-  m_Name: FindClueQ1
+  m_Name: Q1FindRecept
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Questing.Quests.Quest
-  questName: "\u041F\u043E\u0438\u0441\u043A \u0443\u043B\u0438\u043A"
-  description: 
+  questName: "\u041D\u0430\u0439\u0442\u0438 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043D\u044B\u0439 \u0440\u0435\u0446\u0435\u043F\u0442"
+  description: "\u041D\u0430\u0439\u0442\u0438 6 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043D\u044B\u0445 \u0443\u043B\u0438\u043A. "
   steps:
   - id: LookWindow
     title: "\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u043D\u0430 \u043F\u043E\u043B "

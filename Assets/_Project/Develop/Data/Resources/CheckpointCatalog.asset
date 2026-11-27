@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: CheckpointCatalog
   m_EditorClassIdentifier: 
   entries:
-  - key: 1372bdd7338aad64797098a63ec976ac
-    asset: {fileID: 11400000, guid: 1372bdd7338aad64797098a63ec976ac, type: 2}
   - key: 29a188bbe7e4fd74bb7e16bffdf0c2e3
     asset: {fileID: 11400000, guid: 29a188bbe7e4fd74bb7e16bffdf0c2e3, type: 2}
   - key: 2cbaec7910566254d9e0400284ab2b8b
