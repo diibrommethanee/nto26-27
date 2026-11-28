@@ -245,7 +245,7 @@ namespace _Project.Develop.UI.Tea
         {
             if (State == TeaBrewingState.ReadyToPour)
                 StartPour();
-            else if (State == TeaBrewingState.WaitingIngredient && _selectedIngredients.Count > 0)
+            else if (CanCompleteBrewing)
                 CompleteBrewing();
         }
 
@@ -453,23 +453,7 @@ namespace _Project.Develop.UI.Tea
             if (_selectedIngredients.Count == 0)
                 return;
 
-            if (State != TeaBrewingState.Completed)
-                State = TeaBrewingState.Completed;
-
-            _autoCompleteTween.Stop();
-            if (pourButton != null)
-            {
-                if (teapot != null && pourButton.gameObject == teapot.gameObject)
-                    pourButton.interactable = false;
-                else
-                    pourButton.gameObject.SetActive(false);
-            }
-
-            if (ingredientsGroup != null)
-            {
-                ingredientsGroup.interactable = false;
-                ingredientsGroup.blocksRaycasts = false;
-            }
+            EnterCompletionState();
 
             var result = new List<TeaIngredientType>(_selectedIngredients);
             OnBrewingFinished();

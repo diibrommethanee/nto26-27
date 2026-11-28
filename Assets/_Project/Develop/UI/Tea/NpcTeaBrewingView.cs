@@ -39,31 +39,17 @@ namespace _Project.Develop.UI.Tea
             base.HideImmediate();
         }
 
-        public override void TryCompleteBrewing()
-        {
-            if (CanCompleteBrewing)
-                ShowCompletionActions();
-        }
+        public override void TryCompleteBrewing() => ShowCompletionActions();
 
         protected override bool CanSelectIngredient() => SelectedIngredients.Count < 1;
 
-        protected override void OnIngredientSelected()
-        {
-            if (!CanCompleteBrewing)
-                return;
-
-            ShowCompletionActions();
-        }
+        protected override void OnIngredientSelected() => ShowCompletionActions();
 
         protected override void OnPourClicked()
         {
             if (State == TeaBrewingState.ReadyToPour)
-            {
                 base.OnPourClicked();
-                return;
-            }
-
-            if (CanCompleteBrewing)
+            else
                 ShowCompletionActions();
         }
 
@@ -121,18 +107,11 @@ namespace _Project.Develop.UI.Tea
             BeginBrewing();
         }
 
-        private void OnOfferTeaClicked()
-        {
-            if ((State == TeaBrewingState.WaitingIngredient || State == TeaBrewingState.Completed) &&
-                SelectedIngredients.Count > 0)
-            {
-                CompleteBrewing();
-            }
-        }
+        private void OnOfferTeaClicked() => CompleteBrewing();
 
         private void ShowCompletionActions()
         {
-            if (State != TeaBrewingState.WaitingIngredient || !CanCompleteBrewing)
+            if (!CanCompleteBrewing)
                 return;
 
             EnterCompletionState();

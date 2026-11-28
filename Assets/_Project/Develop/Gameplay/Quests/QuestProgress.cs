@@ -25,19 +25,30 @@ namespace _Project.Develop.Gameplay.Quests
                 .ToList().AsReadOnly();
         }
 
-        internal void Restore(int[] saved)
+        internal int[] Capture()
         {
-            if (saved == null || saved.Length != Steps.Count + 1 || saved[0] < 0 || saved[0] > Steps.Count)
-                throw new InvalidDataException($"Invalid saved step index for quest '{Data.name}'.");
-
+            var saved = new int[Steps.Count + 1];
+            saved[0] = CurrentStepIndex;
             for (var i = 0; i < Steps.Count; i++)
-            {
-                var amount = saved[i + 1];
-                if (amount < 0)
-                    throw new InvalidDataException($"Negative progress for quest '{Data.name}', step {i}.");
-                Steps[i].AddProgress(amount);
-            }
-            CurrentStepIndex = saved[0];
+                saved[i + 1] = Steps[i].CurrentAmount;
+            return saved;
+        }
+
+        internal static QuestProgress FromCheckpoint(Quest quest, int[] saved)
+        {
+            var progress = new QuestProgress(quest);
+            var steps = progress.Steps;
+            if (saved == null || saved.Length != steps.Count + 1 || saved[0] < 0 || saved[0] > steps.Count)
+                throw new InvalidDataException($"Invalid saved step index for quest '{quest.name}'.");
+
+            for (var i = 0; i < steps.Count; i++)
+                if (saved[i + 1] < 0)
+                    throw new InvalidDataException($"Negative progress for quest '{quest.name}', step {i}.");
+
+            for (var i = 0; i < steps.Count; i++)
+                steps[i].RestoreAmount(saved[i + 1]);
+            progress.CurrentStepIndex = saved[0];
+            return progress;
         }
 
         internal void AdvanceStep()

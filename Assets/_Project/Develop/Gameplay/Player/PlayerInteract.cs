@@ -5,7 +5,6 @@ using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
 using _Project.Develop.Gameplay.Timeline;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
 
@@ -54,15 +53,14 @@ namespace _Project.Develop.Gameplay.Player
             else
                 _lasso.Cancel();
 
-            var mousePos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            var mousePos = _input.PointerPosition;
             UpdateTarget(mousePos);
 
         }
 
         private void LateUpdate()
         {
-            var interaction = _input.Actions.Player.Interaction;
-            if (!interaction.enabled || _input.CutsceneActive || _input.IsZoomMode)
+            if (!_input.Actions.Player.Interaction.enabled || _input.CutsceneActive || _input.IsZoomMode)
             {
                 _pressedInteractionTarget = null;
                 _pressedNpc = null;
@@ -70,7 +68,13 @@ namespace _Project.Develop.Gameplay.Player
                 return;
             }
 
-            bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            bool pointerOverUi = _input.IsPointerOverUI;
+            HandleNpcClick(pointerOverUi);
+            HandleInteraction(pointerOverUi);
+        }
+
+        private void HandleNpcClick(bool pointerOverUi)
+        {
             var moveTo = _input.Actions.Player.MoveTo;
             if (moveTo.WasPressedThisFrame())
                 _pressedNpc = pointerOverUi ? null : _currentTarget as NpcInteract;
@@ -82,7 +86,11 @@ namespace _Project.Develop.Gameplay.Player
                 if (!pointerOverUi && pressedNpc != null && ReferenceEquals(pressedNpc, _currentTarget))
                     _player.ApproachNpc(pressedNpc);
             }
+        }
 
+        private void HandleInteraction(bool pointerOverUi)
+        {
+            var interaction = _input.Actions.Player.Interaction;
             if (interaction.WasPressedThisFrame())
             {
                 _pressedInteractionTarget = pointerOverUi ? null : _currentTarget;
@@ -96,12 +104,14 @@ namespace _Project.Develop.Gameplay.Player
             _pressedInteractionTarget = null;
             var pickup = _pressedPickup;
             _pressedPickup = null;
-            if (!pointerOverUi && pickup != null && pickup == _currentPickup)
+            if (pointerOverUi) return;
+
+            if (pickup != null && pickup == _currentPickup)
             {
                 pickup.Collect(_evidenceService);
                 return;
             }
-            if (pointerOverUi || !ReferenceEquals(target, _currentTarget))
+            if (!ReferenceEquals(target, _currentTarget))
                 return;
 
             if (target is NpcInteract npc)
@@ -121,7 +131,7 @@ namespace _Project.Develop.Gameplay.Player
                     continue;
 
                 var pickup = hit.collider.GetComponentInParent<WorldClue>();
-                if (_dayService.RemainingMinutes > 0 && pickup != null && pickup.IsPickup && !pickup.IsCollected && pickup.CanCollect(_ability.ActiveSkill))
+                if (_dayService.RemainingMinutes > 0 && pickup != null && pickup.IsPickup && pickup.CanCollect(_ability.ActiveSkill))
                 {
                     _currentPickup = pickup;
                     return;

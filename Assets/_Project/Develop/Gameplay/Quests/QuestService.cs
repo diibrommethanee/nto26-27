@@ -24,8 +24,11 @@ namespace _Project.Develop.Gameplay.Quests
         private readonly IPublisher<QuestStepCompletedEvent> _stepCompletedPublisher;
         private readonly IPublisher<QuestCompletedEvent> _questCompletedPublisher;
 
-        public IReadOnlyList<QuestProgress> ActiveQuests => _activeQuests;
-        public IReadOnlyList<QuestProgress> CompletedQuests => _completedQuests;
+        public IReadOnlyList<QuestProgress> ActiveQuests { get; }
+        public IReadOnlyList<QuestProgress> CompletedQuests { get; }
+
+        private IEnumerable<QuestProgress> AllQuests => _activeQuests.Concat(_completedQuests);
+        private QuestProgress DefaultTrackedQuest => _activeQuests.LastOrDefault() ?? _completedQuests.LastOrDefault();
 
         public QuestProgress TrackedQuest { get; private set; }
         public event Action<QuestProgress> TrackedQuestChanged;
@@ -46,26 +49,29 @@ namespace _Project.Develop.Gameplay.Quests
 
         public void AfterRestore()
         {
-            var tracked = _restoredTrackedKey == null ? null : _activeQuests.Concat(_completedQuests)
+            var tracked = _restoredTrackedKey == null ? null : AllQuests
                 .FirstOrDefault(quest => CheckpointCatalog.Instance.Key(quest.Data) == _restoredTrackedKey);
             _restoredTrackedKey = null;
-            Track(tracked ?? _activeQuests.LastOrDefault() ?? _completedQuests.LastOrDefault());
+            Track(tracked ?? DefaultTrackedQuest);
         }
 
         [Save] private Dictionary<string, int[]> SavedQuests
         {
-            get => _activeQuests.Concat(_completedQuests).ToDictionary(
+            get => AllQuests.ToDictionary(
                 quest => CheckpointCatalog.Instance.Key(quest.Data),
-                quest => quest.Steps.Select(step => step.CurrentAmount).Prepend(quest.CurrentStepIndex).ToArray());
+                quest => quest.Capture());
             set
             {
                 var active = new List<QuestProgress>();
                 var completed = new List<QuestProgress>();
                 foreach (var pair in value)
                 {
-                    var progress = new QuestProgress(CheckpointCatalog.Instance.Resolve<Quest>(pair.Key));
-                    progress.Restore(pair.Value);
-                    (progress.IsCompleted ? completed : active).Add(progress);
+                    var quest = CheckpointCatalog.Instance.Resolve<Quest>(pair.Key);
+                    var progress = QuestProgress.FromCheckpoint(quest, pair.Value);
+                    if (progress.IsCompleted)
+                        completed.Add(progress);
+                    else
+                        active.Add(progress);
                 }
 
                 _activeQuests.Clear();
@@ -82,6 +88,8 @@ namespace _Project.Develop.Gameplay.Quests
             IPublisher<QuestCompletedEvent> questCompletedPublisher,
             EvidenceService evidence, QuestRewards rewards)
         {
+            ActiveQuests = _activeQuests.AsReadOnly();
+            CompletedQuests = _completedQuests.AsReadOnly();
             _rewards = rewards;
             _evidence = evidence;
             _stepCompletedPublisher = stepCompletedPublisher;
@@ -102,8 +110,7 @@ namespace _Project.Develop.Gameplay.Quests
             if (data == null)
                 return false;
 
-            if (_activeQuests.Any(x => x.Data == data) ||
-                _completedQuests.Any(x => x.Data == data))
+            if (AllQuests.Any(progress => progress.Data == data))
                 return false;
 
             var progress = new QuestProgress(data);
@@ -122,38 +129,38 @@ namespace _Project.Develop.Gameplay.Quests
         public void RemoveQuest(Quest quest)
         {
             _activeQuests.RemoveAll(x => x.Data == quest);
-            if (TrackedQuest?.Data == quest) Track(_activeQuests.LastOrDefault() ?? _completedQuests.LastOrDefault());
+            if (TrackedQuest?.Data == quest) Track(DefaultTrackedQuest);
             Debug.Log("Quest removed");
         }
 
         private void OnNpcInteracted(NpcInteractedEvent evt)
         {
-            UpdateProgress(QuestEventType.NpcInteracted, evt.Npc, 1);
+            UpdateProgress(QuestEventType.NpcInteracted, evt.Npc);
         }
 
         private void OnNpcTalked(NpcTalkedEvent evt)
         {
-            UpdateProgress(QuestEventType.NpcTalked, evt.Npc, 1);
+            UpdateProgress(QuestEventType.NpcTalked, evt.Npc);
         }
 
         private void OnClueCollected(Clue clue, Vector3? sourceWorldPosition, Vector2? boardPosition)
         {
-            UpdateProgress(QuestEventType.ClueCollected, clue, 1);
+            UpdateProgress(QuestEventType.ClueCollected, clue);
         }
 
         private void OnHypothesisUnlocked(Hypothesis hypothesis)
         {
-            UpdateProgress(QuestEventType.HypothesisCollected, hypothesis, 1);
+            UpdateProgress(QuestEventType.HypothesisCollected, hypothesis);
         }
 
         private void OnHypothesisPassed(Hypothesis hypothesis)
         {
-            UpdateProgress(QuestEventType.HypothesisPassed, hypothesis, 1);
+            UpdateProgress(QuestEventType.HypothesisPassed, hypothesis);
         }
 
-        private void UpdateProgress(QuestEventType eventType, QuestTarget target, int amount)
+        private void UpdateProgress(QuestEventType eventType, QuestTarget target)
         {
-            if (amount <= 0 || target == null)
+            if (target == null)
                 return;
 
             for (var i = _activeQuests.Count - 1; i >= 0; i--)
@@ -161,18 +168,7 @@ namespace _Project.Develop.Gameplay.Quests
                 var quest = _activeQuests[i];
                 var step = quest.CurrentStep;
 
-                if (step == null)
-                    continue;
-
-                if (step.Data.eventType != eventType)
-                    continue;
-
-                if (step.Data.target != target)
-                    continue;
-
-                step.AddProgress(amount);
-
-                if (!step.IsCompleted)
+                if (step == null || !step.TryComplete(eventType, target))
                     continue;
 
                 _stepCompletedPublisher.Publish(

@@ -28,37 +28,34 @@ namespace _Project.Develop.Gameplay.Evidence
 
         [Save] private string[] Clues
         {
-            get => _collected.Select(CheckpointCatalog.Instance.Key).ToArray();
-            set
-            {
-                var restored = value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray();
-                _collected.Clear();
-                _collected.AddRange(restored);
-            }
+            get => CheckpointCatalog.Instance.Keys(_collected);
+            set => RestoreList(_collected, value);
         }
 
         [Save] private string[] Hypotheses
         {
-            get => _unlockedHypotheses.Select(CheckpointCatalog.Instance.Key).ToArray();
-            set
-            {
-                var restored = value.Select(CheckpointCatalog.Instance.Resolve<Hypothesis>).ToArray();
-                _unlockedHypotheses.Clear();
-                _unlockedHypotheses.AddRange(restored);
-            }
+            get => CheckpointCatalog.Instance.Keys(_unlockedHypotheses);
+            set => RestoreList(_unlockedHypotheses, value);
         }
 
         [Save] private Dictionary<string, string[]> Answers
         {
             get => _solvedHypotheses.ToDictionary(pair => CheckpointCatalog.Instance.Key(pair.Key),
-                pair => pair.Value.Select(CheckpointCatalog.Instance.Key).ToArray());
+                pair => CheckpointCatalog.Instance.Keys(pair.Value));
             set
             {
                 _solvedHypotheses = value.ToDictionary(
                     pair => CheckpointCatalog.Instance.Resolve<Hypothesis>(pair.Key),
                     pair => (IReadOnlyList<Clue>)Array.AsReadOnly(
-                        pair.Value.Select(CheckpointCatalog.Instance.Resolve<Clue>).ToArray()));
+                        CheckpointCatalog.Instance.ResolveAll<Clue>(pair.Value)));
             }
+        }
+
+        private static void RestoreList<T>(List<T> destination, string[] keys) where T : ScriptableObject
+        {
+            var restored = CheckpointCatalog.Instance.ResolveAll<T>(keys);
+            destination.Clear();
+            destination.AddRange(restored);
         }
 
         public EvidenceService(EvidenceDatabase database, QuestRewards rewards)
@@ -112,39 +109,15 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool CheckHypothesis(Hypothesis hypothesis, IReadOnlyList<Clue> answers)
         {
-            var index = 0;
-            foreach (var node in hypothesis.nodes)
-            {
-                if (node.type != HypothesisNodeType.Fill)
-                    continue;
-
-                if (index >= answers.Count || !IsCorrectAnswer(hypothesis, node, answers[index], index))
-                    return false;
-
-                index++;
-            }
-
-            if (index == 0 || index != answers.Count)
+            if (!hypothesis.MatchesAnswers(answers) || !answers.All(HasClue))
                 return false;
 
             if (!_solvedHypotheses.ContainsKey(hypothesis))
             {
-                var snapshot = new Clue[answers.Count];
-                for (var i = 0; i < answers.Count; i++)
-                    snapshot[i] = answers[i];
-                _solvedHypotheses.Add(hypothesis, Array.AsReadOnly(snapshot));
+                _solvedHypotheses.Add(hypothesis, Array.AsReadOnly(answers.ToArray()));
                 HypothesisPassed?.Invoke(hypothesis);
             }
             return true;
-        }
-
-        private bool IsCorrectAnswer(Hypothesis hypothesis, HypothesisNode node, Clue answer, int fillIndex)
-        {
-            if (answer == null || string.IsNullOrWhiteSpace(answer.fillWord) ||
-                !_collected.Contains(answer))
-                return false;
-
-            return answer.hypothesis == hypothesis && answer.fillIndex == fillIndex && answer == node.correctClue;
         }
     }
 }

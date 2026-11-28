@@ -42,11 +42,17 @@ namespace _Project.Develop.UI.Timeline
         private IPublisher<DayEndingCutsceneFinished> _finished;
         private IDisposable _subscription;
         private PlayableDirector _director;
-        private bool _playing;
+        private enum EndingStage
+        {
+            Idle,
+            PlayingTimeline,
+            WaitingForTea,
+            BrewingTea,
+            Finished
+        }
+
+        private EndingStage _stage;
         private bool _hudWasEnabled;
-        private bool _ending;
-        private bool _teaCompleted;
-        private bool _waitingToStartTea;
         private bool _teaForNpc;
 
         private void Awake()
@@ -58,7 +64,7 @@ namespace _Project.Develop.UI.Timeline
             newDayButton.gameObject.SetActive(false);
             newDayButton.onClick.AddListener(OnNewDayButtonClicked);
             if (notebookWriter != null)
-                notebookWriter.OnFinishWriter.AddListener(ShowNewDayButton);
+                notebookWriter.OnFinishWriter.AddListener(OnNotebookWritingFinished);
 
             if (teaMiniGame != null)
                 teaMiniGame.Completed += OnTeaCompleted;
@@ -90,21 +96,17 @@ namespace _Project.Develop.UI.Timeline
 
         private void OnPhaseChanged(DayPhaseChanged message)
         {
-            var ending = message.Phase == DayPhase.Ending;
-            if (!ending)
+            if (message.Phase != DayPhase.Ending)
             {
-                if (_ending)
+                if (_stage != EndingStage.Idle)
                     ResetToIdleState();
                 return;
             }
 
-            if (_ending || _playing)
+            if (_stage != EndingStage.Idle)
                 return;
 
-            _ending = true;
-            _playing = true;
-            _teaCompleted = false;
-            _waitingToStartTea = false;
+            _stage = EndingStage.PlayingTimeline;
             _hudWasEnabled = hud.enabled;
             hud.enabled = false;
             _input.SetCutsceneActive(true);
@@ -120,14 +122,11 @@ namespace _Project.Develop.UI.Timeline
 
         private void ResetToIdleState()
         {
+            _stage = EndingStage.Idle;
             if (_director != null && _director.state == PlayState.Playing)
                 _director.Stop();
 
-            _playing = false;
-            _waitingToStartTea = false;
-            _teaCompleted = false;
             _teaForNpc = false;
-            _ending = false;
 
             if (_input != null)
                 _input.SetCutsceneActive(false);
@@ -147,13 +146,12 @@ namespace _Project.Develop.UI.Timeline
 
         public bool CanServeTea(NpcData npc)
         {
-            return _npcTea.CanServe(npc);
+            return npcTeaMiniGame != null && _stage == EndingStage.Idle && !_teaForNpc && _npcTea.CanServe(npc);
         }
 
         public void BeginNpcTea(NpcData npc)
         {
-            var view = GetNpcTeaView();
-            if (npc == null || view == null || _ending || _teaForNpc || !CanServeTea(npc))
+            if (!CanServeTea(npc))
                 return;
 
             _teaForNpc = true;
@@ -167,45 +165,38 @@ namespace _Project.Develop.UI.Timeline
 
             GetNpcTeaStage()?.SetActive(true);
             SetNpcTeaCeremonyGroupActive(true);
-            view.BeginForNpc(npc);
+            npcTeaMiniGame.BeginForNpc(npc);
         }
 
         private void OnStopped(PlayableDirector director)
         {
-            if (!_playing) return;
-            _playing = false;
+            if (_stage != EndingStage.PlayingTimeline)
+                return;
 
-            if (_ending && teaMiniGame != null)
+            if (teaMiniGame != null)
             {
-                _waitingToStartTea = true;
-                ShowNewDayButtonInternal("Продолжить");
+                _stage = EndingStage.WaitingForTea;
+                ShowDayAction("Продолжить");
                 return;
             }
 
+            _stage = EndingStage.Finished;
             _input.SetCutsceneActive(false);
-            if (_ending) _finished.Publish(new DayEndingCutsceneFinished());
+            _finished.Publish(new DayEndingCutsceneFinished());
         }
 
         private void OnTeaCompleted(IReadOnlyList<TeaIngredientType> ingredients)
         {
-            _teaCompleted = true;
+            if (_stage != EndingStage.Idle)
+                _stage = EndingStage.Finished;
             _input.SetCutsceneActive(false);
 
             _buffService.SetPendingIngredients(ingredients);
 
-            if (_ending) _finished.Publish(new DayEndingCutsceneFinished());
+            if (_stage != EndingStage.Idle) _finished.Publish(new DayEndingCutsceneFinished());
 
-            // Keep tea view visible behind the next-day button; scene reload will clean up.
-
-            // If notebook writer is active, let its finish event show the button; otherwise show now
-            if (notebookWriter != null && notebookWriter.isActiveAndEnabled)
-            {
-                // Keep UI as-is; ShowNewDayButton will be called on writer finish
-            }
-            else
-            {
-                ShowNewDayButtonInternal("Следующий день");
-            }
+            if (notebookWriter == null || !notebookWriter.isActiveAndEnabled)
+                ShowDayAction("Следующий день");
         }
 
         private void OnNpcTeaCompleted(NpcData npc, IReadOnlyList<TeaIngredientType> ingredients)
@@ -223,7 +214,6 @@ namespace _Project.Develop.UI.Timeline
             HideNpcTeaCanvas();
         }
 
-        private NpcTeaBrewingView GetNpcTeaView() => npcTeaMiniGame;
         private GameObject GetNpcTeaStage() => npcTeaStage != null ? npcTeaStage : teaStage;
         private GameObject GetNpcTeaCeremonyGroup() => npcTeaCeremonyGroup != null ? npcTeaCeremonyGroup : teaCeremonyGroup;
 
@@ -236,35 +226,34 @@ namespace _Project.Develop.UI.Timeline
 
         private void HideNpcTeaCanvas()
         {
-            GetNpcTeaView()?.HideImmediate();
+            npcTeaMiniGame?.HideImmediate();
             SetNpcTeaCeremonyGroupActive(false);
             GetNpcTeaStage()?.SetActive(false);
         }
 
-        private void ShowNewDayButton(TMPWriter writer)
+        private void OnNotebookWritingFinished(TMPWriter writer)
         {
-            if (!_ending) return;
-            if (!_teaCompleted && teaMiniGame != null) return;
+            if (_stage == EndingStage.Idle) return;
+            if (_stage != EndingStage.Finished && teaMiniGame != null) return;
 
-            ShowNewDayButtonInternal("Следующий день");
+            ShowDayAction("Следующий день");
         }
 
-        private void ShowNewDayButtonInternal(string label = null)
+        private void ShowDayAction(string label)
         {
             if (notebookWriter != null) notebookWriter.enabled = false;
             if (newDayButton != null)
             {
                 newDayButton.gameObject.SetActive(true);
-                if (!string.IsNullOrEmpty(label))
-                    SetButtonLabel(newDayButton, label);
+                SetButtonLabel(newDayButton, label);
             }
         }
 
         private void OnNewDayButtonClicked()
         {
-            if (_waitingToStartTea)
+            if (_stage == EndingStage.WaitingForTea)
             {
-                _waitingToStartTea = false;
+                _stage = EndingStage.BrewingTea;
                 if (newDayButton != null) newDayButton.gameObject.SetActive(false);
 
                 SetNotebookGroupActive(false);
@@ -325,7 +314,7 @@ namespace _Project.Develop.UI.Timeline
             if (npcTeaMiniGame != null)
                 npcTeaMiniGame.NpcCompleted -= OnNpcTeaCompleted;
 
-            if (notebookWriter != null) notebookWriter.OnFinishWriter.RemoveListener(ShowNewDayButton);
+            if (notebookWriter != null) notebookWriter.OnFinishWriter.RemoveListener(OnNotebookWritingFinished);
             if (newDayButton != null) newDayButton.onClick.RemoveListener(OnNewDayButtonClicked);
             if (_director != null) _director.stopped -= OnStopped;
         }

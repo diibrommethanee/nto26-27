@@ -5,7 +5,6 @@ using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.Timeline;
 using MessagePipe;
 using Cysharp.Threading.Tasks;
-using UnityEngine.EventSystems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer;
@@ -15,6 +14,8 @@ namespace _Project.Develop.Gameplay.Player.Abilities
 {
     public class PlayerAbility : MonoBehaviour
     {
+        private const SkillType InitialSkill = SkillType.Hearing;
+
         private InputController _input;
         private DayService _dayService;
         private UnityCamera _camera;
@@ -25,7 +26,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private IBufferedPublisher<SelectedSkillChanged> _selectedSkillPublisher;
         private bool _subscribed;
 
-        public SkillType SelectedSkill { get; private set; } = SkillType.Hearing;
+        public SkillType SelectedSkill => _abilities == null ? InitialSkill : _abilities[_selectedIndex].Skill;
         public SkillType? ActiveSkill => _active?.Skill;
 
         [Inject]
@@ -37,7 +38,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             _input = input;
             _dayService = dayService;
             _abilities = abilities.ToArray();
-            _selectedIndex = System.Array.FindIndex(_abilities, ability => ability.Skill == SelectedSkill);
+            _selectedIndex = System.Array.FindIndex(_abilities, ability => ability.Skill == InitialSkill);
             if (_selectedIndex < 0)
                 throw new System.InvalidOperationException("The initial hearing ability must be registered.");
             _selectedSkillPublisher = selectedSkillPublisher;
@@ -76,7 +77,6 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         {
             SetActiveSkill(null);
             _selectedIndex = (_selectedIndex + 1) % _abilities.Length;
-            SelectedSkill = _abilities[_selectedIndex].Skill;
             PublishSelectedSkill();
         }
 
@@ -91,13 +91,20 @@ namespace _Project.Develop.Gameplay.Player.Abilities
         private async UniTask UseSkillAsync()
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-            if (!isActiveAndEnabled || IsPointerOverCollectableClue()) return;
+            if (!isActiveAndEnabled || !_input.Actions.Player.UseSkill.enabled)
+                return;
 
-            var activating = ActiveSkill != SelectedSkill;
-            if (activating && !_dayService.TrySpendMinutes(_dayService.AbilityCostMinutes)) return;
+            if (_input.IsPointerOverUI || IsPointerOverCollectableClue())
+                return;
 
-            SetActiveSkill(activating ? _abilities[_selectedIndex] : null);
+            if (ActiveSkill == SelectedSkill)
+            {
+                SetActiveSkill(null);
+                return;
+            }
+
+            if (_dayService.TrySpendAbilityTime())
+                SetActiveSkill(_abilities[_selectedIndex]);
         }
 
         public void StopHearing()
@@ -116,15 +123,19 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             PublishSelectedSkill();
         }
 
+        internal bool CanCollectClueAt(Collider2D collider)
+        {
+            var clue = collider.GetComponentInParent<IWorldClue>();
+            return clue != null && clue.CanCollect(ActiveSkill);
+        }
+
         private bool IsPointerOverCollectableClue()
         {
-            var mouse = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            var mouse = _input.PointerPosition;
             var ray = _camera.ScreenPointToRay(mouse);
             foreach (var hit in Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity))
             {
-                if (!hit.collider) continue;
-                var clue = hit.collider.GetComponentInParent<IWorldClue>();
-                if (clue != null && !clue.IsCollected && clue.CanCollect(ActiveSkill))
+                if (hit.collider != null && CanCollectClueAt(hit.collider))
                     return true;
             }
 

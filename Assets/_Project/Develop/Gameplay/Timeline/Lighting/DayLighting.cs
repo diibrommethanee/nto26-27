@@ -113,9 +113,8 @@ namespace _Project.Develop.Gameplay.Timeline.Lighting
                 return;
             }
 
-            var previous = _blend;
-            _transition = Tween.Custom(this, 0f, 1f, settings.transitionDuration,
-                (lighting, progress) => lighting.ApplyBlend(Vector3.Lerp(previous, target, progress)),
+            _transition = Tween.Custom(this, _blend, target, settings.transitionDuration,
+                (lighting, blend) => lighting.ApplyBlend(blend),
                 Ease.InOutSine, useUnscaledTime: true);
         }
 

@@ -16,10 +16,11 @@ namespace _Project.Develop.UI
 
         private Icon _hearing;
         private Icon _smell;
-        private IDisposable _subscription;
+        private IDisposable _skillSubscription;
         private Tween _transition;
-        private Tween _zoomFade;
-        private IDisposable _zoomSubscription;
+        private Tween _hudFade;
+        private IDisposable _hudVisibilitySubscription;
+        private float _visibility;
         private Vector2 _weights;
         private bool _initialized;
 
@@ -30,16 +31,14 @@ namespace _Project.Develop.UI
             _hearing = new Icon(hearingIcon);
             _smell = new Icon(smellIcon);
             SetVisibility(input.IsZoomMode ? 0f : 1f);
-            _zoomSubscription = new HudVisibilitySubscription(zoom, saving, input.IsZoomMode, SetHidden);
-            _subscription = skills.Subscribe(OnSelectedSkillChanged);
+            _hudVisibilitySubscription = new HudVisibilitySubscription(zoom, saving, input.IsZoomMode, SetHidden);
+            _skillSubscription = skills.Subscribe(OnSelectedSkillChanged);
         }
-
-        private float _visibility;
 
         private void SetHidden(bool hidden, bool saveTransition)
         {
-            _zoomFade.Stop();
-            _zoomFade = Tween.Custom(this, _visibility, hidden ? 0f : 1f,
+            _hudFade.Stop();
+            _hudFade = Tween.Custom(this, _visibility, hidden ? 0f : 1f,
                 saveTransition ? .075f : hidden ? .18f : .3f, (view, alpha) => view.SetVisibility(alpha),
                 Ease.InOutSine, useUnscaledTime: true);
         }
@@ -77,9 +76,9 @@ namespace _Project.Develop.UI
         private void OnDestroy()
         {
             _transition.Stop();
-            _subscription?.Dispose();
-            _zoomFade.Stop();
-            _zoomSubscription?.Dispose();
+            _skillSubscription?.Dispose();
+            _hudFade.Stop();
+            _hudVisibilitySubscription?.Dispose();
         }
 
         private class Icon

@@ -1,7 +1,6 @@
 using _Project.Develop.Gameplay.Input;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
@@ -46,10 +45,10 @@ namespace _Project.Develop.Gameplay.Environment
             if (!isActiveAndEnabled)
                 return;
 
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (_input.IsPointerOverUI)
                 return;
 
-            var pos = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            var pos = _input.PointerPosition;
             
             var ray = _camera.ScreenPointToRay(pos);
             var plane = new Plane(Vector3.forward, _col.transform.position);

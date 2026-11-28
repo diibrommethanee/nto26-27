@@ -41,10 +41,11 @@ namespace _Project.Develop.UI.Hearing
         private HearingSource _source;
         private Vector3? _lastNoSignalOrigin;
         private Vector3 _lastNoSignalPosition;
-        private float _frequency;
-        private float _held;
-        private bool _decoded;
-        private float _caughtElapsed = -1f;
+        private enum ListeningStage { Tuning, WritingTranscript, ReadingTranscript }
+
+        private HearingTuning _tuning;
+        private ListeningStage _stage;
+        private float _readingElapsed;
 
         [Inject]
         private void Construct(IBufferedSubscriber<HearingChanged> hearing, EvidenceService evidence,
@@ -68,40 +69,18 @@ namespace _Project.Develop.UI.Hearing
         {
             _visibilityTween.Stop();
             _source = null;
-            _held = 0;
-            _decoded = false;
-            _caughtElapsed = -1f;
+            _tuning = null;
+            _stage = ListeningStage.Tuning;
             if (!message.IsActive)
             {
-                if (panel.activeSelf && _visibility.alpha > 0f)
-                {
-                    if (_writer.isActiveAndEnabled)
-                        _writer.StopWriter();
-
-                    _visibilityTween = Tween.Alpha(_visibility, 0f, ExitSeconds,
-                        Ease.InOutSine, useUnscaledTime: true);
-                    _visibilityTween.OnComplete(this, view => view.HidePanel());
-                }
-                else
-                {
-                    HidePanel();
-                }
-
+                FadeOut();
                 return;
             }
 
             _writer.enabled = false;
             Vector3 playerPosition = player.transform.position;
 
-            float nearest = float.PositiveInfinity;
-            foreach (var source in sources)
-            {
-                float distance = Vector2.Distance(playerPosition, source.transform.position);
-                if (!source.isActiveAndEnabled || distance > GetEffectiveRadius(source) || distance >= nearest
-                    || _evidence.HasClue(source.clue)) continue;
-                _source = source;
-                nearest = distance;
-            }
+            _source = FindNearestSource(playerPosition);
 
             bool repeatNoSignal = false;
             transform.position = _source != null
@@ -114,25 +93,59 @@ namespace _Project.Develop.UI.Hearing
             panel.SetActive(true);
             if (_source == null)
             {
-                const string messageText = "Поблизости ничего не слышно";
-                if (repeatNoSignal)
-                {
-                    status.text = messageText;
-                    FadeIn();
-                }
-                else
-                {
-                    _visibility.alpha = 1f;
-                    StartWriting(messageText);
-                }
-
+                ShowNoSignal(repeatNoSignal);
                 return;
             }
 
             FadeIn();
             wave.ResetSignal();
             wave.FacePlayer(playerPosition - _source.transform.position);
-            Tune(0f);
+            _tuning = new HearingTuning(_source);
+            RefreshTuningHint();
+        }
+
+        private void ShowNoSignal(bool repeated)
+        {
+            const string messageText = "Поблизости ничего не слышно";
+            if (repeated)
+            {
+                status.text = messageText;
+                FadeIn();
+            }
+            else
+            {
+                _visibility.alpha = 1f;
+                StartWriting(messageText);
+            }
+        }
+
+        private HearingSource FindNearestSource(Vector3 playerPosition)
+        {
+            HearingSource nearestSource = null;
+            float nearest = float.PositiveInfinity;
+            foreach (var source in sources)
+            {
+                float distance = Vector2.Distance(playerPosition, source.transform.position);
+                if (!source.isActiveAndEnabled || distance > _buffService.AbilityRadius(source.radius) || distance >= nearest
+                    || _evidence.HasClue(source.clue)) continue;
+                nearestSource = source;
+                nearest = distance;
+            }
+
+            return nearestSource;
+        }
+
+        private void FadeOut()
+        {
+            if (!panel.activeSelf || _visibility.alpha <= 0f)
+            {
+                HidePanel();
+                return;
+            }
+
+            if (_writer.isActiveAndEnabled) _writer.StopWriter();
+            _visibilityTween = Tween.Alpha(_visibility, 0f, ExitSeconds, Ease.InOutSine, useUnscaledTime: true);
+            _visibilityTween.OnComplete(this, view => view.HidePanel());
         }
 
         private void FadeIn()
@@ -154,15 +167,13 @@ namespace _Project.Develop.UI.Hearing
             return _lastNoSignalPosition;
         }
 
-        private void Tune(float value)
+        private void RefreshTuningHint()
         {
-            _frequency = value;
-            float difference = _source.frequency - value;
+            float difference = _tuning.FrequencyDifference;
             float distance = Mathf.Abs(difference);
             wave.Tune(distance, _source.tolerance);
-            if (distance <= _source.tolerance) return;
+            if (_tuning.IsInTune) return;
 
-            _held = 0;
             status.alpha = _statusAlpha;
             wave.SetProgress(0f);
             status.text = difference > 0 ? "Крути колёсико вверх" : "Крути колёсико вниз";
@@ -182,7 +193,7 @@ namespace _Project.Develop.UI.Hearing
                 return;
             }
             Vector2 directionToPlayer = player.transform.position - _source.transform.position;
-            float effectiveRadius = GetEffectiveRadius(_source);
+            float effectiveRadius = _buffService.AbilityRadius(_source.radius);
             if (directionToPlayer.sqrMagnitude > effectiveRadius * effectiveRadius)
             {
                 player.StopHearing();
@@ -191,34 +202,30 @@ namespace _Project.Develop.UI.Hearing
 
             wave.FacePlayer(directionToPlayer);
             if (zooming) return;
-            if (_caughtElapsed >= 0f)
-            {
-                UpdateCaught();
-                return;
-            }
+            if (_stage == ListeningStage.ReadingTranscript)
+                UpdateTranscriptFade();
+            else if (_stage == ListeningStage.Tuning)
+                UpdateTuning();
+        }
 
-            if (_decoded) return;
-
+        private void UpdateTuning()
+        {
             float scroll = _input.Actions.UI.ScrollWheel.ReadValue<Vector2>().y;
             if (scroll != 0f)
             {
-                float step = Mathf.Min(0.05f, _source.tolerance * 2f);
-                Tune(Mathf.Clamp01(_frequency + Mathf.Sign(scroll) * step));
+                _tuning.Adjust(scroll);
+                RefreshTuningHint();
             }
 
-            if (Mathf.Abs(_frequency - _source.frequency) > _source.tolerance) return;
-            _held += Time.unscaledDeltaTime;
-            float progress = _held / _source.holdSeconds;
+            if (!_tuning.IsInTune) return;
+
+            float progress = _tuning.AdvanceHold(Time.unscaledDeltaTime);
             wave.SetProgress(progress);
             status.alpha = _statusAlpha * (1f - Mathf.SmoothStep(0f, 1f, progress));
-            if (_held < _source.holdSeconds) return;
-            _decoded = true;
-            wave.Flash();
-            ShowTranscript();
-        }
+            if (!_tuning.IsDecoded) return;
 
-        private void ShowTranscript()
-        {
+            _stage = ListeningStage.WritingTranscript;
+            wave.Flash();
             wave.SetProgress(1f);
             StartWriting(_source.transcript);
         }
@@ -233,25 +240,23 @@ namespace _Project.Develop.UI.Hearing
 
         private void OnTranscriptFinished(TMPWriter writer)
         {
-            if (!_decoded || _source == null) return;
+            if (_stage != ListeningStage.WritingTranscript || _source == null) return;
 
-            _caughtElapsed = 0f;
+            _stage = ListeningStage.ReadingTranscript;
+            _readingElapsed = 0f;
             _evidence.Collect(_source.clue, _source.transform.position, sourceSprite: hearingIcon);
         }
 
-        private void UpdateCaught()
+        private void UpdateTranscriptFade()
         {
-            _caughtElapsed += Time.unscaledDeltaTime;
-            if (_caughtElapsed < TranscriptReadSeconds) return;
+            _readingElapsed += Time.unscaledDeltaTime;
+            if (_readingElapsed < TranscriptReadSeconds) return;
 
-            float fade = (_caughtElapsed - TranscriptReadSeconds) / FadeSeconds;
+            float fade = (_readingElapsed - TranscriptReadSeconds) / FadeSeconds;
             _visibility.alpha = 1f - Mathf.SmoothStep(0f, 1f, fade);
             if (fade >= 1f)
                 player.StopHearing();
         }
-
-        private float GetEffectiveRadius(HearingSource source) =>
-            source.radius * (_buffService.ThymeActiveThisDay ? NextDayBuffService.AbilityRadiusMultiplier : 1f);
 
         private void HidePanel()
         {

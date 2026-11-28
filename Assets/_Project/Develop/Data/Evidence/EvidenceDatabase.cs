@@ -15,13 +15,11 @@ namespace _Project.Develop.Data.Evidence
 
             foreach (var recipe in recipes)
             {
-                if (recipe == null || recipe.result == null) continue;
-                if ((recipe.first == first && recipe.second == second) ||
-                    (recipe.first == second && recipe.second == first))
-                {
-                    result = recipe.result;
-                    return true;
-                }
+                var match = recipe?.ResultFor(first, second);
+                if (match == null) continue;
+
+                result = match;
+                return true;
             }
 
             return false;

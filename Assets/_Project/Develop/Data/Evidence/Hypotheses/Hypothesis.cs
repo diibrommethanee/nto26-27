@@ -28,5 +28,26 @@ namespace _Project.Develop.Data.Evidence
         public List<HypothesisNode> nodes = new();
 
         public QuestReward reward = new();
+
+        public bool MatchesAnswers(IReadOnlyList<Clue> answers)
+        {
+            var slot = 0;
+            foreach (var node in nodes)
+            {
+                if (node.type != HypothesisNodeType.Fill)
+                    continue;
+
+                if (slot >= answers.Count)
+                    return false;
+
+                var answer = answers[slot];
+                if (answer == null || answer != node.correctClue || !answer.FitsSlot(this, slot))
+                    return false;
+
+                slot++;
+            }
+
+            return slot > 0 && slot == answers.Count;
+        }
     }
 }

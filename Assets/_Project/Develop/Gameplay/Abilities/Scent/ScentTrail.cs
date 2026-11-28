@@ -4,7 +4,6 @@ using _Project.Develop.Gameplay.Tea;
 using MessagePipe;
 using UnityEngine;
 using VContainer;
-using VContainer.Unity;
 
 namespace _Project.Develop.Gameplay.Abilities.Scent
 {
@@ -30,7 +29,8 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
         private Mesh _mesh;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _properties;
-        private bool _isVisible;
+        private bool _smellActive;
+        private bool ShouldRender => _smellActive && _player != null && IsWithinRange();
         private IBufferedSubscriber<SmellVisibilityChanged> _smell;
         private NextDayBuffService _buffService;
         private PlayerAbility _player;
@@ -48,8 +48,15 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
                 return;
             }
 
-            _renderer.enabled = _isVisible;
+            _renderer.enabled = _smellActive;
 
+            _mesh = CreateRibbonMesh();
+            filter.sharedMesh = _mesh;
+            _properties = new MaterialPropertyBlock();
+        }
+
+        private static Mesh CreateRibbonMesh()
+        {
             var vertices = new Vector3[(Segments + 1) * 2];
             var uv = new Vector2[vertices.Length];
             var triangles = new int[Segments * 6];
@@ -73,23 +80,24 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
                 triangles[triangle + 5] = vertex + 3;
             }
 
-            _mesh = new Mesh { name = "Scent Ribbon", vertices = vertices, uv = uv, triangles = triangles };
-            filter.sharedMesh = _mesh;
-            _properties = new MaterialPropertyBlock();
+            return new Mesh { name = "Scent Ribbon", vertices = vertices, uv = uv, triangles = triangles };
         }
 
         private void LateUpdate()
         {
-            bool withinRange = _player != null && IsWithinRange();
-            if (_renderer != null)
-                _renderer.enabled = _isVisible && withinRange;
-
-            if (!_isVisible || !withinRange)
+            _renderer.enabled = ShouldRender;
+            if (!_renderer.enabled)
                 return;
 
             var startPosition = transform.InverseTransformPoint(start.position);
             var endPosition = transform.InverseTransformPoint(end.position);
 
+            ApplyScentMaterial(startPosition, endPosition);
+            _mesh.bounds = CalculateRibbonBounds(startPosition, endPosition);
+        }
+
+        private void ApplyScentMaterial(Vector3 startPosition, Vector3 endPosition)
+        {
             _properties.SetVector(StartId, startPosition);
             _properties.SetVector(EndId, endPosition);
             _properties.SetColor(ColorId, scent.color);
@@ -100,22 +108,28 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
             _properties.SetFloat(WidthId, scent.ribbonWidth);
             _properties.SetFloat(IntensityId, scent.intensity);
             _renderer.SetPropertyBlock(_properties);
+        }
 
+        private Bounds CalculateRibbonBounds(Vector3 startPosition, Vector3 endPosition)
+        {
             var bounds = new Bounds((startPosition + endPosition) * 0.5f, Vector3.zero);
             bounds.Encapsulate(startPosition);
             bounds.Encapsulate(endPosition);
             var padding = Vector3.Distance(startPosition, endPosition) * 0.12f
                           + scent.waveAmplitude + scent.ribbonWidth;
             bounds.Expand(new Vector3(padding * 2f, padding * 2f, 0.1f));
-            _mesh.bounds = bounds;
+            return bounds;
+        }
+
+        [Inject]
+        private void Construct(IBufferedSubscriber<SmellVisibilityChanged> smell, NextDayBuffService buffs)
+        {
+            _smell = smell;
+            _buffService = buffs;
         }
 
         private void Start()
         {
-            // Scene-placed trails resolve their own scope once. The buffered event covers late enables.
-            var scope = GetComponentInParent<LifetimeScope>() ?? LifetimeScope.Find<LifetimeScope>(gameObject.scene);
-            _smell = scope.Container.Resolve<IBufferedSubscriber<SmellVisibilityChanged>>();
-            _buffService = scope.Container.Resolve<NextDayBuffService>();
             _player = FindAnyObjectByType<PlayerAbility>();
             Subscribe();
         }
@@ -133,33 +147,32 @@ namespace _Project.Develop.Gameplay.Abilities.Scent
                 closestPoint = from + segment * projection;
             }
 
-            float effectiveRadius = detectionRadius
-                                    * (_buffService.ThymeActiveThisDay ? NextDayBuffService.AbilityRadiusMultiplier : 1f);
+            float effectiveRadius = _buffService.AbilityRadius(detectionRadius);
             return ((Vector2)_player.transform.position - closestPoint).sqrMagnitude
                    <= effectiveRadius * effectiveRadius;
         }
 
         private void OnEnable()
         {
-            if (_smell != null) Subscribe();
+            if (_player != null) Subscribe();
         }
 
         private void Subscribe() =>
-            _subscription = _smell.Subscribe(message => SetVisible(message.IsActive));
+            _subscription = _smell.Subscribe(message => SetSmellActive(message.IsActive));
 
         private void OnDisable()
         {
             _subscription?.Dispose();
             _subscription = null;
-            SetVisible(false);
+            SetSmellActive(false);
         }
 
-        private void SetVisible(bool isVisible)
+        private void SetSmellActive(bool active)
         {
-            _isVisible = isVisible;
+            _smellActive = active;
 
             if (_renderer != null)
-                _renderer.enabled = isVisible && _player != null && IsWithinRange();
+                _renderer.enabled = ShouldRender;
         }
 
         private void OnDestroy()

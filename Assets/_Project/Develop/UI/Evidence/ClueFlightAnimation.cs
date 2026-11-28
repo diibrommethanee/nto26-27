@@ -34,8 +34,8 @@ namespace _Project.Develop.UI.Evidence
             var targetCanvas = _notebookButton.GetComponentInParent<Canvas>().rootCanvas;
             var canvasRect = (RectTransform)targetCanvas.transform;
             var sourceCanvas = source.canvas.rootCanvas;
-            var sourceCamera = sourceCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : sourceCanvas.worldCamera;
-            var targetCamera = targetCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : targetCanvas.worldCamera;
+            var sourceCamera = EventCamera(sourceCanvas);
+            var targetCamera = EventCamera(targetCanvas);
             var jobs = new List<UniTask>();
             var info = source.textInfo;
             for (var i = 0; i < info.linkCount; i++)
@@ -44,20 +44,9 @@ namespace _Project.Develop.UI.Evidence
                 if (!link.GetLinkID().StartsWith(EvidenceView.DialogueClueLinkPrefix, StringComparison.Ordinal))
                     continue;
 
-                var bounds = new Bounds();
-                var hasGlyph = false;
-                for (var j = link.linkTextfirstCharacterIndex;
-                     j < link.linkTextfirstCharacterIndex + link.linkTextLength && j < info.characterCount; j++)
-                {
-                    var glyph = info.characterInfo[j];
-                    if (!glyph.isVisible) continue;
-                    if (!hasGlyph) bounds = new Bounds(glyph.bottomLeft, Vector3.zero);
-                    bounds.Encapsulate(glyph.bottomLeft);
-                    bounds.Encapsulate(glyph.topRight);
-                    hasGlyph = true;
-                }
+                if (!TryGetVisibleBounds(info, link, out var bounds))
+                    continue;
 
-                if (!hasGlyph) continue;
                 var screen = RectTransformUtility.WorldToScreenPoint(sourceCamera,
                     source.rectTransform.TransformPoint(bounds.center));
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, targetCamera,
@@ -67,6 +56,26 @@ namespace _Project.Develop.UI.Evidence
 
             return UniTask.WhenAll(jobs);
         }
+
+        private static bool TryGetVisibleBounds(TMP_TextInfo info, TMP_LinkInfo link, out Bounds bounds)
+        {
+            bounds = new Bounds();
+            var hasGlyph = false;
+            for (var j = link.linkTextfirstCharacterIndex;
+                 j < link.linkTextfirstCharacterIndex + link.linkTextLength && j < info.characterCount; j++)
+            {
+                var glyph = info.characterInfo[j];
+                if (!glyph.isVisible) continue;
+                if (!hasGlyph) bounds = new Bounds(glyph.bottomLeft, Vector3.zero);
+                bounds.Encapsulate(glyph.bottomLeft);
+                bounds.Encapsulate(glyph.topRight);
+                hasGlyph = true;
+            }
+            return hasGlyph;
+        }
+
+        private static Camera EventCamera(Canvas canvas) =>
+            canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
         private async UniTask FlyPhraseAsync(string phrase, TMP_Text source, RectTransform canvas, Vector2 position)
         {
@@ -107,7 +116,7 @@ namespace _Project.Develop.UI.Evidence
                 return;
 
             var screenPosition = worldCamera.WorldToScreenPoint(worldPosition);
-            var eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            var eventCamera = EventCamera(canvas);
             if (screenPosition.z <= 0f || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     flightParent, screenPosition, eventCamera, out var startPosition))
                 return;

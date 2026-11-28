@@ -1,6 +1,8 @@
 using _Project.Develop.Data;
 using _Project.Develop.Data.Tea;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace _Project.Develop.Gameplay.Tea
 {
@@ -12,65 +14,42 @@ namespace _Project.Develop.Gameplay.Tea
         public const float MovementSpeedMultiplier = 1.15f;
         public const float AbilityRadiusMultiplier = 1.2f;
 
-        private readonly List<TeaIngredientType> _pendingIngredients = new();
+        private TeaIngredientType _pendingIngredient;
 
-        // Player buffs (applied on next day start)
         [Save] public bool MintActiveThisDay { get; private set; }
         [Save] public bool LemonBalmActiveThisDay { get; private set; }
         [Save] public bool ThymeActiveThisDay { get; private set; }
 
         [Save] private TeaIngredientType[] SavedIngredients
         {
-            get => _pendingIngredients.ToArray();
+            get => HasPendingIngredients ? new[] { _pendingIngredient } : Array.Empty<TeaIngredientType>();
             set => SetPendingIngredients(value);
         }
 
-        public bool HasPendingIngredients => _pendingIngredients.Count > 0;
+        public float AbilityRadius(float baseRadius) =>
+            ThymeActiveThisDay ? baseRadius * AbilityRadiusMultiplier : baseRadius;
 
-        public IReadOnlyList<TeaIngredientType> PendingIngredients => _pendingIngredients;
+        public float MovementSpeed(float baseSpeed) =>
+            LemonBalmActiveThisDay ? baseSpeed * MovementSpeedMultiplier : baseSpeed;
+
+        public bool HasPendingIngredients => _pendingIngredient != TeaIngredientType.None;
+
+        public IReadOnlyList<TeaIngredientType> PendingIngredients => SavedIngredients;
 
         [Save] public int? DialoguePointCostOverride { get; private set; }
 
         public void SetPendingIngredients(IReadOnlyList<TeaIngredientType> ingredients)
         {
-            _pendingIngredients.Clear();
-            if (ingredients == null)
-                return;
-
-            for (int i = 0; i < ingredients.Count; i++)
-            {
-                var ingredient = ingredients[i];
-                if (ingredient == TeaIngredientType.None)
-                    continue;
-
-                _pendingIngredients.Add(ingredient);
-                break;
-            }
+            _pendingIngredient = ingredients?.FirstOrDefault(ingredient => ingredient != TeaIngredientType.None)
+                ?? TeaIngredientType.None;
         }
 
         public void ApplyPendingForNewDay()
         {
-            MintActiveThisDay = false;
-            LemonBalmActiveThisDay = false;
-            ThymeActiveThisDay = false;
-
-            for (int i = 0; i < _pendingIngredients.Count; i++)
-            {
-                switch (_pendingIngredients[i])
-                {
-                    case TeaIngredientType.Mint:
-                        MintActiveThisDay = true;
-                        break;
-                    case TeaIngredientType.LemonBalm:
-                        LemonBalmActiveThisDay = true;
-                        break;
-                    case TeaIngredientType.Thyme:
-                        ThymeActiveThisDay = true;
-                        break;
-                }
-            }
-
-            _pendingIngredients.Clear();
+            MintActiveThisDay = _pendingIngredient == TeaIngredientType.Mint;
+            LemonBalmActiveThisDay = _pendingIngredient == TeaIngredientType.LemonBalm;
+            ThymeActiveThisDay = _pendingIngredient == TeaIngredientType.Thyme;
+            _pendingIngredient = TeaIngredientType.None;
         }
 
         public void SetDialoguePointCostOverride(int? costMinutes)

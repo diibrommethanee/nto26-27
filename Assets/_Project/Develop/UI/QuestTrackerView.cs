@@ -101,7 +101,7 @@ namespace _Project.Develop.UI
             {
                 _zoomFade.Stop();
                 _group.alpha = 0f;
-                _group.interactable = _group.blocksRaycasts = false;
+                _group.SetInteractive(false);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace _Project.Develop.UI
             _zoomFade.Stop();
             if (!_currentQuest) return;
 
-            _group.interactable = _group.blocksRaycasts = false;
+            _group.SetInteractive(false);
             var visible = !message.IsActive;
             _zoomFade = Tween.Alpha(_group, visible ? 1f : 0f, visible ? 0.28f : 0.18f,
                 Ease.OutCubic, useUnscaledTime: true);
@@ -173,7 +173,7 @@ namespace _Project.Develop.UI
         private void ShowTracker()
         {
             _group.alpha = 1f;
-            _group.interactable = _group.blocksRaycasts = true;
+            _group.SetInteractive(true);
         }
 
         private void OnDestroy()

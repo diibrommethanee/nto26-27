@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using _Project.Develop.Data;
+using _Project.Develop.Gameplay.Npc;
 
 namespace _Project.Develop.Gameplay.Timeline
 {
@@ -8,8 +9,11 @@ namespace _Project.Develop.Gameplay.Timeline
         private readonly DayService _day;
         private readonly ICheckpointService _checkpoints;
 
-        public NextDayTransition(DayService day, ICheckpointService checkpoints)
+        private readonly NpcStates _npcs;
+
+        public NextDayTransition(DayService day, ICheckpointService checkpoints, NpcStates npcs)
         {
+            _npcs = npcs;
             _day = day;
             _checkpoints = checkpoints;
         }
@@ -17,6 +21,7 @@ namespace _Project.Develop.Gameplay.Timeline
         public async Task<bool> StartAsync()
         {
             if (!_day.TryStartNextDay()) return false;
+            _npcs.StartNewDay();
             await _checkpoints.SaveAsync();
             return true;
         }

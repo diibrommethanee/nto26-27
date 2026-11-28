@@ -34,16 +34,24 @@ namespace _Project.Develop.Gameplay.Camera
             environmentCamera.SetStrength(blend, player, npc);
             foregroundCamera.SetStrength(blend, player, npc);
             if (npc)
-            {
-                Vector2 a = player.position;
-                Vector2 b = npc.position;
-                center = Vector2.Lerp(a, b, 0.4f);
-                size = Mathf.Min(zoom, Mathf.Max(zoom * zoomRatio, Mathf.Abs(a.y - b.y) * 0.6f + bubbleMargin,
-                    (Mathf.Abs(a.x - b.x) * 0.6f + bubbleMargin) / aspect));
-            }
+                FrameSpeakers(aspect, zoom);
+
             var target = new Vector3(center.x - followPosition.x, center.y - followPosition.y, offset.z);
             offset = Vector3.Lerp(offset, target, blend);
             zoom = Mathf.Lerp(zoom, size, blend);
+        }
+
+        private void FrameSpeakers(float aspect, float gameplayZoom)
+        {
+            Vector2 playerPosition = player.position;
+            Vector2 npcPosition = npc.position;
+            center = Vector2.Lerp(playerPosition, npcPosition, 0.4f);
+
+            var distance = npcPosition - playerPosition;
+            var verticalRoom = Mathf.Abs(distance.y) * 0.6f + bubbleMargin;
+            var horizontalRoom = (Mathf.Abs(distance.x) * 0.6f + bubbleMargin) / aspect;
+            var requiredSize = Mathf.Max(verticalRoom, horizontalRoom);
+            size = Mathf.Clamp(requiredSize, gameplayZoom * zoomRatio, gameplayZoom);
         }
     }
 }

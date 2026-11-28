@@ -17,8 +17,6 @@ namespace _Project.Develop.Gameplay.Timeline
     public class DayService : _Project.Develop.Data.ISavable, _Project.Develop.Data.IAfterRestore, IInitializable, IDisposable
     {
         private readonly DaySettings _settings;
-        public int DialogueCostMinutes => _buffService.DialoguePointCostOverride ?? _settings.dialogueCostMinutes;
-        public int AbilityCostMinutes => _settings.abilityCostMinutes;
 
         private readonly ISubscriber<ForceDayPhase> _forcePhase;
         private readonly IBufferedPublisher<DayPhaseChanged> _phaseChanged;
@@ -52,8 +50,8 @@ namespace _Project.Develop.Gameplay.Timeline
 
         private void OnForcePhase(ForceDayPhase message)
         {
-            if ((message.Phase is DayPhase.Daytime or DayPhase.Evening) && message.Phase > Phase)
-                SetPhase(message.Phase);
+            if (message.Phase is DayPhase.Daytime or DayPhase.Evening)
+                AdvanceTo(message.Phase);
         }
 
         [_Project.Develop.Data.Save] public int DayNumber { get; private set; } = 1;
@@ -62,19 +60,33 @@ namespace _Project.Develop.Gameplay.Timeline
 
         public void AfterRestore() => _phaseChanged.Publish(new DayPhaseChanged(Phase));
 
-        public bool TrySpendMinutes(int minutes)
+        public bool TrySpendDialogueTime() =>
+            TrySpendMinutes(_buffService.DialoguePointCostOverride ?? _settings.dialogueCostMinutes);
+
+        public bool TrySpendAbilityTime() => TrySpendMinutes(_settings.abilityCostMinutes);
+
+        private bool TrySpendMinutes(int minutes)
         {
             if (minutes <= 0 || minutes > RemainingMinutes || Phase == DayPhase.Ending)
                 return false;
 
             RemainingMinutes -= minutes;
-            var spentMinutes = _settings.startingMinutes - RemainingMinutes;
-            if (spentMinutes >= _settings.minutesPerPhase * 2 && Phase < DayPhase.Evening)
-                SetPhase(DayPhase.Evening);
-            else if (spentMinutes >= _settings.minutesPerPhase && Phase < DayPhase.Daytime)
-                SetPhase(DayPhase.Daytime);
-
+            UpdatePhaseFromTimeSpent();
             return true;
+        }
+
+        private void UpdatePhaseFromTimeSpent()
+        {
+            var spentMinutes = _settings.startingMinutes - RemainingMinutes;
+            if (spentMinutes >= 2 * _settings.minutesPerPhase)
+                AdvanceTo(DayPhase.Evening);
+            else if (spentMinutes >= _settings.minutesPerPhase)
+                AdvanceTo(DayPhase.Daytime);
+        }
+
+        private void AdvanceTo(DayPhase phase)
+        {
+            if (phase > Phase) SetPhase(phase);
         }
 
         public bool TryAdvancePhase()
