@@ -124,7 +124,7 @@ namespace _Project.Develop.Gameplay.Player.Abilities
             {
                 if (!hit.collider) continue;
                 var clue = hit.collider.GetComponentInParent<IWorldClue>();
-                if (clue != null && !clue.IsCollected && clue.CanCollect(ActiveSkill))
+                if (clue != null && clue.CanCollect(ActiveSkill))
                     return true;
             }
 

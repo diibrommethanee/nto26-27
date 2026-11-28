@@ -196,8 +196,7 @@ namespace _Project.Develop.UI.Dialogue
             worldCanvas.gameObject.SetActive(true);
             if (worldOfferTeaButton != null)
             {
-                worldOfferTeaButton.gameObject.SetActive(_interaction.Npc != null && !isPlayerSpeaking
-                    && (_dayEndingCutscene == null || _dayEndingCutscene.CanServeTea(_interaction.Npc)));
+                worldOfferTeaButton.gameObject.SetActive(!isPlayerSpeaking && CanOfferTea);
                 PositionWorldOfferTeaButton();
             }
             worldCharacter.text = speakerName;
@@ -314,22 +313,11 @@ namespace _Project.Develop.UI.Dialogue
             buttonRect.anchoredPosition = new Vector2(xOffset, worldBlob.anchoredPosition.y + blobHeight + 10f);
         }
 
+        private bool CanOfferTea => _dayEndingCutscene != null && _dayEndingCutscene.CanServeTea(_interaction.Npc);
+
         private void OnOfferTeaClicked()
         {
-            var npc = _interaction.Npc;
-            if (npc == null)
-                return;
-
-            if (_dayEndingCutscene == null)
-            {
-                Debug.LogError("Cannot offer tea: DayEndingCutscene was not found.");
-                return;
-            }
-
-            if (!_dayEndingCutscene.CanServeTea(npc))
-                return;
-
-            _dayEndingCutscene.BeginNpcTea(npc);
+            if (CanOfferTea) _dayEndingCutscene.BeginNpcTea(_interaction.Npc);
         }
 
         private static string TagCluePhrases(string text)
@@ -373,7 +361,7 @@ namespace _Project.Develop.UI.Dialogue
                 button.gameObject.SetActive(true);
             }
 
-            if (_interaction.Npc != null && (_dayEndingCutscene == null || _dayEndingCutscene.CanServeTea(_interaction.Npc)))
+            if (CanOfferTea)
             {
                 var offerTeaButton = Instantiate(_choiceTemplate, choicesContainer);
                 offerTeaButton.GetComponentInChildren<TMP_Text>(true).text = "Предложить чай";

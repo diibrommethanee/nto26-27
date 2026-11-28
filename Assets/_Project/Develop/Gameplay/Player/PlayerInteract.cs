@@ -121,7 +121,7 @@ namespace _Project.Develop.Gameplay.Player
                     continue;
 
                 var pickup = hit.collider.GetComponentInParent<WorldClue>();
-                if (_dayService.RemainingMinutes > 0 && pickup != null && pickup.IsPickup && !pickup.IsCollected && pickup.CanCollect(_ability.ActiveSkill))
+                if (_dayService.RemainingMinutes > 0 && pickup != null && pickup.IsPickup && pickup.CanCollect(_ability.ActiveSkill))
                 {
                     _currentPickup = pickup;
                     return;

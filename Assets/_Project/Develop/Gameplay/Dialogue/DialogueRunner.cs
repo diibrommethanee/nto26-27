@@ -14,8 +14,16 @@ namespace _Project.Develop.Gameplay.Dialogue
 
         private readonly Dictionary<Hash128, NodeData> _nodes = new();
         private readonly Dictionary<Type, IDialogueNodeHandler> _handlers = new();
-        private readonly Dictionary<NpcData, (DialogueDefinition Dialogue, Hash128 NodeId,
-            DialogueNodeData PreviousDialogue, bool TalkedPublished, bool ReturnPending)> _suspended = new();
+        private class SuspendedDialogue
+        {
+            public DialogueDefinition Dialogue;
+            public Hash128 ResumeNode;
+            public DialogueNodeData PreviousDialogue;
+            public bool TalkedPublished;
+            public bool ReturnPending;
+        }
+
+        private readonly Dictionary<NpcData, SuspendedDialogue> _suspended = new();
         private readonly NpcStates _states;
         private readonly IPublisher<DialogueEnded> _endedPublisher;
         private readonly IPublisher<NpcTalkedEvent> _talkedPublisher;
@@ -28,7 +36,6 @@ namespace _Project.Develop.Gameplay.Dialogue
 
         private Hash128 _nextNodeId;
         private NodeData _waitingNode;
-        private bool _waitingForContinue;
         private bool _processing;
 
         public NpcData Interlocutor => _npc;
@@ -75,9 +82,9 @@ namespace _Project.Develop.Gameplay.Dialogue
                 return;
             }
 
-            var hasCheckpoint = npc != null && _suspended.TryGetValue(npc, out _);
-            var checkpoint = hasCheckpoint ? _suspended[npc] : default;
-            var sameDialogue = hasCheckpoint && checkpoint.Dialogue == dialogue;
+            SuspendedDialogue checkpoint = null;
+            if (npc != null) _suspended.TryGetValue(npc, out checkpoint);
+            var sameDialogue = checkpoint != null && checkpoint.Dialogue == dialogue;
             var returnDialogue = dialogue.returnDialogue;
             var playReturn = sameDialogue && checkpoint.ReturnPending &&
                 returnDialogue != null && returnDialogue != dialogue;
@@ -106,18 +113,17 @@ namespace _Project.Develop.Gameplay.Dialogue
             _npc = npc;
             _playingReturnDialogue = playReturn;
             _talkedPublished = playReturn;
-            if (hasCheckpoint && !playReturn)
+            if (checkpoint != null && !playReturn)
                 _suspended.Remove(npc);
 
             if (!playReturn && sameDialogue && dialogue.resumeAfterExit &&
-                _nodes.TryGetValue(checkpoint.NodeId, out var resumeNode) && resumeNode is not EndNodeData)
+                _nodes.TryGetValue(checkpoint.ResumeNode, out var resumeNode) && resumeNode is not EndNodeData)
             {
-                _nextNodeId = checkpoint.NodeId;
+                _nextNodeId = checkpoint.ResumeNode;
                 _talkedPublished = checkpoint.TalkedPublished;
                 if (_handlers[typeof(DialogueNodeData)] is DialogueNodeHandler dialogueHandler)
                     dialogueHandler.PreviousDialogue = checkpoint.PreviousDialogue;
             }
-            _waitingForContinue = false;
             IsRunning = true;
 
             ProcessNodes();
@@ -125,18 +131,16 @@ namespace _Project.Develop.Gameplay.Dialogue
 
         public void Continue()
         {
-            if (!IsRunning || !_waitingForContinue || _processing)
+            if (!IsRunning || _waitingNode == null || _processing)
                 return;
 
-            _waitingForContinue = false;
             var completedNode = _waitingNode;
             _waitingNode = null;
 
             _processing = true;
             try
             {
-                if (IsRunning && completedNode != null &&
-                    _handlers[completedNode.GetType()] is IDialogueContinuationHandler handler)
+                if (_handlers[completedNode.GetType()] is IDialogueContinuationHandler handler)
                 {
                     handler.Complete(completedNode);
                 }
@@ -173,7 +177,7 @@ namespace _Project.Develop.Gameplay.Dialogue
             if (!IsRunning || _processing)
                 return;
 
-            if (_waitingForContinue && _nodes.TryGetValue(_nextNodeId, out var next) && next is EndNodeData)
+            if (_waitingNode != null && _nodes.TryGetValue(_nextNodeId, out var next) && next is EndNodeData)
             {
                 Continue();
                 return;
@@ -183,8 +187,14 @@ namespace _Project.Develop.Gameplay.Dialogue
                 (_dialogue.resumeAfterExit || _dialogue.returnDialogue != null))
             {
                 var previousDialogue = (_handlers[typeof(DialogueNodeData)] as DialogueNodeHandler)?.PreviousDialogue;
-                _suspended[_npc] = (_dialogue, _waitingNode?.id ?? _nextNodeId, previousDialogue, _talkedPublished,
-                    _dialogue.returnDialogue != null);
+                _suspended[_npc] = new SuspendedDialogue
+                {
+                    Dialogue = _dialogue,
+                    ResumeNode = _waitingNode?.id ?? _nextNodeId,
+                    PreviousDialogue = previousDialogue,
+                    TalkedPublished = _talkedPublished,
+                    ReturnPending = _dialogue.returnDialogue != null
+                };
             }
 
             Stop();
@@ -196,7 +206,6 @@ namespace _Project.Develop.Gameplay.Dialogue
                 return;
 
             IsRunning = false;
-            _waitingForContinue = false;
             _waitingNode = null;
             _choices = null;
             _nextNodeId = default;
@@ -220,17 +229,10 @@ namespace _Project.Develop.Gameplay.Dialogue
                         return;
 
                     if (!_nodes.TryGetValue(_nextNodeId, out var node))
-                    {
-                        var missingNodeId = _nextNodeId;
-                        Stop();
-                        throw new InvalidOperationException($"Dialogue node '{missingNodeId}' was not found.");
-                    }
+                        throw new InvalidOperationException($"Dialogue node '{_nextNodeId}' was not found.");
 
                     if (!_handlers.TryGetValue(node.GetType(), out var handler))
-                    {
-                        Stop();
                         throw new InvalidOperationException($"No dialogue handler registered for {node.GetType().Name}.");
-                    }
 
                     var step = handler.Handle(node);
                     
@@ -242,14 +244,12 @@ namespace _Project.Develop.Gameplay.Dialogue
                         case DialogueStepKind.Wait:
                             _waitingNode = node;
                             _nextNodeId = step.nextNodeId;
-                            _waitingForContinue = true;
                             if (step.publishTalked)
                                 PublishTalked();
                             return;
 
                         case DialogueStepKind.Choose:
                             _choices = step.choices;
-                            _waitingForContinue = false;
                             _waitingNode = null;
                             _choicesPublisher.Publish(new DialogueChoicesShown(_choices));
                             return;
@@ -259,28 +259,14 @@ namespace _Project.Develop.Gameplay.Dialogue
                             break;
 
                         case DialogueStepKind.End:
-                            if (_npc != null && step.setDialogue != null)
-                            {
-                                _states[_npc].Dialogue = step.setDialogue;
-                                _suspended.Remove(_npc);
-                            }
-                            else if (_playingReturnDialogue)
-                            {
-                                var checkpoint = _suspended[_npc];
-                                checkpoint.ReturnPending = false;
-                                _suspended[_npc] = checkpoint;
-                            }
-                            PublishTalked();
-                            Stop();
+                            FinishDialogue(step.setDialogue);
                             return;
 
                         default:
-                            Stop();
                             throw new InvalidOperationException($"Unsupported dialogue step: {step.kind}.");
                     }
                 }
 
-                Stop();
                 throw new InvalidOperationException("Dialogue exceeded the automatic step limit. Check for a loop.");
             }
             catch
@@ -292,6 +278,22 @@ namespace _Project.Develop.Gameplay.Dialogue
             {
                 _processing = false;
             }
+        }
+
+        private void FinishDialogue(DialogueDefinition nextDialogue)
+        {
+            if (_npc != null && nextDialogue != null)
+            {
+                _states[_npc].Dialogue = nextDialogue;
+                _suspended.Remove(_npc);
+            }
+            else if (_playingReturnDialogue)
+            {
+                _suspended[_npc].ReturnPending = false;
+            }
+
+            PublishTalked();
+            Stop();
         }
 
         private void PublishTalked()

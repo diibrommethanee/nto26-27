@@ -168,7 +168,7 @@ namespace _Project.Develop.Gameplay.Player
             foreach (var hit in Physics2D.OverlapAreaAll(_min - padding, _max + padding))
             {
                 var clue = hit != null ? hit.GetComponentInParent<WorldClue>() : null;
-                if (clue == null || clue.IsCollected || clue.IsPickup || !clue.CanCollect(_ability.ActiveSkill))
+                if (clue == null || clue.IsPickup || !clue.CanCollect(_ability.ActiveSkill))
                     continue;
 
                 var position = (Vector2)hit.bounds.center;

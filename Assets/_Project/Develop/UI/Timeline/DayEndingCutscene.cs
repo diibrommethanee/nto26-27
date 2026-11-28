@@ -147,13 +147,12 @@ namespace _Project.Develop.UI.Timeline
 
         public bool CanServeTea(NpcData npc)
         {
-            return _npcTea.CanServe(npc);
+            return npcTeaMiniGame != null && !_ending && !_teaForNpc && _npcTea.CanServe(npc);
         }
 
         public void BeginNpcTea(NpcData npc)
         {
-            var view = GetNpcTeaView();
-            if (npc == null || view == null || _ending || _teaForNpc || !CanServeTea(npc))
+            if (!CanServeTea(npc))
                 return;
 
             _teaForNpc = true;
@@ -167,7 +166,7 @@ namespace _Project.Develop.UI.Timeline
 
             GetNpcTeaStage()?.SetActive(true);
             SetNpcTeaCeremonyGroupActive(true);
-            view.BeginForNpc(npc);
+            npcTeaMiniGame.BeginForNpc(npc);
         }
 
         private void OnStopped(PlayableDirector director)
@@ -195,17 +194,8 @@ namespace _Project.Develop.UI.Timeline
 
             if (_ending) _finished.Publish(new DayEndingCutsceneFinished());
 
-            // Keep tea view visible behind the next-day button; scene reload will clean up.
-
-            // If notebook writer is active, let its finish event show the button; otherwise show now
-            if (notebookWriter != null && notebookWriter.isActiveAndEnabled)
-            {
-                // Keep UI as-is; ShowNewDayButton will be called on writer finish
-            }
-            else
-            {
+            if (notebookWriter == null || !notebookWriter.isActiveAndEnabled)
                 ShowNewDayButtonInternal("Следующий день");
-            }
         }
 
         private void OnNpcTeaCompleted(NpcData npc, IReadOnlyList<TeaIngredientType> ingredients)
@@ -223,7 +213,6 @@ namespace _Project.Develop.UI.Timeline
             HideNpcTeaCanvas();
         }
 
-        private NpcTeaBrewingView GetNpcTeaView() => npcTeaMiniGame;
         private GameObject GetNpcTeaStage() => npcTeaStage != null ? npcTeaStage : teaStage;
         private GameObject GetNpcTeaCeremonyGroup() => npcTeaCeremonyGroup != null ? npcTeaCeremonyGroup : teaCeremonyGroup;
 
@@ -236,7 +225,7 @@ namespace _Project.Develop.UI.Timeline
 
         private void HideNpcTeaCanvas()
         {
-            GetNpcTeaView()?.HideImmediate();
+            npcTeaMiniGame?.HideImmediate();
             SetNpcTeaCeremonyGroupActive(false);
             GetNpcTeaStage()?.SetActive(false);
         }

@@ -37,7 +37,7 @@ namespace _Project.Develop.Gameplay.Camera
         private float _currentZoom;
         private float _zoomVelocity;
         
-        public bool IsZoomMode => _input != null && _input.Actions.Camera.Zoom.enabled;
+        public bool IsZoomMode => _input != null && _input.IsZoomMode;
         public float ScrollPulse { get; private set; }
         public float ScrollDirection { get; private set; }
 
@@ -66,10 +66,10 @@ namespace _Project.Develop.Gameplay.Camera
         
         private void OnCameraPan(InputAction.CallbackContext ctx)
         {
-            CameraPanAsync(ctx).Forget();
+            CameraPanAsync(ctx.ReadValue<Vector2>().y).Forget();
         }
 
-        private async UniTask CameraPanAsync(InputAction.CallbackContext ctx)
+        private async UniTask CameraPanAsync(float scroll)
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             
@@ -77,16 +77,16 @@ namespace _Project.Develop.Gameplay.Camera
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
             
-            Pulse(ctx.ReadValue<Vector2>().y);
-            _targetPanOffset += ctx.ReadValue<Vector2>().y * settings.panSensitivity;
+            Pulse(scroll);
+            _targetPanOffset += scroll * settings.panSensitivity;
         }
 
         private void OnZoom(InputAction.CallbackContext ctx)
         {
-            ZoomAsync(ctx).Forget();
+            ZoomAsync(ctx.ReadValue<Vector2>().y).Forget();
         }
 
-        private async UniTask ZoomAsync(InputAction.CallbackContext ctx)
+        private async UniTask ZoomAsync(float scroll)
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             
@@ -94,13 +94,13 @@ namespace _Project.Develop.Gameplay.Camera
                 return;
 
             if (!_input.Actions.Camera.Zoom.enabled) return;
-            var nextZoom = Mathf.Clamp(_targetZoom - ctx.ReadValue<Vector2>().y * settings.zoomSensitivity, settings.minZoom, settings.maxZoom);
+            var nextZoom = Mathf.Clamp(_targetZoom - scroll * settings.zoomSensitivity, settings.minZoom, settings.maxZoom);
 
             var mouseX = _camera.ScreenToViewportPoint(Mouse.current.position.ReadValue()).x;
             var horizontalOffset = (mouseX - 0.5f) * 2f;
 
             _targetPanOffset += horizontalOffset * _camera.aspect * (_targetZoom - nextZoom);
-            if (!Mathf.Approximately(_targetZoom, nextZoom)) Pulse(ctx.ReadValue<Vector2>().y);
+            if (!Mathf.Approximately(_targetZoom, nextZoom)) Pulse(scroll);
             _targetZoom = nextZoom;
         }
         

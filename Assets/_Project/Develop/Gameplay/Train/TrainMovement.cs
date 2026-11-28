@@ -48,36 +48,31 @@ namespace _Project.Develop.Gameplay.Train
 
             var progress = Mathf.Clamp01(_elapsed / _duration);
 
+            if (_state == State.Braking)
+                _speed.Value = 1f - Mathf.SmoothStep(0f, 1f, progress);
+            else if (_state == State.Accelerating)
+                _speed.Value = Mathf.SmoothStep(0f, 1f, progress);
+
+            if (progress >= 1f) AdvanceState();
+        }
+
+        private void AdvanceState()
+        {
             switch (_state)
             {
                 case State.Travelling:
-                    if (progress >= 1f)
-                        EnterState(State.Braking, _settings.brakingDuration);
+                    EnterState(State.Braking, _settings.brakingDuration);
                     break;
-                
                 case State.Braking:
-                    _speed.Value = 1f - Mathf.SmoothStep(0f, 1f, progress);
-                    
-                    if (progress >= 1f)
-                    {
-                        EnterState(State.Stopped, _settings.stopDuration);
-                        _stoppedPublisher.Publish(new TrainStopped());
-                    }
+                    EnterState(State.Stopped, _settings.stopDuration);
+                    _stoppedPublisher.Publish(new TrainStopped());
                     break;
-                
                 case State.Stopped:
-                    if (progress >= 1f)
-                    {
-                        EnterState(State.Accelerating, _settings.accelerationDuration);
-                        _departedPublisher.Publish(new TrainDeparted());
-                    }
+                    EnterState(State.Accelerating, _settings.accelerationDuration);
+                    _departedPublisher.Publish(new TrainDeparted());
                     break;
-                
                 case State.Accelerating:
-                    _speed.Value = Mathf.SmoothStep(0f, 1f, progress);
-
-                    if (progress >= 1f)
-                        BeginTravelling();
+                    BeginTravelling();
                     break;
             }
         }
