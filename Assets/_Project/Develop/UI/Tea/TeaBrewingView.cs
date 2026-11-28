@@ -245,7 +245,7 @@ namespace _Project.Develop.UI.Tea
         {
             if (State == TeaBrewingState.ReadyToPour)
                 StartPour();
-            else if (State == TeaBrewingState.WaitingIngredient && _selectedIngredients.Count > 0)
+            else if (CanCompleteBrewing)
                 CompleteBrewing();
         }
 

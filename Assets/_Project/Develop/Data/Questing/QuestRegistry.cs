@@ -6,12 +6,10 @@ namespace _Project.Develop.Data.Questing
 {
     public class QuestRegistry : IQuestRegistry
     {
-        private readonly HashSet<Quest> _quests;
         private readonly Dictionary<Quest, Dictionary<string, int>> _stepIndices;
 
         public QuestRegistry(QuestDatabase database)
         {
-            _quests = new HashSet<Quest>();
             _stepIndices = new Dictionary<Quest, Dictionary<string, int>>();
 
             if (database == null || database.quests == null)
@@ -28,7 +26,7 @@ namespace _Project.Develop.Data.Questing
                     continue;
                 }
 
-                if (!_quests.Add(quest))
+                if (_stepIndices.ContainsKey(quest))
                 {
                     Debug.LogError($"[QuestRegistry] Duplicate quest reference: '{quest.name}'.");
                     continue;
@@ -74,14 +72,12 @@ namespace _Project.Develop.Data.Questing
         }
 
         public bool Contains(Quest quest)
-            => quest != null && _quests.Contains(quest);
+            => quest != null && _stepIndices.ContainsKey(quest);
 
         public bool TryGetStep(Quest quest, string stepId, out QuestStep step)
         {
             step = null;
-            if (string.IsNullOrEmpty(stepId)) return false;
-            if (!Contains(quest)) return false;
-            if (!_stepIndices[quest].TryGetValue(stepId, out var index)) return false;
+            if (!TryGetStepIndex(quest, stepId, out var index)) return false;
             step = quest.steps[index];
             return true;
         }
@@ -106,6 +102,6 @@ namespace _Project.Develop.Data.Questing
             return nextStep != null;
         }
 
-        public IReadOnlyCollection<Quest> AllQuests => _quests;
+        public IReadOnlyCollection<Quest> AllQuests => _stepIndices.Keys;
     }
 }

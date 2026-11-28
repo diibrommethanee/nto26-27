@@ -127,7 +127,7 @@ namespace _Project.Develop.Gameplay.Player
                     return;
 
                 var clue = hit.collider.GetComponentInParent<IWorldClue>();
-                if (clue != null && !clue.IsCollected && clue.CanCollect(_ability.ActiveSkill))
+                if (clue != null && clue.CanCollect(_ability.ActiveSkill))
                     return;
             }
 
@@ -223,21 +223,26 @@ namespace _Project.Develop.Gameplay.Player
             if (!Mathf.Approximately(Velocity.x, 0f))
                 FaceDirection(Velocity.x);
 
-            if (_takingDialogueStep && _pendingNpc && !_agent.pathPending &&
-                (!_agent.hasPath || _agent.remainingDistance <= _agent.stoppingDistance))
+            FinishApproachWhenStopped();
+        }
+
+        private void FinishApproachWhenStopped()
+        {
+            if (!_takingDialogueStep || !_pendingNpc || _agent.pathPending) return;
+            if (_agent.hasPath && _agent.remainingDistance > _agent.stoppingDistance) return;
+
+            var npc = _pendingNpc;
+            _takingDialogueStep = false;
+            if (!npc.GetComponentInChildren<NpcDialogueExit>().Contains(_bodyCollider))
             {
-                var npc = _pendingNpc;
-                _takingDialogueStep = false;
-                if (npc.GetComponentInChildren<NpcDialogueExit>().Contains(_bodyCollider))
-                {
-                    var towardsNpc = npc.transform.position.x - transform.position.x;
-                    if (Mathf.Abs(towardsNpc) > 0.01f)
-                        FaceDirection(towardsNpc);
-                    TryStartNpcDialogue(npc);
-                }
-                else
-                    _pendingNpc = null;
+                _pendingNpc = null;
+                return;
             }
+
+            var towardsNpc = npc.transform.position.x - transform.position.x;
+            if (Mathf.Abs(towardsNpc) > 0.01f)
+                FaceDirection(towardsNpc);
+            TryStartNpcDialogue(npc);
         }
 
         private void FaceDirection(float horizontalDirection)

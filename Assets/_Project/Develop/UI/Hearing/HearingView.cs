@@ -197,8 +197,11 @@ namespace _Project.Develop.UI.Hearing
                 return;
             }
 
-            if (_decoded) return;
+            if (!_decoded) UpdateTuning();
+        }
 
+        private void UpdateTuning()
+        {
             float scroll = _input.Actions.UI.ScrollWheel.ReadValue<Vector2>().y;
             if (scroll != 0f)
             {

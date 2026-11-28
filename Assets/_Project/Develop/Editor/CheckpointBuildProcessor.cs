@@ -37,7 +37,7 @@ public class CheckpointBuildProcessor : IProcessSceneWithReport, IPreprocessBuil
         if (!asset) return;
         var catalog = new SerializedObject(asset);
         var entries = catalog.FindProperty("entries");
-        var keys = new[] { "t:Quest", "t:Clue", "t:Hypothesis" }
+        var keys = new[] { "t:Quest", "t:Clue", "t:Hypothesis", "t:NpcData", "t:DialogueDefinition" }
             .SelectMany(filter => AssetDatabase.FindAssets(filter)).Distinct().OrderBy(key => key).ToArray();
         entries.arraySize = keys.Length;
         for (var i = 0; i < keys.Length; i++)

@@ -15,6 +15,14 @@ namespace _Project.Develop.Gameplay.Quests
             Data = data;
         }
 
+        internal bool TryComplete(QuestEventType eventType, QuestTarget target, int amount)
+        {
+            if (Data.eventType != eventType || Data.target != target) return false;
+
+            AddProgress(amount);
+            return IsCompleted;
+        }
+
         internal void AddProgress(int amount)
         {
             CurrentAmount = Math.Min(CurrentAmount + amount, Data.requiredAmount);

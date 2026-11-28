@@ -20,7 +20,7 @@ namespace _Project.Develop.Gameplay.Evidence
         [SerializeField, Min(0.1f)] private float holdDuration = 1.5f;
         
         private SpriteRenderer _sprite;
-        private Collider2D _сol;
+        private Collider2D _collider;
 
         private MaterialPropertyBlock _propertyBlock;
 
@@ -31,6 +31,8 @@ namespace _Project.Develop.Gameplay.Evidence
 
         public bool CanCollect(SkillType? activeSkill)
         {
+            if (IsCollected) return false;
+
             return requiredSkill switch
             {
                 ClueSkillRequirement.None => true,
@@ -43,7 +45,7 @@ namespace _Project.Develop.Gameplay.Evidence
         private void Awake()
         {
             _sprite = GetComponent<SpriteRenderer>();
-            _сol = GetComponent<Collider2D>();
+            _collider = GetComponent<Collider2D>();
 
             _propertyBlock = new MaterialPropertyBlock();
             SetHoldProgress(0f);
@@ -64,7 +66,7 @@ namespace _Project.Develop.Gameplay.Evidence
             SetHoldProgress(1f);
             IsCollected = true;
             evidenceService.Collect(clue, transform.position, sourceSprite: IsPickup ? _sprite.sprite : null);
-            _сol.enabled = false;
+            _collider.enabled = false;
             if (IsPickup)
                 gameObject.SetActive(false);
         }

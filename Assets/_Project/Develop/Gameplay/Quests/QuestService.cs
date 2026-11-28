@@ -161,18 +161,7 @@ namespace _Project.Develop.Gameplay.Quests
                 var quest = _activeQuests[i];
                 var step = quest.CurrentStep;
 
-                if (step == null)
-                    continue;
-
-                if (step.Data.eventType != eventType)
-                    continue;
-
-                if (step.Data.target != target)
-                    continue;
-
-                step.AddProgress(amount);
-
-                if (!step.IsCompleted)
+                if (step == null || !step.TryComplete(eventType, target, amount))
                     continue;
 
                 _stepCompletedPublisher.Publish(

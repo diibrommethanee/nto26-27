@@ -6,9 +6,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using _Project.Develop.Data;
 using _Project.Develop.Gameplay;
-using _Project.Develop.Gameplay.Evidence;
-using _Project.Develop.Gameplay.Quests;
-using _Project.Develop.Gameplay.Timeline;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -92,37 +89,45 @@ namespace _Project.Develop.Infrastructure.EntryPoints
             var root = JObject.Parse(File.ReadAllText(SavePath));
             if ((int?)root["version"] != 1) throw new InvalidDataException("Unsupported checkpoint version.");
             var participants = Participants();
-            if (root["prefabs"] is JObject prefabs && prefabs.HasValues)
-            {
-                var templates = Resources.LoadAll<GameObject>("")
-                    .Select(template => template.GetComponent<SavableBehaviour>())
-                    .Where(template => template != null).ToDictionary(template => template.SaveId);
-                foreach (var entry in prefabs.Properties())
-                {
-                    if (participants.ContainsKey(entry.Name)) continue;
-                    var template = templates[(string)entry.Value];
-                    var instance = UnityEngine.Object.Instantiate(template);
-                    instance.AssignIdentity(template.SaveId, entry.Name);
-                    participants.Add(entry.Name, instance);
-                }
-            }
+            RestorePrefabs(root["prefabs"] as JObject, participants);
             foreach (var pair in participants)
             {
                 var record = root["records"][pair.Key];
-                if (record == null) continue;
-                foreach (var member in Members(pair.Value.GetType()))
-                {
-                    var token = record[member.Name];
-                    if (token == null) continue;
-                    if (member is FieldInfo field) field.SetValue(pair.Value, token.ToObject(field.FieldType));
-                    else
-                    {
-                        var property = (PropertyInfo)member;
-                        property.SetValue(pair.Value, token.ToObject(property.PropertyType));
-                    }
-                }
+                if (record != null) RestoreMembers(pair.Value, record);
             }
             foreach (var participant in participants.Values.OfType<IAfterRestore>()) participant.AfterRestore();
+        }
+
+        private static void RestorePrefabs(JObject prefabs, Dictionary<string, ISavable> participants)
+        {
+            if (prefabs == null || !prefabs.HasValues) return;
+
+            var templates = Resources.LoadAll<GameObject>("")
+                .Select(template => template.GetComponent<SavableBehaviour>())
+                .Where(template => template != null).ToDictionary(template => template.SaveId);
+            foreach (var entry in prefabs.Properties())
+            {
+                if (participants.ContainsKey(entry.Name)) continue;
+                var template = templates[(string)entry.Value];
+                var instance = UnityEngine.Object.Instantiate(template);
+                instance.AssignIdentity(template.SaveId, entry.Name);
+                participants.Add(entry.Name, instance);
+            }
+        }
+
+        private static void RestoreMembers(ISavable participant, JToken record)
+        {
+            foreach (var member in Members(participant.GetType()))
+            {
+                var token = record[member.Name];
+                if (token == null) continue;
+                if (member is FieldInfo field) field.SetValue(participant, token.ToObject(field.FieldType));
+                else
+                {
+                    var property = (PropertyInfo)member;
+                    property.SetValue(participant, token.ToObject(property.PropertyType));
+                }
+            }
         }
     }
 }

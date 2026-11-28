@@ -9495,25 +9495,7 @@ MonoBehaviour:
   parentReference:
     TypeName: _Project.Develop.Infrastructure.DI.RootScope
   autoRun: 1
-  autoInjectGameObjects:
-  - {fileID: 1240338796}
-  - {fileID: 691226956}
-  - {fileID: 392308992}
-  - {fileID: 404348659}
-  - {fileID: 2113724529}
-  - {fileID: 1904803434}
-  - {fileID: 1628665870}
-  - {fileID: 5809622237658280620}
-  - {fileID: 1860401910}
-  - {fileID: 771926395}
-  - {fileID: 1450411817}
-  - {fileID: 1772647685}
-  - {fileID: 1693272832}
-  - {fileID: 704522496}
-  - {fileID: 435386117}
-  - {fileID: 2389051271}
-  - {fileID: 1596279880}
-  - {fileID: 1898567304}
+  autoInjectGameObjects: []
   daySettings: {fileID: 11400000, guid: d998444b8acd48c1bd87279b2153b3be, type: 2}
   npcTeaRecipes: {fileID: 11400000, guid: 726d351295b44bfd97e751a14f68226c, type: 2}
   trainSettings: {fileID: 11400000, guid: 5aadb8baa12021b438f7fa3f06d47ad8, type: 2}
