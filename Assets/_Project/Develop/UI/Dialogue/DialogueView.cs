@@ -36,7 +36,6 @@ namespace _Project.Develop.UI.Dialogue
         [SerializeField] private TMP_Text worldContent;
         [SerializeField] private Button worldContinue;
         [SerializeField] private RectTransform worldBlob;
-        [SerializeField] private Button worldOfferTeaButton;
         [SerializeField] private NpcData playerSpeaker;
         [SerializeField] private Transform playerDialogueAnchor;
 
@@ -120,8 +119,6 @@ namespace _Project.Develop.UI.Dialogue
                 if (!worldCanvas.TryGetComponent(out _worldGroup))
                     _worldGroup = worldCanvas.gameObject.AddComponent<CanvasGroup>();
                 worldContinue.onClick.AddListener(OnContinueClicked);
-                if (worldOfferTeaButton != null)
-                    worldOfferTeaButton.onClick.AddListener(OnOfferTeaClicked);
                 HideWorldLine();
             }
             else
@@ -194,18 +191,11 @@ namespace _Project.Develop.UI.Dialogue
             worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0f);
             worldBlob.anchoredPosition = Vector2.zero;
             worldCanvas.gameObject.SetActive(true);
-            if (worldOfferTeaButton != null)
-            {
-                worldOfferTeaButton.gameObject.SetActive(!isPlayerSpeaking && CanOfferTea);
-                PositionWorldOfferTeaButton();
-            }
             worldCharacter.text = speakerName;
             worldCharacter.gameObject.SetActive(!string.IsNullOrEmpty(speakerName));
             worldBlob.sizeDelta = new Vector2(
                 Mathf.Clamp(worldContent.GetPreferredValues(text).x + 64f, 270f, 520f),
                 MinWorldBlobHeight);
-
-            PositionWorldOfferTeaButton();
 
             _blobEntrance.Stop();
             worldBlob.localScale = Vector3.one * 0.94f;
@@ -240,10 +230,7 @@ namespace _Project.Develop.UI.Dialogue
             var textHeight = textInfo.lineInfo[0].ascender - textInfo.lineInfo[lineIndex].descender;
             var height = Mathf.Max(MinWorldBlobHeight, textHeight + 80f);
             if (!Mathf.Approximately(worldBlob.rect.height, height))
-                    {
                 worldBlob.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
-                        PositionWorldOfferTeaButton();
-                    }
         }
 
         private Transform FindAnchor(NpcData speaker)
@@ -295,22 +282,7 @@ namespace _Project.Develop.UI.Dialogue
             if (!worldCanvas) return;
             _blobEntrance.Stop();
             if (_worldWriter.IsWriting) _worldWriter.StopWriter();
-            if (worldOfferTeaButton != null)
-                worldOfferTeaButton.gameObject.SetActive(false);
             worldCanvas.gameObject.SetActive(false);
-        }
-
-
-        private void PositionWorldOfferTeaButton()
-        {
-            if (worldOfferTeaButton == null || !worldBlob)
-                return;
-
-            var buttonRect = worldOfferTeaButton.GetComponent<RectTransform>();
-            var blobHeight = worldBlob.rect.height;
-            var opensRight = worldBlob.pivot.x <= 0.01f;
-            var xOffset = opensRight ? worldBlob.rect.width * 0.5f - 10f : -(worldBlob.rect.width * 0.5f - 10f);
-            buttonRect.anchoredPosition = new Vector2(xOffset, worldBlob.anchoredPosition.y + blobHeight + 10f);
         }
 
         private bool CanOfferTea => _dayEndingCutscene != null && _dayEndingCutscene.CanServeTea(_interaction.Npc);
@@ -442,8 +414,6 @@ namespace _Project.Develop.UI.Dialogue
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
             if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);
-            if (worldOfferTeaButton != null)
-                worldOfferTeaButton.onClick.RemoveListener(OnOfferTeaClicked);
             if (_worldWriter)
             {
                 _worldWriter.OnCharacterShown.RemoveListener(OnWorldCharacterShown);
