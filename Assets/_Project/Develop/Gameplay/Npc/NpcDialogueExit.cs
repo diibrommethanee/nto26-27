@@ -9,12 +9,17 @@ namespace _Project.Develop.Gameplay.NPC
         private NpcInteract _npc;
         private BoxCollider2D _zone;
 
-        internal Bounds Bounds => _zone.bounds;
-
         private void Awake()
         {
             _npc = GetComponentInParent<NpcInteract>();
             _zone = GetComponent<BoxCollider2D>();
+        }
+
+        internal Vector3 GetApproachPoint(Vector3 playerPosition, float stoppingDistance)
+        {
+            var bounds = _zone.bounds;
+            var inset = Mathf.Max(.5f, stoppingDistance * 2f);
+            return Vector3.MoveTowards(bounds.ClosestPoint(playerPosition), bounds.center, inset);
         }
 
         internal bool Contains(Collider2D playerCollider)

@@ -9,8 +9,6 @@ namespace _Project.Develop.Gameplay.Tea
     public class NpcTeaService
     {
         private const int ClosedMoodMaximum = -25;
-        private const int SleepyMoodMinimum = -24;
-        private const int SleepyMoodMaximum = 24;
         private const int ExcitedMoodMinimum = 25;
 
         private readonly TeaRecipeBook _recipes;
@@ -30,7 +28,7 @@ namespace _Project.Develop.Gameplay.Tea
             if (!CanServe(npc)) return false;
 
             var state = _states[npc];
-            var delta = MoodDeltaFor(npc, ingredients);
+            var delta = MoodDeltaFor(state.Mood, ingredients);
             state.Mood += delta;
             state.TeaServed = true;
             if (delta != 0)
@@ -40,10 +38,14 @@ namespace _Project.Develop.Gameplay.Tea
 
         public int MoodDeltaFor(NpcData npc, IReadOnlyList<TeaIngredientType> ingredients)
         {
-            if (npc == null || ingredients == null)
+            return npc == null || ingredients == null ? 0 : MoodDeltaFor(_states[npc].Mood, ingredients);
+        }
+
+        private int MoodDeltaFor(int mood, IReadOnlyList<TeaIngredientType> ingredients)
+        {
+            if (ingredients == null)
                 return 0;
 
-            var mood = _states[npc].Mood;
             var currentState = GetMoodState(mood);
             if (!_recipes.TryFind(currentState, ingredients, out var targetState))
                 return 0;
@@ -51,7 +53,7 @@ namespace _Project.Develop.Gameplay.Tea
             var targetMood = targetState switch
             {
                 TeaMood.Closed => Math.Min(mood, ClosedMoodMaximum),
-                TeaMood.Sleepy => Math.Max(SleepyMoodMinimum, Math.Min(SleepyMoodMaximum, mood)),
+                TeaMood.Sleepy => Math.Clamp(mood, ClosedMoodMaximum + 1, ExcitedMoodMinimum - 1),
                 TeaMood.Excited => Math.Max(mood, ExcitedMoodMinimum),
                 _ => mood
             };

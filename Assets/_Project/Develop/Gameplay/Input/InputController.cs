@@ -2,6 +2,7 @@ using System;
 using MessagePipe;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using VContainer.Unity;
 
 namespace _Project.Develop.Gameplay.Input
@@ -16,6 +17,8 @@ namespace _Project.Develop.Gameplay.Input
     {
         public PlayerInputActions Actions { get; } = new();
         private readonly IPublisher<ZoomModeChanged> _zoomModePublisher;
+        public Vector2 PointerPosition => Actions.Player.MousePosition.ReadValue<Vector2>();
+        public bool IsPointerOverUI => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         public bool IsZoomMode => Actions.Camera.Zoom.enabled;
 
         public InputController(IPublisher<ZoomModeChanged> zoomModePublisher)
@@ -23,7 +26,8 @@ namespace _Project.Develop.Gameplay.Input
             _zoomModePublisher = zoomModePublisher;
         }
 
-        private float _modePressedAt = float.PositiveInfinity;
+        private const float ZoomHoldSeconds = 0.2f;
+        private float? _modePressedAt;
         private bool _notebookOpen;
         private bool _hearingActive;
 
@@ -58,7 +62,7 @@ namespace _Project.Develop.Gameplay.Input
             if (CutsceneActive)
             {
                 if (IsZoomMode) ExitZoomMode();
-                _modePressedAt = float.PositiveInfinity;
+                _modePressedAt = null;
                 Actions.Camera.Disable();
             }
             else
@@ -87,12 +91,12 @@ namespace _Project.Develop.Gameplay.Input
             if (CutsceneActive) return;
             if (!Actions.Camera.Mode.IsPressed())
             {
-                if (!float.IsPositiveInfinity(_modePressedAt))
-                    OnZoomReleased(default);
+                if (_modePressedAt.HasValue)
+                    ReleaseZoom();
                 return;
             }
 
-            if (Time.unscaledTime - _modePressedAt < 0.2f || Actions.Camera.Zoom.enabled)
+            if (_modePressedAt is not float pressedAt || Time.unscaledTime - pressedAt < ZoomHoldSeconds || IsZoomMode)
                 return;
 
             Actions.Player.Disable();
@@ -100,9 +104,11 @@ namespace _Project.Develop.Gameplay.Input
             _zoomModePublisher.Publish(new ZoomModeChanged(true));
         }
 
-        private void OnZoomReleased(InputAction.CallbackContext _)
+        private void OnZoomReleased(InputAction.CallbackContext _) => ReleaseZoom();
+
+        private void ReleaseZoom()
         {
-            _modePressedAt = float.PositiveInfinity;
+            _modePressedAt = null;
             if (CutsceneActive) return;
             var wasZooming = IsZoomMode;
             Actions.Camera.Zoom.Disable();
@@ -114,7 +120,7 @@ namespace _Project.Develop.Gameplay.Input
         private void ExitZoomMode()
         {
             Actions.Camera.Zoom.Disable();
-            _modePressedAt = float.PositiveInfinity;
+            _modePressedAt = null;
             _zoomModePublisher.Publish(new ZoomModeChanged(false));
         }
 
@@ -127,7 +133,7 @@ namespace _Project.Develop.Gameplay.Input
             }
 
             Actions.Player.Enable();
-            if (_hearingActive || !float.IsPositiveInfinity(_modePressedAt))
+            if (_hearingActive || _modePressedAt.HasValue)
                 Actions.Player.CameraPan.Disable();
         }
 

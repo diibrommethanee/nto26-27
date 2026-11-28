@@ -885,10 +885,10 @@ MonoBehaviour:
         m_LocalSubgraphs: []
         m_LastKnownBounds:
           serializedVersion: 2
-          x: -1186.6667
-          y: 475.33334
-          width: 3510.0002
-          height: 374.66666
+          x: -1460
+          y: 475
+          width: 3781
+          height: 381
         m_GraphElementMetaData:
         - m_Guid:
             m_Value0: 11638666581856022527
@@ -1071,15 +1071,19 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: ffefbc8697d984a1fa16111d5709923c
         m_Version: 2
-        m_Position: {x: -1186.3723, y: 507.26794}
+        m_Position: {x: -1460.0723, y: 504.9679}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
           rid: -2
         m_State: 0
         m_InputConstantsById:
-          m_KeyList: []
-          m_ValueList: []
+          m_KeyList:
+          - __option_ResumeAfterExit
+          - ReturnDialogue
+          m_ValueList:
+          - rid: 5539972427742707838
+          - rid: 5539972427742707839
         m_InputPortInfos:
           expandedPortsById:
             m_KeyList: []
@@ -1108,7 +1112,7 @@ MonoBehaviour:
           serializedVersion: 2
           Hash: 678479a04277e9399e2a29c2b880f644
         m_Version: 2
-        m_Position: {x: -1035.7538, y: 501.9627}
+        m_Position: {x: -1042.1334, y: 514.6127}
         m_Title: 
         m_Tooltip: 
         m_NodePreviewModel:
@@ -1209,5 +1213,13 @@ MonoBehaviour:
           m_Title: 
     - rid: 5539972244747059306
       type: {class: 'Constant`1[[_Project.Develop.Data.Evidence.Clue, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: {fileID: 0}
+    - rid: 5539972427742707838
+      type: {class: 'Constant`1[[System.Boolean, mscorlib]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
+      data:
+        m_Value: 1
+    - rid: 5539972427742707839
+      type: {class: 'Constant`1[[_Project.Develop.Data.Dialogue.DialogueDefinition, Data]]', ns: Unity.GraphToolkit.Editor, asm: UnityEditor.GraphToolkitModule}
       data:
         m_Value: {fileID: 0}

@@ -35,12 +35,7 @@ namespace _Project.Develop.Gameplay.Npc
             get
             {
                 var catalog = CheckpointCatalog.Instance;
-                return _states.ToDictionary(pair => catalog.Key(pair.Key), pair => new SavedNpc
-                {
-                    Mood = pair.Value.Mood,
-                    DialogueKey = pair.Value.Dialogue == null ? null : catalog.Key(pair.Value.Dialogue),
-                    TeaServed = pair.Value.TeaServed
-                });
+                return _states.ToDictionary(pair => catalog.Key(pair.Key), pair => Capture(pair.Value, catalog));
             }
             set
             {
@@ -49,17 +44,25 @@ namespace _Project.Develop.Gameplay.Npc
                 foreach (var pair in value)
                 {
                     var npc = catalog.Resolve<NpcData>(pair.Key);
-                    var data = pair.Value;
-                    restored.Add(npc, new NpcState(npc)
-                    {
-                        Mood = data.Mood,
-                        Dialogue = data.DialogueKey == null ? null : catalog.Resolve<DialogueDefinition>(data.DialogueKey),
-                        TeaServed = data.TeaServed
-                    });
+                    restored.Add(npc, Restore(npc, pair.Value, catalog));
                 }
                 _states = restored;
             }
         }
+
+        private static SavedNpc Capture(NpcState state, CheckpointCatalog catalog) => new()
+        {
+            Mood = state.Mood,
+            DialogueKey = state.Dialogue == null ? null : catalog.Key(state.Dialogue),
+            TeaServed = state.TeaServed
+        };
+
+        private static NpcState Restore(NpcData npc, SavedNpc saved, CheckpointCatalog catalog) => new(npc)
+        {
+            Mood = saved.Mood,
+            Dialogue = saved.DialogueKey == null ? null : catalog.Resolve<DialogueDefinition>(saved.DialogueKey),
+            TeaServed = saved.TeaServed
+        };
 
         internal void StartNewDay()
         {

@@ -26,6 +26,12 @@ namespace _Project.Develop.Gameplay.Tea
             set => SetPendingIngredients(value);
         }
 
+        public float AbilityRadius(float baseRadius) =>
+            ThymeActiveThisDay ? baseRadius * AbilityRadiusMultiplier : baseRadius;
+
+        public float MovementSpeed(float baseSpeed) =>
+            LemonBalmActiveThisDay ? baseSpeed * MovementSpeedMultiplier : baseSpeed;
+
         public bool HasPendingIngredients => _pendingIngredient != TeaIngredientType.None;
 
         public IReadOnlyList<TeaIngredientType> PendingIngredients => SavedIngredients;

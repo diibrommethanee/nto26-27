@@ -15,17 +15,18 @@ namespace _Project.Develop.Gameplay.Quests
             Data = data;
         }
 
-        internal bool TryComplete(QuestEventType eventType, QuestTarget target, int amount)
+        internal bool TryComplete(QuestEventType eventType, QuestTarget target)
         {
             if (Data.eventType != eventType || Data.target != target) return false;
 
-            AddProgress(amount);
+            if (CurrentAmount < Data.requiredAmount)
+                CurrentAmount++;
             return IsCompleted;
         }
 
-        internal void AddProgress(int amount)
+        internal void RestoreAmount(int amount)
         {
-            CurrentAmount = Math.Min(CurrentAmount + amount, Data.requiredAmount);
+            CurrentAmount = Math.Min(amount, Data.requiredAmount);
         }
     }
 }

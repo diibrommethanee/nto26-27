@@ -20,5 +20,8 @@ namespace _Project.Develop.Data.Evidence
         [Header("Hypothesis Text")]
         public string fillWord;
         [Min(0)] public int fillIndex;
+
+        public bool FitsSlot(Hypothesis page, int index) =>
+            hypothesis == page && fillIndex == index && !string.IsNullOrWhiteSpace(fillWord);
     }
 }

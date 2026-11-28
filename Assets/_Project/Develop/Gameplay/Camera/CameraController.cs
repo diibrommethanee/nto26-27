@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using Unity.Cinemachine;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
@@ -74,7 +73,7 @@ namespace _Project.Develop.Gameplay.Camera
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             
             if (!_input.Actions.Player.CameraPan.enabled || _input.Actions.Camera.Mode.IsPressed()) return;
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (_input.IsPointerOverUI)
                 return;
             
             Pulse(scroll);
@@ -90,7 +89,7 @@ namespace _Project.Develop.Gameplay.Camera
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
             
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (_input.IsPointerOverUI)
                 return;
 
             if (!_input.Actions.Camera.Zoom.enabled) return;
@@ -115,18 +114,23 @@ namespace _Project.Develop.Gameplay.Camera
         {
             DiscardPanBeyondConfiner();
             _currentPanOffset = Mathf.SmoothDamp(_currentPanOffset, _targetPanOffset, ref _panVelocity, settings.panSmoothTime);
-            var offset = _initialFollowOffset + Vector3.right * _currentPanOffset;
-
             _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, settings.zoomSmoothTime);
             ScrollPulse = Mathf.MoveTowards(ScrollPulse, 0f, Time.unscaledDeltaTime * 3.5f);
+
+            var offset = _initialFollowOffset + Vector3.right * _currentPanOffset;
             var zoom = _currentZoom;
             dialogue.Blend(_cinemachineCamera.Follow.position, _camera.aspect, ref offset, ref zoom);
             _follow.FollowOffset = offset;
-            if (_cinemachineCamera.Lens.OrthographicSize != zoom)
-            {
-                _cinemachineCamera.Lens.OrthographicSize = zoom;
-                _confiner.InvalidateLensCache();
-            }
+            ApplyZoom(zoom);
+        }
+
+        private void ApplyZoom(float zoom)
+        {
+            if (_cinemachineCamera.Lens.OrthographicSize == zoom)
+                return;
+
+            _cinemachineCamera.Lens.OrthographicSize = zoom;
+            _confiner.InvalidateLensCache();
         }
 
         private void DiscardPanBeyondConfiner()
