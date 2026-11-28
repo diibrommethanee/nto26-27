@@ -118,7 +118,7 @@ namespace _Project.Develop.Gameplay.Evidence
                 if (node.type != HypothesisNodeType.Fill)
                     continue;
 
-                if (index >= answers.Count || !IsCorrectAnswer(hypothesis, node, answers[index]))
+                if (index >= answers.Count || !IsCorrectAnswer(hypothesis, node, answers[index], index))
                     return false;
 
                 index++;
@@ -138,13 +138,13 @@ namespace _Project.Develop.Gameplay.Evidence
             return true;
         }
 
-        private bool IsCorrectAnswer(Hypothesis hypothesis, HypothesisNode node, Clue answer)
+        private bool IsCorrectAnswer(Hypothesis hypothesis, HypothesisNode node, Clue answer, int fillIndex)
         {
             if (answer == null || string.IsNullOrWhiteSpace(answer.fillWord) ||
                 !_collected.Contains(answer))
                 return false;
 
-            return answer.hypothesis == hypothesis && answer.fillIndex == node.expectedFillIndex;
+            return answer.hypothesis == hypothesis && answer.fillIndex == fillIndex && answer == node.correctClue;
         }
     }
 }
