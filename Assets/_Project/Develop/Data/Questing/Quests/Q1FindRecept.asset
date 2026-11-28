@@ -13,21 +13,26 @@ MonoBehaviour:
   m_Name: Q1FindRecept
   m_EditorClassIdentifier: Data::_Project.Develop.Data.Questing.Quests.Quest
   questName: "\u041D\u0430\u0439\u0442\u0438 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043D\u044B\u0439 \u0440\u0435\u0446\u0435\u043F\u0442"
-  description: "\u041D\u0430\u0439\u0442\u0438 6 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043D\u044B\u0445 \u0443\u043B\u0438\u043A. "
+  description: "\u041F\u0435\u043A\u0430\u0440\u044C \u0440\u0430\u0441\u0441\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u0442 \u0432\u0430\u043C \u043E \u0442\u0430\u0438\u043D\u0441\u0442\u0432\u0435\u043D\u043D\u043E\u043C \u0438\u0441\u0447\u0435\u0437\u043D\u043E\u0432\u0435\u043D\u0438\u0438 \u0441\u0432\u043E\u0435\u0433\u043E \u0440\u0435\u0446\u0435\u043F\u0442\u0430 \u043F\u0438\u0440\u043E\u0433\u0430."
   steps:
-  - id: LookWindow
-    title: "\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u043D\u0430 \u043F\u043E\u043B "
-    target: {fileID: 11400000, guid: c620e0af34a7e784fab931b3c7222254, type: 2}
-    eventType: 3
-    requiredAmount: 0
-  - id: LookSill
-    title: "\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u043D\u0430 \u043F\u043E\u0434\u043E\u043A\u043E\u043D\u043D\u0438\u043A "
+  - id: FIndClues
+    title: "\u0421\u043E\u0431\u0440\u0430\u0442\u044C 6 \u0443\u043B\u0438\u043A"
     target: {fileID: 0}
     eventType: 3
-    requiredAmount: 0
+    requiredAmount: 6
+  - id: MakeHypo
+    title: "\u0421\u043E\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0443\u044E \u0433\u0438\u043F\u043E\u0442\u0435\u0437\u0443"
+    target: {fileID: 11400000, guid: e1ad888983b77bc40b21d51f4125c33c, type: 2}
+    eventType: 5
+    requiredAmount: 1
+  - id: TalkFai
+    title: "\u041F\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u0442\u044C \u0441 \u043F\u043E\u0432\u0430\u0440\u043E\u043C"
+    target: {fileID: 11400000, guid: 2a7fdbfeba54b584da5b48e813688e3b, type: 2}
+    eventType: 2
+    requiredAmount: 1
   reward:
     dialogueNpc: {fileID: 0}
-    dialogue: {fileID: 7194093555672020370, guid: 4cc644bd797b1a54c8a90ffb801be3f3, type: 3}
+    dialogue: {fileID: 0}
     moodNpc: {fileID: 0}
     moodIncrease: 0
   surfaceStyle: {fileID: 0}
