@@ -1,6 +1,5 @@
 using _Project.Develop.Data.Player;
 using _Project.Develop.Gameplay.Dialogue;
-using _Project.Develop.Gameplay.Evidence;
 using _Project.Develop.Gameplay.Input;
 using _Project.Develop.Gameplay.NPC;
 using _Project.Develop.Gameplay.Player.Abilities;
@@ -8,7 +7,6 @@ using _Project.Develop.Gameplay.Tea;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using VContainer;
 using UnityCamera = UnityEngine.Camera;
@@ -67,18 +65,10 @@ namespace _Project.Develop.Gameplay.Player
             _buffService = buffService;
         }
 
-        private void ApplySpeedBuff()
-        {
-            if (_agent == null || _stats == null) return;
-            _agent.speed = _stats.speed;
-            if (_buffService != null && _buffService.LemonBalmActiveThisDay)
-                _agent.speed *= NextDayBuffService.MovementSpeedMultiplier;
-        }
-
         private void Start()
         {
             _ability = GetComponent<PlayerAbility>();
-            ApplySpeedBuff();
+            _agent.speed = _buffService.MovementSpeed(_stats.speed);
             _agent.acceleration = _stats.acceleration;
             _agent.stoppingDistance = _stats.stoppingDistance;
             _bodyCollider = GetComponent<Collider2D>();
@@ -90,7 +80,7 @@ namespace _Project.Develop.Gameplay.Player
 
         private void OnMoveStarted(InputAction.CallbackContext _)
         {
-            _moveStartPosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            _moveStartPosition = _input.PointerPosition;
             _moveStartedDuringChoice = _dialogue.IsChoosing;
         }
 
@@ -99,7 +89,7 @@ namespace _Project.Develop.Gameplay.Player
             if (_moveStartedDuringChoice)
                 return;
 
-            var mousePosition = _input.Actions.Player.MousePosition.ReadValue<Vector2>();
+            var mousePosition = _input.PointerPosition;
             if (Vector2.Distance(_moveStartPosition, mousePosition) >= _stats.startMovePixels)
                 return;
 
@@ -110,13 +100,27 @@ namespace _Project.Develop.Gameplay.Player
         {
             await UniTask.Yield(PlayerLoopTiming.LastUpdate, destroyCancellationToken);
 
-            if (_input.CutsceneActive || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+            if (_input.CutsceneActive || _input.IsPointerOverUI)
                 return;
             
             if (!_camera.pixelRect.Contains(mousePosition))
                 return;
 
             var ray = _camera.ScreenPointToRay(mousePosition);
+            if (HitsInteractionTarget(ray)) return;
+
+            var plane = new Plane(Vector3.forward, transform.position);
+
+            if (!plane.Raycast(ray, out var distance))
+                return;
+
+            _pendingNpc = null;
+            var target = ray.GetPoint(distance);
+            TrySetMoveTarget(target);
+        }
+
+        private bool HitsInteractionTarget(Ray ray)
+        {
             var hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
             foreach (var hit in hits)
             {
@@ -124,21 +128,13 @@ namespace _Project.Develop.Gameplay.Player
                     continue;
 
                 if (hit.collider.GetComponentInParent<IInteractable>() != null)
-                    return;
+                    return true;
 
-                var clue = hit.collider.GetComponentInParent<IWorldClue>();
-                if (clue != null && clue.CanCollect(_ability.ActiveSkill))
-                    return;
+                if (_ability.CanCollectClueAt(hit.collider))
+                    return true;
             }
 
-            var plane = new Plane(Vector3.forward, transform.position);
-            
-            if (!plane.Raycast(ray, out var distance))
-                return;
-
-            _pendingNpc = null;
-            var target = ray.GetPoint(distance);
-            TrySetMoveTarget(target);
+            return false;
         }
 
         private bool TrySetMoveTarget(Vector3 destination, bool showMarker = true)
@@ -167,34 +163,33 @@ namespace _Project.Develop.Gameplay.Player
                 return;
             }
 
-            var zone = npc.GetComponentInChildren<NpcDialogueExit>();
+            var zone = npc.DialogueZone;
             _pendingNpc = npc;
             _takingDialogueStep = false;
             if (zone.Contains(_bodyCollider))
             {
-                var towardsNpc = npc.transform.position.x - transform.position.x;
-                if (Mathf.Abs(towardsNpc) > 0.01f && towardsNpc * transform.localScale.x > 0f)
-                {
-                    var step = Mathf.Max(0.35f, _agent.stoppingDistance * 2f);
-                    var destination = transform.position + Vector3.right * Mathf.Sign(towardsNpc) * step;
-                    _takingDialogueStep = TrySetMoveTarget(destination, showMarker: false);
-                    if (_takingDialogueStep)
-                        return;
-
-                    // At a navigation boundary, face the NPC in place.
-                    FaceDirection(towardsNpc);
-                }
-
-                TryStartNpcDialogue(npc);
+                _takingDialogueStep = TryStepTowardsNpc(npc);
+                if (!_takingDialogueStep) TryStartNpcDialogue(npc);
                 return;
             }
 
-            var bounds = zone.Bounds;
-            var inset = Mathf.Max(.5f, _stats.stoppingDistance * 2f);
-            var target = bounds.ClosestPoint(transform.position);
-            target = Vector3.MoveTowards(target, bounds.center, inset);
+            var target = zone.GetApproachPoint(transform.position, _stats.stoppingDistance);
             if (!TrySetMoveTarget(target))
                 _pendingNpc = null;
+        }
+
+        private bool TryStepTowardsNpc(NpcInteract npc)
+        {
+            var towardsNpc = npc.transform.position.x - transform.position.x;
+            if (Mathf.Abs(towardsNpc) <= 0.01f || towardsNpc * transform.localScale.x <= 0f)
+                return false;
+
+            var step = Mathf.Max(0.35f, _agent.stoppingDistance * 2f);
+            var destination = transform.position + Vector3.right * Mathf.Sign(towardsNpc) * step;
+            if (TrySetMoveTarget(destination, showMarker: false)) return true;
+
+            FaceDirection(towardsNpc);
+            return false;
         }
 
         internal void TryStartNpcDialogue(NpcInteract npc)
@@ -233,7 +228,7 @@ namespace _Project.Develop.Gameplay.Player
 
             var npc = _pendingNpc;
             _takingDialogueStep = false;
-            if (!npc.GetComponentInChildren<NpcDialogueExit>().Contains(_bodyCollider))
+            if (!npc.DialogueZone.Contains(_bodyCollider))
             {
                 _pendingNpc = null;
                 return;

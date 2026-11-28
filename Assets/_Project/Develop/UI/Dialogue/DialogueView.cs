@@ -11,7 +11,6 @@ using _Project.Develop.UI.Evidence;
 using _Project.Develop.UI.Surface;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using MessagePipe;
 using TMPEffects.CharacterData;
 using TMPEffects.Components;
@@ -47,10 +46,10 @@ namespace _Project.Develop.UI.Dialogue
         private InputController _input;
         private ISubscriber<ZoomModeChanged> _zoomMode;
         private IBufferedSubscriber<SavingVisibilityChanged> _saving;
-        private IDisposable _zoomSubscription;
-        private Tween _zoomFade;
-        private float _zoomVisibility;
-        private bool _zoomActive;
+        private IDisposable _hudVisibilitySubscription;
+        private Tween _hudFade;
+        private float _hudAlpha;
+        private bool _hudHidden;
         private bool _panelVisible;
         private Tween _blobEntrance;
         private Vector3 _canvasWorldScale;
@@ -97,8 +96,8 @@ namespace _Project.Develop.UI.Dialogue
             _group = GetComponent<CanvasGroup>();
             _choiceTemplate = choicesContainer.GetComponentInChildren<Button>(true);
             _dayEndingCutscene = FindAnyObjectByType<DayEndingCutscene>();
-            _zoomActive = _input.IsZoomMode;
-            _zoomVisibility = _zoomActive ? 0f : 1f;
+            _hudHidden = _input.IsZoomMode;
+            _hudAlpha = _hudHidden ? 0f : 1f;
             SetVisible(false);
 
             if (worldCanvas)
@@ -129,8 +128,8 @@ namespace _Project.Develop.UI.Dialogue
                 _continueButton.onClick.AddListener(OnContinueClicked);
             }
 
-            ApplyZoomVisibility(_zoomVisibility);
-            _zoomSubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
+            ApplyHudAlpha(_hudAlpha);
+            _hudVisibilitySubscription = new HudVisibilitySubscription(_zoomMode, _saving, _input.IsZoomMode, SetHudHidden);
         }
 
         private void OnDialogueShown(DialogueShown message)
@@ -141,14 +140,11 @@ namespace _Project.Develop.UI.Dialogue
                 dialogueCamera.Dialogue.Begin(playerDialogueAnchor, _interaction.DialogueAnchor);
             var dialogue = message.dialogue;
             _lineClue = dialogue.clue;
-            var text = dialogue.text ?? string.Empty;
-            if (_lineClue && notebook)
-                text = TagCluePhrases(text);
+            var text = DialogueMarkup.Format(dialogue.text, _lineClue && notebook);
             var speakerName = !string.IsNullOrWhiteSpace(dialogue.overrideName) ? dialogue.overrideName
                 : dialogue.character != null ? dialogue.character.displayName
                     : string.Empty;
 
-            text = FormatText(text);
             if (worldCanvas)
             {
                 SetVisible(false);
@@ -166,31 +162,20 @@ namespace _Project.Develop.UI.Dialogue
 
         private void ShowWorldLine(NpcData speaker, string speakerName, string text)
         {
-            var styleOwner = speaker != null ? speaker : _runner.Interlocutor;
-            var speakerStyle = styleOwner != null ? styleOwner.surfaceStyle : null;
+            var lineSpeaker = speaker != null ? speaker : _runner.Interlocutor;
+            var speakerStyle = lineSpeaker != null ? lineSpeaker.surfaceStyle : null;
             _worldSurface.style = speakerStyle != null ? speakerStyle : _defaultWorldStyle;
 
             var isPlayerSpeaking = speaker != null && speaker == playerSpeaker;
             var anchor = isPlayerSpeaking ? playerDialogueAnchor
-                : FindAnchor(speaker != null ? speaker : _runner.Interlocutor);
+                : FindAnchor(lineSpeaker);
             if (anchor == null)
             {
                 HideWorldLine();
                 return;
             }
 
-            var canvasTransform = worldCanvas.transform;
-            canvasTransform.SetParent(null, true);
-            canvasTransform.SetPositionAndRotation(anchor.position, Quaternion.identity);
-            canvasTransform.localScale = _canvasWorldScale;
-            if (!isPlayerSpeaking)
-                canvasTransform.SetParent(anchor, true);
-
-            var anchorParent = anchor.parent;
-            var opensRight = anchorParent == null || anchor.position.x >= anchorParent.position.x;
-            worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0f);
-            worldBlob.anchoredPosition = Vector2.zero;
-            worldCanvas.gameObject.SetActive(true);
+            PlaceWorldBubble(anchor, followAnchor: !isPlayerSpeaking);
             worldCharacter.text = speakerName;
             worldCharacter.gameObject.SetActive(!string.IsNullOrEmpty(speakerName));
             worldBlob.sizeDelta = new Vector2(
@@ -203,6 +188,22 @@ namespace _Project.Develop.UI.Dialogue
             if (_worldWriter.IsWriting) _worldWriter.StopWriter();
             _worldWriter.SetText(text);
             _worldWriter.StartWriter();
+        }
+
+        private void PlaceWorldBubble(Transform anchor, bool followAnchor)
+        {
+            var canvasTransform = worldCanvas.transform;
+            canvasTransform.SetParent(null, true);
+            canvasTransform.SetPositionAndRotation(anchor.position, Quaternion.identity);
+            canvasTransform.localScale = _canvasWorldScale;
+            if (followAnchor)
+                canvasTransform.SetParent(anchor, true);
+
+            var anchorParent = anchor.parent;
+            var opensRight = anchorParent == null || anchor.position.x >= anchorParent.position.x;
+            worldBlob.pivot = new Vector2(opensRight ? 0f : 1f, 0f);
+            worldBlob.anchoredPosition = Vector2.zero;
+            worldCanvas.gameObject.SetActive(true);
         }
 
         private void OnWorldCharacterShown(TMPWriter writer, CharData character)
@@ -247,33 +248,33 @@ namespace _Project.Develop.UI.Dialogue
 
         private void SetHudHidden(bool hidden, bool saveTransition)
         {
-            if (_zoomActive == hidden)
+            if (_hudHidden == hidden)
                 return;
 
-            _zoomActive = hidden;
-            _zoomFade.Stop();
-            ApplyZoomVisibility(_zoomVisibility);
+            _hudHidden = hidden;
+            _hudFade.Stop();
+            ApplyHudAlpha(_hudAlpha);
 
-            var target = _zoomActive ? 0f : 1f;
-            if (_zoomVisibility == target)
+            var target = _hudHidden ? 0f : 1f;
+            if (_hudAlpha == target)
                 return;
 
-            _zoomFade = Tween.Custom(this, _zoomVisibility, target, _zoomActive ? .22f : .3f,
-                (view, alpha) => view.ApplyZoomVisibility(alpha), Ease.InOutSine, useUnscaledTime: true);
+            _hudFade = Tween.Custom(this, _hudAlpha, target, _hudHidden ? .22f : .3f,
+                (view, alpha) => view.ApplyHudAlpha(alpha), Ease.InOutSine, useUnscaledTime: true);
         }
 
-        private void ApplyZoomVisibility(float alpha)
+        private void ApplyHudAlpha(float alpha)
         {
-            _zoomVisibility = alpha;
-            var canInteract = !_zoomActive && alpha >= .999f;
+            _hudAlpha = alpha;
+            var canInteract = !_hudHidden && alpha >= .999f;
 
             _group.alpha = _panelVisible ? alpha : 0f;
-            _group.interactable = _group.blocksRaycasts = _panelVisible && canInteract;
+            _group.SetInteractive(_panelVisible && canInteract);
 
             if (_worldGroup != null)
             {
                 _worldGroup.alpha = alpha;
-                _worldGroup.interactable = _worldGroup.blocksRaycasts = canInteract;
+                _worldGroup.SetInteractive(canInteract);
             }
         }
 
@@ -292,27 +293,6 @@ namespace _Project.Develop.UI.Dialogue
             if (CanOfferTea) _dayEndingCutscene.BeginNpcTea(_interaction.Npc);
         }
 
-        private static string TagCluePhrases(string text)
-        {
-            var index = 0;
-            return Regex.Replace(text, @"<(?<tag>highlight|h)>(?<phrase>.*?)</\k<tag>>",
-                match => string.IsNullOrWhiteSpace(match.Groups["phrase"].Value)
-                    ? match.Value
-                    : $"<link=\"{EvidenceView.DialogueClueLinkPrefix}{index++}\">{match.Value}</link>",
-                RegexOptions.Singleline);
-        }
-
-        private static string FormatText(string text)
-        {
-            return (text ?? string.Empty)
-                .Replace("<highlight>", "<color=#FFD54F>")
-                .Replace("</highlight>", "</color>")
-                .Replace("<h>", "<color=#FFD54F>")
-                .Replace("</h>", "</color>")
-                .Replace("<w>", "<wave>")
-                .Replace("</w>", "</wave>");
-        }
-
         private void OnChoicesShown(DialogueChoicesShown message)
         {
             ClearChoices();
@@ -326,23 +306,21 @@ namespace _Project.Develop.UI.Dialogue
             for (var i = 0; i < message.choices.Count; i++)
             {
                 var index = i;
-                var button = Instantiate(_choiceTemplate, choicesContainer);
-                button.GetComponentInChildren<TMP_Text>(true).text = message.choices[index].text;
-                button.onClick.AddListener(() => _runner.Choose(index));
-                _choiceButtons.Add(button);
-                button.gameObject.SetActive(true);
+                AddChoiceButton(message.choices[index].text, () => _runner.Choose(index));
             }
 
-            if (CanOfferTea)
-            {
-                var offerTeaButton = Instantiate(_choiceTemplate, choicesContainer);
-                offerTeaButton.GetComponentInChildren<TMP_Text>(true).text = "Предложить чай";
-                offerTeaButton.onClick.AddListener(OnOfferTeaClicked);
-                _choiceButtons.Add(offerTeaButton);
-                offerTeaButton.gameObject.SetActive(true);
-            }
+            if (CanOfferTea) AddChoiceButton("Предложить чай", OnOfferTeaClicked);
 
             SetVisible(true);
+        }
+
+        private void AddChoiceButton(string label, UnityEngine.Events.UnityAction onClick)
+        {
+            var button = Instantiate(_choiceTemplate, choicesContainer);
+            button.GetComponentInChildren<TMP_Text>(true).text = label;
+            button.onClick.AddListener(onClick);
+            _choiceButtons.Add(button);
+            button.gameObject.SetActive(true);
         }
 
         private void ClearChoices()
@@ -391,7 +369,7 @@ namespace _Project.Develop.UI.Dialogue
         private void SetVisible(bool visible)
         {
             _panelVisible = visible;
-            ApplyZoomVisibility(_zoomVisibility);
+            ApplyHudAlpha(_hudAlpha);
         }
         
         private void ClearText()
@@ -408,9 +386,9 @@ namespace _Project.Develop.UI.Dialogue
             _dialogueSubscription?.Dispose();
             _endedSubscription?.Dispose();
             _choicesSubscription?.Dispose();
-            _zoomSubscription?.Dispose();
+            _hudVisibilitySubscription?.Dispose();
             _runner.ContinueRequested -= OnContinueClicked;
-            _zoomFade.Stop();
+            _hudFade.Stop();
 
             if (_continueButton) _continueButton.onClick.RemoveListener(OnContinueClicked);
             if (worldContinue) worldContinue.onClick.RemoveListener(OnContinueClicked);

@@ -21,6 +21,10 @@ namespace _Project.Develop.Gameplay.Dialogue
             public DialogueNodeData PreviousDialogue;
             public bool TalkedPublished;
             public bool ReturnPending;
+
+            public bool ShouldPlayReturn(DialogueDefinition requested) =>
+                Dialogue == requested && ReturnPending &&
+                requested.returnDialogue != null && requested.returnDialogue != requested;
         }
 
         private readonly Dictionary<NpcData, SuspendedDialogue> _suspended = new();
@@ -84,29 +88,12 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             SuspendedDialogue checkpoint = null;
             if (npc != null) _suspended.TryGetValue(npc, out checkpoint);
-            var sameDialogue = checkpoint != null && checkpoint.Dialogue == dialogue;
-            var returnDialogue = dialogue.returnDialogue;
-            var playReturn = sameDialogue && checkpoint.ReturnPending &&
-                returnDialogue != null && returnDialogue != dialogue;
+            var playReturn = checkpoint?.ShouldPlayReturn(dialogue) == true;
             if (playReturn)
-                dialogue = returnDialogue;
+                dialogue = dialogue.returnDialogue;
 
-            foreach (var node in dialogue.nodes)
-            {
-                if (node == null || !_nodes.TryAdd(node.id, node))
-                {
-                    Debug.LogError("Cannot start dialogue: null node or duplicate node ID.");
-                    _nodes.Clear();
-                    return;
-                }
-            }
-
-            if (!_nodes.ContainsKey(dialogue.entryNodeId))
-            {
-                Debug.LogError("Cannot start dialogue: entry node was not found.");
-                _nodes.Clear();
+            if (!TryLoadNodes(dialogue))
                 return;
-            }
 
             _nextNodeId = dialogue.entryNodeId;
             _dialogue = dialogue;
@@ -114,19 +101,48 @@ namespace _Project.Develop.Gameplay.Dialogue
             _playingReturnDialogue = playReturn;
             _talkedPublished = playReturn;
             if (checkpoint != null && !playReturn)
-                _suspended.Remove(npc);
-
-            if (!playReturn && sameDialogue && dialogue.resumeAfterExit &&
-                _nodes.TryGetValue(checkpoint.ResumeNode, out var resumeNode) && resumeNode is not EndNodeData)
             {
-                _nextNodeId = checkpoint.ResumeNode;
-                _talkedPublished = checkpoint.TalkedPublished;
-                if (_handlers[typeof(DialogueNodeData)] is DialogueNodeHandler dialogueHandler)
-                    dialogueHandler.PreviousDialogue = checkpoint.PreviousDialogue;
+                _suspended.Remove(npc);
+                if (checkpoint.Dialogue == dialogue && dialogue.resumeAfterExit)
+                    ResumeAtCheckpoint(checkpoint);
             }
+
             IsRunning = true;
 
             ProcessNodes();
+        }
+
+        private bool TryLoadNodes(DialogueDefinition dialogue)
+        {
+            foreach (var node in dialogue.nodes)
+            {
+                if (node == null || !_nodes.TryAdd(node.id, node))
+                {
+                    Debug.LogError("Cannot start dialogue: null node or duplicate node ID.");
+                    _nodes.Clear();
+                    return false;
+                }
+            }
+
+            if (!_nodes.ContainsKey(dialogue.entryNodeId))
+            {
+                Debug.LogError("Cannot start dialogue: entry node was not found.");
+                _nodes.Clear();
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ResumeAtCheckpoint(SuspendedDialogue checkpoint)
+        {
+            if (!_nodes.TryGetValue(checkpoint.ResumeNode, out var node) || node is EndNodeData)
+                return;
+
+            _nextNodeId = checkpoint.ResumeNode;
+            _talkedPublished = checkpoint.TalkedPublished;
+            if (_handlers[typeof(DialogueNodeData)] is DialogueNodeHandler handler)
+                handler.PreviousDialogue = checkpoint.PreviousDialogue;
         }
 
         public void Continue()

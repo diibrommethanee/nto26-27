@@ -36,6 +36,18 @@ namespace _Project.Develop.Data.Dialogue
         public bool publishTalked;
         public int moodChange;
         public Hash128 nextNodeId;
+
+        public DialogueNodeData ResolveSpeaker(DialogueNodeData previous)
+        {
+            var line = (DialogueNodeData)MemberwiseClone();
+            if (inheritCharacter)
+            {
+                line.character = previous?.character;
+                line.overrideName = previous?.overrideName;
+            }
+            line.inheritCharacter = false;
+            return line;
+        }
     }
     
     [Serializable]

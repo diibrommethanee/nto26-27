@@ -16,10 +16,9 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField] private TMP_Dropdown slotTemplate;
         [SerializeField, HideInInspector] private TMP_Text[] textParts;
 
-        private readonly List<List<Clue>> _options = new();
         private EvidenceService _evidence;
         private Hypothesis _hypothesis;
-        private readonly List<TMP_Dropdown> _slots = new();
+        private readonly List<HypothesisAnswerSlot> _slots = new();
         private readonly List<GameObject> _sentenceItems = new();
 
         public void Initialize(EvidenceService evidence)
@@ -52,7 +51,6 @@ namespace _Project.Develop.UI.Evidence
 
             _sentenceItems.Clear();
             _slots.Clear();
-            _options.Clear();
             _hypothesis = hypothesis;
             gameObject.SetActive(hypothesis != null);
             if (hypothesis == null)
@@ -60,6 +58,20 @@ namespace _Project.Develop.UI.Evidence
 
             title.text = hypothesis.title;
 
+            BuildSentence(hypothesis);
+            RefreshClues();
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(sentence);
+            var scroll = sentence.GetComponentInParent<ScrollRect>();
+            if (scroll)
+            {
+                scroll.StopMovement();
+                scroll.normalizedPosition = new Vector2(0f, 1f);
+            }
+        }
+
+        private void BuildSentence(Hypothesis hypothesis)
+        {
             var text = new StringBuilder();
             foreach (var node in hypothesis.nodes)
             {
@@ -77,20 +89,10 @@ namespace _Project.Develop.UI.Evidence
                 slot.SetValueWithoutNotify(0);
                 slot.onValueChanged.AddListener(OnSelectionChanged);
                 _sentenceItems.Add(slot.gameObject);
-                _slots.Add(slot);
-                _options.Add(new List<Clue>());
+                _slots.Add(new HypothesisAnswerSlot(slot));
             }
 
             AddTextPart(text.ToString());
-            RefreshClues();
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(sentence);
-            var scroll = sentence.GetComponentInParent<ScrollRect>();
-            if (scroll)
-            {
-                scroll.StopMovement();
-                scroll.normalizedPosition = new Vector2(0f, 1f);
-            }
         }
 
         private void AddTextPart(string text)
@@ -115,43 +117,14 @@ namespace _Project.Develop.UI.Evidence
         private void RebuildOptions(IReadOnlyList<Clue> selections, bool solved)
         {
             var usedClues = new HashSet<Clue>(selections);
-            for (var index = 0; index < _options.Count; index++)
-            {
-                var slot = _slots[index];
-                var selected = selections[index];
-                if (slot.IsExpanded)
-                    slot.Hide();
-
-                var options = _options[index];
-                options.Clear();
-
-                var labels = new List<string> { "______" };
-                foreach (var clue in _evidence.Collected)
-                {
-                    if (clue.hypothesis != _hypothesis || clue.fillIndex != index ||
-                        string.IsNullOrWhiteSpace(clue.fillWord) ||
-                        (clue != selected && usedClues.Contains(clue)))
-                        continue;
-
-                    options.Add(clue);
-                    labels.Add(clue.fillWord);
-                }
-
-                slot.ClearOptions();
-                slot.AddOptions(labels);
-                slot.SetValueWithoutNotify(options.IndexOf(selected) + 1);
-                slot.RefreshShownValue();
-                slot.interactable = !solved && options.Count > 0;
-            }
+            for (var index = 0; index < _slots.Count; index++)
+                _slots[index].Refresh(_hypothesis, index, _evidence.Collected, selections[index], usedClues, solved);
         }
 
         public void CloseChoices()
         {
             foreach (var slot in _slots)
-            {
-                if (slot.IsExpanded)
-                    slot.Hide();
-            }
+                slot.Close();
         }
 
         private void OnSelectionChanged(int _)
@@ -160,8 +133,7 @@ namespace _Project.Develop.UI.Evidence
                 return;
 
             var answers = ReadSelections();
-            var solved = System.Array.TrueForAll(answers, clue => clue != null) &&
-                         _evidence.CheckHypothesis(_hypothesis, answers);
+            var solved = _evidence.CheckHypothesis(_hypothesis, answers);
             RebuildOptions(answers, solved);
         }
 
@@ -169,11 +141,7 @@ namespace _Project.Develop.UI.Evidence
         {
             var selections = new Clue[_slots.Count];
             for (var index = 0; index < selections.Length; index++)
-            {
-                var choice = _slots[index].value;
-                if (choice > 0)
-                    selections[index] = _options[index][choice - 1];
-            }
+                selections[index] = _slots[index].Selection;
 
             return selections;
         }

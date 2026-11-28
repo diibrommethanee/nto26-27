@@ -12,13 +12,10 @@ namespace _Project.Develop.UI.Evidence
     internal class NotebookPages
     {
         private const float PageTurnDuration = 0.66f;
-        private const float DragDeadZone = 4f;
-        private const float FlickMemory = .1f;
-        private const float FlickSpeed = 1.8f;
 
-        private readonly List<(Hypothesis Data, HypothesisView View, CanvasGroup Group)> _pages = new();
+        private readonly List<(Hypothesis Data, HypothesisView View, CanvasGroup Group, RectTransform Clues)> _pages = new();
         private readonly RectTransform _board;
-        private readonly List<RectTransform> _clueAreas = new();
+        private readonly Vector3[] _clueAreaCorners = new Vector3[4];
         private readonly Dictionary<RectTransform, RectTransform> _threadAreas = new();
         private readonly RectTransform _pendingClues;
         private readonly Image _matLeft;
@@ -36,14 +33,7 @@ namespace _Project.Develop.UI.Evidence
         private Tween _turn;
         private int _position;
         private int? _dragPointer;
-        private int _gripDirection;
-        private float _dragStartX;
-        private float _gripHeight;
-        private float _dragSpan;
-        private float _lastDragX;
-        private float _lastMotionTime;
-        private float _dragVelocity;
-        private float _dragProgress;
+        private readonly PageTurnGesture _gesture = new();
         private int _turnOrigin;
         private int _turnDestination;
         private Action<float> _paintTurn;
@@ -96,14 +86,15 @@ namespace _Project.Develop.UI.Evidence
             view.Initialize(_evidence);
             view.Show(hypothesis);
             view.gameObject.SetActive(false);
-            _pages.Add((hypothesis, view, GetGroup(rect)));
-            _clueAreas.Add(CreateClueArea(_pages.Count - 1, $"{_pages.Count}_{hypothesis.name.Replace(' ', '_')}"));
+            var pageName = $"{_pages.Count + 1}_{hypothesis.name.Replace(' ', '_')}";
+            var clues = CreateClueArea(_pages.Count, pageName);
+            _pages.Add((hypothesis, view, GetGroup(rect), clues));
         }
 
         public RectTransform ClueArea(Hypothesis hypothesis)
         {
             var index = IndexOf(hypothesis);
-            return index < 0 ? _pendingClues : _clueAreas[index];
+            return index < 0 ? _pendingClues : _pages[index].Clues;
         }
 
         public void ShowCluePage(Hypothesis hypothesis)
@@ -198,33 +189,27 @@ namespace _Project.Develop.UI.Evidence
 
         public void BeginDrag(PointerEventData eventData)
         {
-            var pressed = eventData.pointerPressRaycast.gameObject;
-            if (eventData.button != PointerEventData.InputButton.Left || _dragPointer.HasValue || _turn.isAlive ||
-                (pressed != _surfaceLeft.gameObject && pressed != _surfaceRight.gameObject &&
-                 pressed != _matLeft.gameObject && pressed != _matRight.gameObject) ||
-                !RectTransformUtility.ScreenPointToLocalPointInRectangle(_board, eventData.pressPosition,
+            if (eventData.button != PointerEventData.InputButton.Left || _dragPointer.HasValue || _turn.isAlive)
+                return;
+
+            var direction = TurnDirectionFor(eventData.pointerPressRaycast.gameObject);
+            var destination = _position + direction;
+            if (direction == 0 || destination < 0 || destination >= SpreadCount)
+                return;
+
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_board, eventData.pressPosition,
                     eventData.pressEventCamera, out var start))
                 return;
 
-            var direction = pressed == _surfaceLeft.gameObject || pressed == _matLeft.gameObject ? -1 : 1;
-            var target = _position + direction;
-            if (target < 0 || target >= SpreadCount)
-                return;
             _dragPointer = eventData.pointerId;
-            _dragStartX = _lastDragX = start.x;
-            _lastMotionTime = Time.unscaledTime;
-            _dragVelocity = 0f;
-            _dragProgress = 0f;
-            _gripDirection = direction;
-            var leaf = PageFace(direction < 0).rectTransform;
-            _gripHeight = Mathf.Clamp((start.y - leaf.localPosition.y) / (leaf.rect.height * .5f), -1f, 1f);
-            var distanceFromSpine = Mathf.Abs(start.x - leaf.localPosition.x);
-            var gripPosition = distanceFromSpine / leaf.rect.width;
-            var grip = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.2f, .95f, gripPosition));
-            var resistedTravel = leaf.rect.width * Mathf.Lerp(1.45f, .72f, grip);
-            var edgeGrip = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.65f, .95f, gripPosition));
-            // A projected point moves twice its distance from the spine in a complete turn.
-            _dragSpan = Mathf.Lerp(resistedTravel, 2f * distanceFromSpine, edgeGrip);
+            _gesture.Begin(direction, start, PageFace(direction < 0).rectTransform);
+        }
+
+        private int TurnDirectionFor(GameObject pressed)
+        {
+            if (pressed == _surfaceLeft.gameObject || pressed == _matLeft.gameObject) return -1;
+            if (pressed == _surfaceRight.gameObject || pressed == _matRight.gameObject) return 1;
+            return 0;
         }
 
         public void Drag(PointerEventData eventData)
@@ -234,37 +219,11 @@ namespace _Project.Develop.UI.Evidence
                     eventData.pressEventCamera, out var cursor))
                 return;
 
-            var delta = _dragStartX - cursor.x;
-            SampleDragVelocity(cursor.x);
-            var direction = delta > 0f ? 1 : -1;
-            if (Mathf.Abs(delta) <= DragDeadZone || direction != _gripDirection)
-            {
-                _dragProgress = 0f;
-                _paintTurn?.Invoke(0f);
-                return;
-            }
+            var passedDeadZone = _gesture.Move(cursor.x);
+            if (passedDeadZone && _paintTurn == null)
+                StartTurn(_gesture.Direction);
 
-            if (_paintTurn == null)
-                StartTurn(direction);
-
-            var travel = Mathf.Clamp01((Mathf.Abs(delta) - DragDeadZone) / _dragSpan);
-            // Convert the horizontal travel to the leaf's rotation angle.
-            _dragProgress = Mathf.Acos(1f - 2f * travel) / Mathf.PI;
-            _paintTurn(_dragProgress);
-        }
-
-        private void SampleDragVelocity(float x)
-        {
-            var movement = _lastDragX - x;
-            if (Mathf.Abs(movement) < .5f)
-                return;
-
-            var now = Time.unscaledTime;
-            var elapsed = now - _lastMotionTime;
-            var speed = movement / (_dragSpan * Mathf.Max(elapsed, 1f / 120f));
-            _dragVelocity = Mathf.Lerp(_dragVelocity, speed, elapsed < FlickMemory ? .55f : 1f);
-            _lastDragX = x;
-            _lastMotionTime = now;
+            _paintTurn?.Invoke(_gesture.Progress);
         }
 
         public void EndDrag(PointerEventData eventData)
@@ -277,13 +236,12 @@ namespace _Project.Develop.UI.Evidence
             if (_paintTurn == null)
                 return;
 
-            var velocity = Time.unscaledTime - _lastMotionTime <= FlickMemory ? _dragVelocity * _gripDirection : 0f;
-            var flick = _dragProgress >= .2f && velocity >= FlickSpeed;
-            var commit = _dragProgress >= .5f || flick;
+            var flick = _gesture.IsFlick;
+            var commit = _gesture.Progress >= .5f || flick;
             var goal = commit ? 1f : 0f;
-            var remainder = Mathf.Abs(goal - _dragProgress);
+            var remainder = Mathf.Abs(goal - _gesture.Progress);
             var duration = Mathf.Clamp(PageTurnDuration * remainder / (flick ? 1.2f : 1f), .22f, .49f);
-            _turn = Tween.Custom(_dragProgress, goal, duration, _paintTurn, flick ? Ease.OutSine : Ease.InOutSine,
+            _turn = Tween.Custom(_gesture.Progress, goal, duration, _paintTurn, flick ? Ease.OutSine : Ease.InOutSine,
                     useUnscaledTime: true)
                 .OnComplete(() =>
                 {
@@ -363,13 +321,7 @@ namespace _Project.Develop.UI.Evidence
                 if (index != moving)
                     continue;
 
-                var size = rect.rect.size;
-                var offset = rect.localPosition - leaf.localPosition;
-                rect.SetParent(leaf, false);
-                rect.anchorMin = rect.anchorMax = leaf.pivot;
-                rect.sizeDelta = size;
-                rect.anchoredPosition = offset;
-                _printedText.Attach(rect);
+                AttachToTurningPage(rect, leaf);
             }
             PlaceClueAreas(originRest, destinationRest, moving);
             _shadow.transform.SetAsLastSibling();
@@ -381,19 +333,9 @@ namespace _Project.Develop.UI.Evidence
             for (var index = 0; index <= _pages.Count; index++)
             {
                 var pending = index == _pages.Count;
-                var rect = pending ? _pendingClues : _clueAreas[index];
+                var rect = pending ? _pendingClues : _pages[index].Clues;
                 var surface = index % 2 == 0 ? _surfaceLeft : _surfaceRight;
-                var template = (RectTransform)surface.transform.Find("ClueContainer");
-                var corners = new Vector3[4];
-                template.GetWorldCorners(corners);
-                var minimum = (Vector2)_board.InverseTransformPoint(corners[0]);
-                var maximum = (Vector2)_board.InverseTransformPoint(corners[2]);
-                rect.SetParent(_board, false);
-                rect.anchorMin = rect.anchorMax = _board.pivot;
-                rect.pivot = new Vector2(.5f, .5f);
-                rect.sizeDelta = maximum - minimum;
-                rect.anchoredPosition = (minimum + maximum) * .5f;
-                rect.localScale = Vector3.one;
+                AlignClueArea(rect, surface);
                 rect.gameObject.SetActive((!pending || HasPendingClues) &&
                     (index == first || index == second || index == moving));
                 var threads = _threadAreas[rect];
@@ -418,14 +360,33 @@ namespace _Project.Develop.UI.Evidence
                     continue;
                 }
 
-                var size = rect.rect.size;
-                var offset = rect.localPosition - leaf.localPosition;
-                rect.SetParent(leaf, false);
-                rect.anchorMin = rect.anchorMax = leaf.pivot;
-                rect.sizeDelta = size;
-                rect.anchoredPosition = offset;
-                _printedText.Attach(rect);
+                AttachToTurningPage(rect, leaf);
             }
+        }
+
+        private void AttachToTurningPage(RectTransform rect, RectTransform leaf)
+        {
+            var size = rect.rect.size;
+            var offset = rect.localPosition - leaf.localPosition;
+            rect.SetParent(leaf, false);
+            rect.anchorMin = rect.anchorMax = leaf.pivot;
+            rect.sizeDelta = size;
+            rect.anchoredPosition = offset;
+            _printedText.Attach(rect);
+        }
+
+        private void AlignClueArea(RectTransform rect, Image surface)
+        {
+            var template = (RectTransform)surface.transform.Find("ClueContainer");
+            template.GetWorldCorners(_clueAreaCorners);
+            var minimum = (Vector2)_board.InverseTransformPoint(_clueAreaCorners[0]);
+            var maximum = (Vector2)_board.InverseTransformPoint(_clueAreaCorners[2]);
+            rect.SetParent(_board, false);
+            rect.anchorMin = rect.anchorMax = _board.pivot;
+            rect.pivot = new Vector2(.5f, .5f);
+            rect.sizeDelta = maximum - minimum;
+            rect.anchoredPosition = (minimum + maximum) * .5f;
+            rect.localScale = Vector3.one;
         }
 
         private void SetTurnFace(Image face, float width)
@@ -440,28 +401,23 @@ namespace _Project.Develop.UI.Evidence
             rect.pivot = source.pivot;
             rect.anchoredPosition = source.anchoredPosition;
             rect.localScale = new Vector3(width, 1f, 1f);
-            _faceCurl.SetBend(.36f * Mathf.Sqrt(Mathf.Max(0f, 1f - width * width)), rect.pivot.x, _gripHeight);
+            _faceCurl.SetBend(.36f * Mathf.Sqrt(Mathf.Max(0f, 1f - width * width)), rect.pivot.x, _gesture.GripHeight);
             _printedText.Refresh();
         }
 
         private void SetContentInteractive(bool interactive)
         {
-            foreach (var area in _clueAreas)
-                SetGroup(GetGroup(area), interactive);
-            SetGroup(GetGroup(_pendingClues), interactive);
+            GetGroup(_pendingClues).SetInteractive(interactive);
             foreach (var page in _pages)
-                SetGroup(page.Group, interactive);
+            {
+                page.Group.SetInteractive(interactive);
+                GetGroup(page.Clues).SetInteractive(interactive);
+            }
         }
 
         private static CanvasGroup GetGroup(RectTransform rect) => rect.TryGetComponent<CanvasGroup>(out var group)
             ? group
             : rect.gameObject.AddComponent<CanvasGroup>();
-
-        private static void SetGroup(CanvasGroup group, bool interactive)
-        {
-            group.interactable = interactive;
-            group.blocksRaycasts = interactive;
-        }
 
         private Image CreateImage(string name)
         {

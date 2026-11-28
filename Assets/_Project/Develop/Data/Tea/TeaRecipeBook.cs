@@ -23,19 +23,21 @@ namespace _Project.Develop.Data.Tea
 
         public bool TryFind(TeaMood currentMood, IReadOnlyList<TeaIngredientType> ingredients, out TeaMood target)
         {
+            target = currentMood;
             var selected = new HashSet<TeaIngredientType>(ingredients);
             selected.Remove(TeaIngredientType.None);
+            if (selected.Count == 0)
+                return false;
+
             foreach (var recipe in recipes)
             {
-                if (recipe.currentMood == currentMood && selected.Count > 0 &&
-                    recipe.ingredients != null && selected.SetEquals(recipe.ingredients))
-                {
-                    target = recipe.targetMood;
-                    return target != currentMood;
-                }
+                if (recipe.currentMood != currentMood || recipe.ingredients == null || !selected.SetEquals(recipe.ingredients))
+                    continue;
+
+                target = recipe.targetMood;
+                return target != currentMood;
             }
 
-            target = currentMood;
             return false;
         }
     }

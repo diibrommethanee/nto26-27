@@ -35,19 +35,7 @@ namespace _Project.Develop.Gameplay.Dialogue
         public DialogueStep Handle(NodeData node)
         {
             var dialogue = (DialogueNodeData)node;
-            var resolved = new DialogueNodeData
-            {
-                id = dialogue.id,
-                character = dialogue.inheritCharacter ? PreviousDialogue?.character : dialogue.character,
-                overrideName = dialogue.inheritCharacter ? PreviousDialogue?.overrideName : dialogue.overrideName,
-                text = dialogue.text,
-                quest = dialogue.quest,
-                clue = dialogue.clue,
-                hypothesis = dialogue.hypothesis,
-                publishTalked = dialogue.publishTalked,
-                moodChange = dialogue.moodChange,
-                nextNodeId = dialogue.nextNodeId
-            };
+            var resolved = dialogue.ResolveSpeaker(PreviousDialogue);
             PreviousDialogue = resolved;
             _publisher.Publish(new DialogueShown(resolved));
 
@@ -101,19 +89,7 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             foreach (var option in choice.options)
             {
-                var visible = option.condition switch
-                {
-                    ChoiceConditionType.Always => true,
-                    ChoiceConditionType.RequiredMood =>
-                        _states[option.character].Mood >= option.moodThreshold,
-                    ChoiceConditionType.HasClue =>
-                        _evidenceService.HasClue(option.requiredClue),
-                    ChoiceConditionType.HasHypothesis =>
-                        _evidenceService.HasSolvedHypothesis(option.requiredHypothesis),
-                    _ => throw new InvalidOperationException($"Unsupported choice condition: {option.condition}.")
-                };
-
-                if (visible)
+                if (IsAvailable(option))
                     available.Add(option);
             }
 
@@ -122,6 +98,19 @@ namespace _Project.Develop.Gameplay.Dialogue
 
             return DialogueStep.Choose(available);
         }
+
+        private bool IsAvailable(ChoiceOptionData option) =>
+            option.condition switch
+            {
+                ChoiceConditionType.Always => true,
+                ChoiceConditionType.RequiredMood =>
+                    _states[option.character].Mood >= option.moodThreshold,
+                ChoiceConditionType.HasClue =>
+                    _evidenceService.HasClue(option.requiredClue),
+                ChoiceConditionType.HasHypothesis =>
+                    _evidenceService.HasSolvedHypothesis(option.requiredHypothesis),
+                _ => throw new InvalidOperationException($"Unsupported choice condition: {option.condition}.")
+            };
     }
 
     public class EndNodeHandler : IDialogueNodeHandler

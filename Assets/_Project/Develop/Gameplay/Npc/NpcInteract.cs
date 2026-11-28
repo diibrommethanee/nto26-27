@@ -17,6 +17,7 @@ namespace _Project.Develop.Gameplay.NPC
 
         public NpcData Data => npcData;
         public Transform DialogueAnchor => dialogueAnchor;
+        internal NpcDialogueExit DialogueZone => GetComponentInChildren<NpcDialogueExit>();
 
         private DialogueRunner _dialogueRunner;
         private DayService _dayService;
@@ -46,7 +47,7 @@ namespace _Project.Develop.Gameplay.NPC
                 return;
 
             var dialogue = _states[npcData].Dialogue;
-            if (dialogue != null && !_dayService.TrySpendMinutes(_dayService.DialogueCostMinutes))
+            if (dialogue != null && !_dayService.TrySpendDialogueTime())
                 return;
 
             _interactPublisher.Publish(new NpcInteractedEvent(npcData, dialogueAnchor));

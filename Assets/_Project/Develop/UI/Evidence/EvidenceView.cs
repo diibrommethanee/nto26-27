@@ -17,7 +17,7 @@ namespace _Project.Develop.UI.Evidence
     [RequireComponent(typeof(CanvasGroup))]
     public class EvidenceView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        public const string DialogueClueLinkPrefix = "dialogue-clue-";
+        public const string DialogueClueLinkPrefix = _Project.Develop.UI.Dialogue.DialogueMarkup.ClueLinkPrefix;
 
         private Clue _dialogueClue;
         private TMP_Text _dialogueLabel;
@@ -51,9 +51,7 @@ namespace _Project.Develop.UI.Evidence
         [SerializeField, Min(0f)] private float clueFlyArc = 90f;
         [SerializeField, Min(8f)] private float clueFlyIconSize = 48f;
 
-        private readonly HashSet<(ClueView, ClueView)> _combinedPairs = new();
         private readonly Dictionary<Clue, ClueView> _cards = new();
-        private readonly List<ClueThreadView> _threads = new();
         private EvidenceService _evidence;
         private CanvasGroup _canvasGroup;
         private CanvasGroup _notebookButtonGroup;
@@ -63,9 +61,8 @@ namespace _Project.Develop.UI.Evidence
         private IDisposable _zoomSubscription;
         private Tween _notebookFade;
         private NotebookPages _pages;
+        private ClueConnections _connections;
         private ClueFlightAnimation _flight;
-        private ClueView _selected;
-        private ClueThreadView _preview;
         private bool _isOpen;
         private Sequence _transition;
         private Vector3 _openScale;
@@ -99,15 +96,16 @@ namespace _Project.Develop.UI.Evidence
             _isOpen = _canvasGroup.interactable && _canvasGroup.blocksRaycasts && _canvasGroup.alpha > 0.99f;
             _input.SetNotebookOpen(_isOpen);
             _canvasGroup.alpha = _isOpen ? 1f : 0f;
-            SetInteractive(_isOpen);
+            _canvasGroup.SetInteractive(_isOpen);
             if (!_isOpen)
             {
                 board.localScale = _openScale * closedScale;
                 board.anchoredPosition -= Vector2.up * slideDistance;
             }
 
+            _connections = new ClueConnections(board, threadPrefab, _evidence);
             _pages = new NotebookPages(board, matLeft, matRight,
-                surfaceLeft, surfaceRight, _evidence, ClearSelection);
+                surfaceLeft, surfaceRight, _evidence, _connections.ClearSelection);
             if (hypotheses.Count == 0 && currentHypothesis != null)
                 _pages.Add(currentHypothesis);
             foreach (var hypothesis in hypotheses)
@@ -126,12 +124,12 @@ namespace _Project.Develop.UI.Evidence
         {
             foreach (var hypothesis in _evidence.UnlockedHypotheses) OnHypothesisUnlocked(hypothesis);
             foreach (var clue in _evidence.Collected)
-                if (!_cards.ContainsKey(clue)) AddClueCard(clue, null);
+                AddClueCard(clue, null);
         }
 
         private void OnHypothesisUnlocked(Hypothesis hypothesis)
         {
-            ClearSelection();
+            _connections.ClearSelection();
             _pages.Add(hypothesis);
             _pages.Stop();
             var destination = _pages.ClueArea(hypothesis);
@@ -140,15 +138,14 @@ namespace _Project.Develop.UI.Evidence
                 if (clue.hypothesis == hypothesis && _cards.TryGetValue(clue, out var card) && card.Rect.parent != destination)
                     card.MoveToPage(destination, GetAutomaticSpawnPosition(destination));
             }
-            foreach (var thread in _threads)
-                thread.RefreshPage(board, _pages.ThreadArea);
+            _connections.RefreshPages(_pages);
             _pages.Stop();
         }
 
         private void SetHudHidden(bool hidden, bool saveTransition)
         {
             _notebookFade.Stop();
-            _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = false;
+            _notebookButtonGroup.SetInteractive(false);
             var visible = !hidden;
             _notebookFade = Tween.Alpha(_notebookButtonGroup, visible ? 1f : 0f, saveTransition ? .075f : visible ? .28f : .18f,
                 Ease.OutCubic, useUnscaledTime: true);
@@ -159,7 +156,7 @@ namespace _Project.Develop.UI.Evidence
         private void SetNotebookButtonVisible(bool visible)
         {
             _notebookButtonGroup.alpha = visible ? 1f : 0f;
-            _notebookButtonGroup.interactable = _notebookButtonGroup.blocksRaycasts = visible;
+            _notebookButtonGroup.SetInteractive(visible);
         }
 
         private void OnDestroy()
@@ -178,52 +175,7 @@ namespace _Project.Develop.UI.Evidence
 
         private void SelectClue(ClueView card)
         {
-            if (_selected == null)
-            {
-                _selected = card;
-                card.SetSelected(true);
-                _preview = Instantiate(threadPrefab, _pages.ThreadArea((RectTransform)card.Rect.parent));
-                _preview.transform.SetAsFirstSibling();
-
-                _preview.FollowMouse(card.Rect);
-                return;
-            }
-
-            ConnectClues(_selected, card);
-            ClearSelection();
-        }
-
-        private void ConnectClues(ClueView first, ClueView second)
-        {
-            if (first == second || first.Rect.parent != second.Rect.parent ||
-                _combinedPairs.Contains((first, second)) ||
-                _combinedPairs.Contains((second, first)) ||
-                !_evidence.TryCombine(first.Data, second.Data, out var result))
-                return;
-
-            _combinedPairs.Add((first, second));
-            _preview.Connect(first.Rect, second.Rect);
-            _threads.Add(_preview);
-            _preview = null;
-
-            var midpoint = (first.Rect.anchoredPosition + second.Rect.anchoredPosition) * 0.5f;
-            SpawnClue(result, midpoint + Vector2.up * 100f);
-        }
-
-        private void ClearSelection()
-        {
-            if (_selected == null)
-                return;
-
-            _selected.SetSelected(false);
-            _selected = null;
-            if (_preview != null)
-            {
-                _preview.Hide();
-                _preview.transform.SetParent(board, false);
-                Destroy(_preview.gameObject);
-                _preview = null;
-            }
+            _connections.Select(card, _pages.ThreadArea((RectTransform)card.Rect.parent));
         }
 
         public void SpawnClue(Clue clue, Vector2 position)
@@ -261,8 +213,9 @@ namespace _Project.Develop.UI.Evidence
             else if (sourceWorldPosition is Vector3 worldPosition && notebookButton != null)
             {
                 var sourceSprite = _evidence.GetClueSprite(clue);
-                var isOutlineSticker = clue.type == ClueType.Outline && sourceSprite == null && clue.icon == null;
-                await _flight.FlyClueToNotebookAsync(sourceSprite != null ? sourceSprite : GetArtwork(clue),
+                if (sourceSprite == null) sourceSprite = clue.icon;
+                var isOutlineSticker = clue.type == ClueType.Outline && sourceSprite == null;
+                await _flight.FlyClueToNotebookAsync(sourceSprite != null ? sourceSprite : GetSticker(clue.sticker),
                     worldPosition, isOutlineSticker);
             }
 
@@ -271,7 +224,10 @@ namespace _Project.Develop.UI.Evidence
 
         private void AddClueCard(Clue clue, Vector2? position)
         {
-            ClearSelection();
+            if (_cards.ContainsKey(clue))
+                return;
+
+            _connections.ClearSelection();
             var area = _pages.ClueArea(clue.hypothesis);
             var icon = clue.icon;
             if (icon == null && clue.type == ClueType.Collectible)
@@ -283,15 +239,12 @@ namespace _Project.Develop.UI.Evidence
             var card = Instantiate(prefab, area);
             _cards.Add(clue, card);
             _pages.ShowCluePage(clue.hypothesis);
-            card.Initialize(clue, area, spawnPosition, SelectClue, hasIcon ? icon : GetArtwork(clue), hasIcon);
+            card.Initialize(clue, area, spawnPosition, SelectClue, hasIcon ? icon : GetSticker(clue.sticker), hasIcon);
         }
 
-        private Sprite GetArtwork(Clue clue)
+        private Sprite GetSticker(ClueSticker sticker)
         {
-            if (clue.icon != null)
-                return clue.icon;
-
-            return clue.sticker switch
+            return sticker switch
             {
                 ClueSticker.Blue => blueSticker,
                 ClueSticker.Green => greenSticker,
@@ -329,7 +282,7 @@ namespace _Project.Develop.UI.Evidence
 
         public void Close()
         {
-            ClearSelection();
+            _connections.ClearSelection();
             _pages.Stop();
             SetOpen(false);
         }
@@ -342,7 +295,7 @@ namespace _Project.Develop.UI.Evidence
             _isOpen = open;
             _input.SetNotebookOpen(open);
             _transition.Stop();
-            SetInteractive(false);
+            _canvasGroup.SetInteractive(false);
             var duration = open ? openDuration : closeDuration;
             _transition = Sequence.Create()
                 .Group(Tween.Scale(board, open ? _openScale : _openScale * closedScale,
@@ -351,13 +304,7 @@ namespace _Project.Develop.UI.Evidence
                     duration, open ? Ease.OutCubic : Ease.InCubic))
                 .Group(Tween.Alpha(_canvasGroup, open ? 1f : 0f, duration, Ease.Linear));
             if (open)
-                _transition.OnComplete(this, view => view.SetInteractive(true));
-        }
-
-        private void SetInteractive(bool interactive)
-        {
-            _canvasGroup.interactable = interactive;
-            _canvasGroup.blocksRaycasts = interactive;
+                _transition.OnComplete(this, view => view._canvasGroup.SetInteractive(true));
         }
     }
 }
